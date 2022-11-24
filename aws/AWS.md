@@ -72,5 +72,34 @@
 
 ![Billing prefs](images/billing_prefs_11.png)
 
+## EC2
 
+### Create simple vm
 
+![Create EC2 instance](images/ec2_1.png)
+
+![Create EC2 instance](images/ec2_2.png)
+
+![Create EC2 instance](images/ec2_3.png)
+
+![Create EC2 instance](images/ec2_4.png)
+
+![Create EC2 instance](images/ec2_5.png)
+
+![Create EC2 instance](images/ec2_6.png)
+
+![Create EC2 instance](images/ec2_7.png)
+
+![Create EC2 instance](images/ec2_8.png)
+
+![Create EC2 instance](images/ec2_9.png)
+
+Далее копируем публичный ключ, применяем права доступа и заходим через ssh
+
+```
+mv /mnt/c/Users/anton/Downloads/awsdemo.pem ~/.ssh
+
+chmod 400 ~/.ssh/awsdemo.pem
+
+ssh -i "~/.ssh/awsdemo.pem" ubuntu@ec2-54-157-214-250.compute-1.amazonaws.com
+```
