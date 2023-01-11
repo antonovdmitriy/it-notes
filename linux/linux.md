@@ -199,13 +199,13 @@
   - [Изменение context label](#изменение-context-label)
   - [Чтение лога SELinux](#чтение-лога-selinux)
 - [Firewalling](#firewalling)
-  - [Linux time](#linux-time)
-  - [Kickstart](#kickstart)
-  - [Vagrant](#vagrant)
-  - [Подключение сетевых дисков](#подключение-сетевых-дисков)
-    - [NFS](#nfs)
-    - [Samba](#samba)
-  - [Проброс X11](#проброс-x11)
+- [Linux time](#linux-time)
+- [Kickstart](#kickstart)
+- [Vagrant](#vagrant)
+- [Подключение сетевых дисков](#подключение-сетевых-дисков)
+  - [NFS](#nfs)
+  - [Samba](#samba)
+- [Проброс X11](#проброс-x11)
     - [на сервере:](#на-сервере)
     - [На клиенте:](#на-клиенте)
 
@@ -4449,7 +4449,7 @@ firewall-cmd --reload
 
 ![](images/image43.png)
 
-## Linux time
+# Linux time
 
 ![](images/image123.png)
 
@@ -4484,7 +4484,7 @@ timedatectl set-timezone Europe/Berlin
 
 ![](images/image439.png)
 
-## Kickstart
+# Kickstart
 
 Тулза для автоматической установки RHEL из файла конфигурации. Файл находится в home директории root и называется `anaconda-ks.cfg`
 
@@ -4496,15 +4496,15 @@ timedatectl set-timezone Europe/Berlin
 
 ![](images/image217.png)
 
-## Vagrant
+# Vagrant
 
 Тулза для развертывания виртуальных машин
 
 ![](images/image93.png)
 
-## Подключение сетевых дисков
+# Подключение сетевых дисков
 
-### NFS
+## NFS
 Используется для предоставления доступа к ресурсам по сети - создание сетевого диска.
 
 Необходимо для установки:
@@ -4554,7 +4554,7 @@ mount 192.168.4.210:/datda /mnt
 
 ![](images/image186.png)
 
-### Samba
+## Samba
 
 Используется для предоставление доступа к ресурсам, которые поддерживают и Windows файлы
 
@@ -4647,7 +4647,7 @@ mount -o username=samba //192.168.100.11/samba /mnt
 ![](images/image25.png)
 
 
-## Проброс X11
+# Проброс X11
 
 Для того. чтобы сервер рисовал на экране клиента. Нужно сделать следующее.
 
