@@ -24,6 +24,8 @@ do
    if [[ $status != *"nothing to commit, working tree clean"* ]]; then
         git add -A
         git commit -m "Auto commit from script"
+        git push
+        exit 0
    fi
    
    # Check if it is necessary to push
