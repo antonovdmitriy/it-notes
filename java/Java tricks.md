@@ -503,3 +503,39 @@ short boots = 2 + 1;
 short boots = 2 + hat;  // DOES NOT COMPILE
 byte gloves = 7 * 100;  // DOES NOT COMPILE
 ```
+
+Compaund operates can handle casting
+```java
+long goat = 10;
+int sheep = 5;
+sheep = sheep * goat;   // DOES NOT COMPILE
+```
+
+```java
+long goat = 10;
+int sheep = 5;
+sheep *= goat;  // The compound operator will first cast sheep to a long, apply the multiplication of two long values, and then cast the result to an int. 
+```
+
+assignment with assignment
+```java
+long wolf = 5;
+long coyote = (wolf=3);
+System.out.println(wolf);   // 3
+System.out.println(coyote); // 3
+```
+and as well
+```java
+long wolf = 5;
+long coyote = (wolf=3);
+long tiger = wolf = coyote = 10;
+System.out.println(wolf);   // 10
+System.out.println(coyote); // 10
+ System.out.println(tiger); // 10
+```
+
+```java
+boolean healthy = false;
+if(healthy = true)
+   System.out.print("Good!");
+```

@@ -2433,29 +2433,45 @@ systemctl cat systemd-tmpfiles-clean.timer
 
 # Virtual Box
 
+часто при создании ВМ при старте появляется Kernel panic. Нужно проверить сколько выделено ядер процессора, скорее всего 1-но и из-за этого и происходит эта ошибка. 
+
 ## mnt дисков
 
 Возникли сложности при маунте дисков внутрь Ubuntu Server. Проблема была в том, что обязателен GuestAddition.iso , но он почему не применялся при добавлении, пришлось искать решение, вот оно:
 
-```
-If you don't download the ISO, you won't get the "latest and greatest" version. If you'd like to stick with this option, please [see the following notes for dependencies](https://www.google.com/url?q=https://gist.github.com/magnetikonline/1e7e2dbd1b288fecf090f1ef12f0c80b&sa=D&source=editors&ust=1662229049553849&usg=AOvVaw2o2USLdtF1wF6hBYlYS4aO).
+https://gist.github.com/magnetikonline/1e7e2dbd1b288fecf090f1ef12f0c80b
 
-I have tested these instructions successfully under an Ubuntu 16.04 guest:
+- Create Ubuntu server instance under VirtualBox (obviously).
+- Start VM, goto **Devices - Insert Guest Additions CD image** to mount the ISO image.
+- From the terminal, run the following commands:
 
-1.  Create Ubuntu server instance under VirtualBox (obviously).
-2.  Start VM, go to Devices -\> Insert Guest Additions CD image to mount the ISO image.
-3.  From the terminal, run the following commands:  
-    sudo -i apt install gcc make mkdir -p /media/cdrom mount /dev/cdrom /media/cdrom /media/cdrom/VBoxLinuxAdditions.run reboot
-4.  After reboot:  
-    sudo usermod --append --groups vboxsf USERNAME
-5.  Host shares should now be mounted in Ubuntu guest under /media via the installed VBoxService service, set to start on system boot-up.
+	```sh
+	$ sudo su
+	$ apt install gcc make
+	$ mkdir --parents /media/cdrom
+	$ mount /dev/cdrom /media/cdrom
+	$ /media/cdrom/VBoxLinuxAdditions.run
+	$ reboot
+	```
 
-This impacted my install.
+- After reboot:
+
+	```sh
+	$ modinfo vboxguest
+	$ sudo usermod --append --groups vboxsf -- "$USER"
+	$ cat /etc/group | grep "$USER"
+	```
+
+- Host shares should now be mounted in Ubuntu guest under `/media` via the installed `VBoxService` service, set to start on system boot-up.
+- All done.
+
+**Note:** the above steps can be repeated on an existing VM image for guest addition upgrades, `VBoxLinuxAdditions.run` will handle the uninstall and reinstall process automatically.
+
 
 Noted from comment:
 
 * Log out and back in again after adding user account to vboxsf group
-```
+
 
 ## Настройка сети
 

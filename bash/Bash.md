@@ -269,3 +269,30 @@ echo print $1
 ```
 ![output](images/shift_operator_1.png)
 
+## Command substitution 
+
+Можно использовать о скобки и тильду
+
+```bash
+today=$(date +%d-%m-%y)
+mykernel=$(uname -r)
+```
+```bash
+today=`date +%d-%m-%y`
+mykernel=`uname -r`
+```
+для читаемости лучше использовать `$()`
+
+```bash
+#!/bin/bash
+#simple demo backup script
+#writes backup file to current directory and backs up everything provided as an argument
+
+if [ -z $1]
+then
+    echo argument required
+    exit 9
+fi 
+
+sudo tar -cvf $(date +%d-%m-%y).bak $@
+```
