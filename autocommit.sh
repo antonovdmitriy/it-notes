@@ -20,7 +20,6 @@ do
    cd $i
    echo "processing $i"
    status=$(git status)
-   # Check if it is necessary to commit
    if [[ $status != *"nothing to commit, working tree clean"* ]]; then
         git add -A
         git commit -m "Auto commit from script"
@@ -28,7 +27,6 @@ do
         exit 0
    fi
    
-   # Check if it is necessary to push
    if [[ $status == *"Your branch is ahead"* ]]; then
        git push
    fi
