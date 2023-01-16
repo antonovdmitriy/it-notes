@@ -321,6 +321,18 @@ echo ${username:=$(whoami)}
 filename=${1:=$DEFAULT_FILENAME}
 ```
 
+```bash
+#!/bin/bash
+echo take one
+echo ${var:-abc}
+echo ${var}
+
+echo take two
+echo ${var:=abc}
+echo ${var}
+```
+
+
 если переменная не задана пишем сообщение и выходим с кодом 1
 ```bash
 echo ${myvar:?error_message}
@@ -402,4 +414,83 @@ fi
 
 sudo $PACKAGE_MANAGER install $PACKAGE -y
 
+```
+
+## Pattern matching
+
+Рекомендуется к использованию, а не `sed` т.к это нативный bash, ничего с диска не читается, sed - утилита на диске.
+
+длинну аргумента. Количество символов.
+```bash
+${1#}
+```
+
+### почистить строку 
+
+- `${var#pattern}` удаляет самый короткий результат поиска слева направо
+- `${var##pattern}` удаляет самый длинный результат поиска слева направо 
+- `${var%pattern}` удаляет самый короткий результат поиска справа налево
+- `${var%%pattern}` удаляет самый длинный результат поиска справа налево
+
+```bash
+#!/bin/bash
+#
+# ...
+# to test, use /usr/bin/blah
+
+filename=${1##*/}
+echo 'filename=${1##*/}'
+echo "The name of the file is $filename"
+directoryname=${1%/*}
+echo 'directoryname=${1%/*}'
+echo "the name of the directory is $directoryname"
+```
+
+![](images/pattern_matching_1.png)
+
+```bash
+#!/bin/bash
+BLAH=rababarabarabarara
+clear
+
+echo BLAH=$BLAH
+echo 'the result of ##*ba is' ${BLAH##*ba} 
+echo 'the result of #*ba is' ${BLAH#*ba} 
+echo 'the result of %%ba* is' ${BLAH%%ba*}
+echo 'the result of %ba* is' ${BLAH%ba*}
+```
+
+ ![](images/pattern_matching_2.png)
+
+### сделать замену в переменной
+
+```bash
+${var/pattern/replacement}
+```
+да очень похоже на `sed`
+
+для глобальной замены, т.е много раз используем двойной слеш
+
+```bash
+${var//pattern/replacement}
+```
+
+делать замену, только если переменная начинается с паттерна
+```bash
+${var/#pattern/replacement}
+```
+
+делать замену, только если переменная заканчивается паттерном
+```bash
+${var/%pattern/replacement}
+```
+
+```bash
+#!/bin/bash
+
+VAR=donkey
+echo $VAR
+
+VAR=${VAR/donkey/horse}
+echo $VAR
 ```
