@@ -594,3 +594,33 @@ if(duck!=null && duck.getAge()<5) {
    // Do something
 }
 ```
+
+## Ternary Operator tricks
+
+```java
+int food1 = owl < 4 ? owl > 2 ? 3 : 4 : 5;
+int food2 = (owl < 4 ? ((owl > 2) ? 3 : 4) : 5)
+```
+
+> there is no requirement that second and third expressions in ternary operations have the same data types, although it does come into play when combined with the assignment operator
+```java
+int stripes = 7;
+ 
+System.out.print((stripes > 5) ? 21 : "Zebra");
+ 
+int animal = (stripes < 9) ? 3 : "Horse";  // DOES NOT COMPILE
+```
+
+```java
+int sheep = 1;
+int zzz = 1;
+int sleep = zzz < 10 ? sheep++ : zzz++;
+System.out.print(sleep + "," + sheep + "," + zzz);  // 1,2,1
+```    
+
+```java
+int sheep = 1;
+int zzz = 1;
+int sleep = sheep>=10 ? sheep++ : zzz++;
+System.out.print(sleep + "," + sheep + "," + zzz);  // 1,1,2
+```    
