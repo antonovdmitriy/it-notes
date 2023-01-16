@@ -296,3 +296,110 @@ fi
 
 sudo tar -cvf $(date +%d-%m-%y).bak $@
 ```
+
+## Parameter substitution
+
+можно ставить дефолтное значение в случае отсутствия значения, либо вызывать выражение, которое определит значение
+
+```bash
+#!/bin/bash
+
+echo press username or press enter to use default value
+read username
+echo ${username:-$(whoami)}
+```
+
+тут выполняется попытка чтения инпута в переменную username. Далее через `${}` осущесвляется ссылка на переменную, если она пустая, то вызывается command substitution whoami который возвращает имя текущего пользователя. При этом присвоение к usename не происходит, оно по-прежнему пустое.
+
+Если `$1` не задан, то используется дефолтное значение и присваивается к `filename`
+```bash
+filename=${1:-$DEFAULT_FILENAME}
+```
+
+```bash
+echo ${username:=$(whoami)}
+filename=${1:=$DEFAULT_FILENAME}
+```
+
+если переменная не задана пишем сообщение и выходим с кодом 1
+```bash
+echo ${myvar:?error_message}
+```
+
+## Here document
+
+A here document is a special-purpose code block. It uses a form of I/O redirection to feed a command list to an interactive program or a command, such as ftp, cat, or the ex text editor.
+
+```bash
+COMMAND <<InputComesFromHERE
+...
+...
+...
+InputComesFromHERE
+```
+
+```bash
+ssh $SERVER bash <<EOF
+cd downloads/
+read -e -p "Enter the path to the file: " FILEPATH
+echo $FILEPATH
+eval FILEPATH="$FILEPATH"
+
+echo "Downloading $FILEPATH to $CLIENT"
+EOF
+```
+
+## Function
+
+Два способа обьявить функцию
+
+пробелы между скобками не важны
+```bash
+function_name () {
+
+}
+```
+
+```bash
+function function {
+
+}
+```
+
+> Аргументы функции имеют локальный скоуп. 
+
+```bash
+#!/bin/bash
+hello(){
+    echo hello $1
+}
+hello bob
+```
+
+> Аргументы всего скрипта при этом недоступны в функции
+
+## Приммр простого скрипта
+```bash
+#!/bin/bash
+
+if grep -i 'ubuntu' /etc/os-release > /dev/null
+then
+    PACKAGE_MANAGER=apt
+fi
+
+if grep -i 'red hat' /etc/os-release > /dev/null
+then
+    PACKAGE_MANAGER=yum
+fi
+
+if [ -z $1 ]
+then
+    echo enter package name to install
+    read PACKAGE
+else
+    PACKAGE=$1    
+fi
+
+sudo $PACKAGE_MANAGER install $PACKAGE -y
+
+```

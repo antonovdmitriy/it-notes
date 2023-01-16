@@ -539,3 +539,58 @@ boolean healthy = false;
 if(healthy = true)
    System.out.print("Good!");
 ```
+
+## Comparison
+
+```java
+boolean monkey = true == 3;       // DOES NOT COMPILE
+boolean ape = false != "Grape";   // DOES NOT COMPILE
+boolean gorilla = 10.2 == "Koko"; // DOES NOT COMPILE
+```
+
+```java
+boolean bear = false;
+boolean polar = (bear = true);
+System.out.println(polar);  // true
+```
+
+```java
+var monday = new File("schedule.txt");
+var tuesday = new File("schedule.txt");
+var wednesday = tuesday;
+System.out.println(monday == tuesday);    // false
+System.out.println(tuesday == wednesday); // true
+```
+
+```java
+System.out.print(null == null);  // true
+```
+
+> If the compiler can determine that a variable cannot possibly be cast to a specific class, it reports an error.
+
+```java
+public void openZoo(Number time) {
+   if(time instanceof String) // DOES NOT COMPILE
+      System.out.print(time);
+}
+```
+
+```java
+System.out.print(null instanceof Object);  // false
+ 
+Object noObjectHere = null;
+System.out.print(noObjectHere instanceof String);  // false
+System.out.print(null instanceof null);  // DOES NOT COMPILE
+```
+
+```java
+if(duck!=null & duck.getAge()<5) { // Could throw a NullPointerException
+   // Do something
+}
+```
+
+```java
+if(duck!=null && duck.getAge()<5) {
+   // Do something
+}
+```
