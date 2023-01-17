@@ -389,6 +389,12 @@ Post-increment	`y++`	Increases the value by 1 and returns the **original** value
 Post-decrement	`z--`	Decreases the value by 1 and returns the **original** value
 
 ```java
+int a = 2, b = 4, c = 2;
+System.out.println(a ˃ 2 ? --c : b++); // 4
+System.out.println(b = (a!=c ? a : b++)); // 5  first decrement but return old value. b is already 6, but then result of ternary assign to b. And this result of ternary is 5 (old value of b)
+```
+
+```java
 int parkAttendance = 0;
 System.out.println(parkAttendance);    // 0
 System.out.println(++parkAttendance); // 1
@@ -540,12 +546,29 @@ if(healthy = true)
    System.out.print("Good!");
 ```
 
+
+```java
+public class CandyCounter {
+   static long addCandy(double fruit, float vegetables) {
+      return (int)fruit+vegetables;                         // doesn't compile because result will be float and float not casting to long
+   }
+   
+   public static void main(String[] args) {
+      System.out.print(addCandy(1.4, 2.4f) + ", ");
+      System.out.print(addCandy(1.9, (float)4) + ", ");
+      System.out.print(addCandy((long)(int)(short)2, (float)4)); } } // correct
+```
+
 ## Comparison
+
+>The equality operator can be applied to numeric values, boolean values, and objects (including String and null). When applying the equality operator, you cannot mix these types. I.E it's legal to compare different numeric types with each other.
+
 
 ```java
 boolean monkey = true == 3;       // DOES NOT COMPILE
 boolean ape = false != "Grape";   // DOES NOT COMPILE
 boolean gorilla = 10.2 == "Koko"; // DOES NOT COMPILE
+boolean a = 34L == 3.9f;
 ```
 
 ```java
@@ -593,6 +616,14 @@ if(duck!=null & duck.getAge()<5) { // Could throw a NullPointerException
 if(duck!=null && duck.getAge()<5) {
    // Do something
 }
+```
+
+```java
+int ph = 7, vis = 2;
+boolean clear = vis ˃ 1 & (vis ˂ 9 || ph ˂ 2);
+boolean safe = (vis ˃ 2) && (ph++ ˃ 1);                 // right side never invokes
+boolean tasty = 7 ˂= --ph;
+System.out.println(clear + "-" + safe + "-" + tasty);  // true, false, false 
 ```
 
 ## Ternary Operator tricks

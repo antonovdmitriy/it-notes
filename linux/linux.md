@@ -604,14 +604,25 @@ tr \[:lower:\] \[:upper:\]
 tr \[a-z\] \[A-Z\]
 ```
 ![Linux tr Filters1](images/image444.png)
-```
-command | tr '\\n' ' '  Замена перевода строки на пробел.
+
+ Замена перевода строки на пробел.
+```bash
+command | tr '\\n' ' ' 
 ```
 ![Linux tr Filters3](images/image199.png)
-```
-command | tr -s 'one letter'   Устраняет множественный символ до одного
+
+Устраняет множественный символ до одного. Опция `-s`.
+```bash
+command | tr -s 'one letter'   
 ```
 ![Linux tr Filters2](images/image273.png)
+
+Заменяем пробелы на табы
+```bash
+echo hello my friend | tr [:space:] '\t' 
+```
+
+
 ```
 command | tr -d letter   Удаляет символ
 ```
