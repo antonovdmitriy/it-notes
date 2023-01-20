@@ -655,3 +655,279 @@ int zzz = 1;
 int sleep = sheep>=10 ? sheep++ : zzz++;
 System.out.print(sleep + "," + sheep + "," + zzz);  // 1,1,2
 ```    
+
+## Pattern matching 
+
+Для избежания проверки на тип, а потом приведения к типу с Java 16 появилось это. Переменная data относится к так называемым *pattern variable*.
+```java
+void compareIntegers(Number number) {
+   if(number instanceof Integer data) {
+      System.out.print(data.compareTo(5));
+   }
+}
+```
+
+pattern variable можно переприсвоить, если не обьявлено final
+```java
+if(number instanceof Integer data) {
+   data = 10;
+}
+```
+
+```java
+if(number instanceof final Integer data) {
+   data = 10;  // DOES NOT COMPILE
+}
+```
+
+pattern variable переменную можно использовать дальше в выражениях в том же выражении
+```java
+void printIntegersGreaterThan5(Number number) {
+   if(number instanceof Integer data && data.compareTo(5)>0)
+      System.out.print(data);
+}
+```
+важное ограничение, pattern varialble должно быть подтипом в отличие от традиционного instanceof
+```java
+Integer value = 123;
+if(value instanceof Integer) {}
+if(value instanceof Integer data) {}  // DOES NOT COMPILE
+```
+
+следует различать ситуации, когда pattern variable может не обьявиться перед использонием. Компиллятор следит за эти не даст коду такому скомпилироваться.
+
+```java
+void printIntegersOrNumbersGreaterThan5(Number number) {
+   if(number instanceof Integer data || data.compareTo(5)>0)  // DOES NOT COMPILE
+      System.out.print(data);
+}
+```
+
+Скоуп видимости не ограничен ифом. Может вылезти дальше, если компилятор решит что переменная точно определена.
+```java
+void printOnlyIntegers(Number number) { 
+   if (!(number instanceof Integer data))
+      return;
+   System.out.print(data.intValue());
+}
+
+
+```
+
+## switch statement
+
+![Switch](images/switch_1.png)
+
+`default` может быть где угодно среди case. В том числе кейсов может и не быть, а default при этом будет работать. Более того может быть вообще ничего внутри скобок
+
+```java
+switch(month) {}
+```
+
+The following is a list of all data types supported by switch statements:
+
+- `int` and `Integer`
+- `byte` and `Byte`
+- `short` and `Short`
+- `char` and `Character`
+- `String`
+- `enum` values
+- `var` (if the type resolves to one of the preceding types)
+
+Notice that `boolean`, `long`, `float`, and `double` are excluded from switch statements, as are their associated `Boolean`, `Long`, `Float`, and `Double` classes
+
+обратить внимание на использование нескольких значений в одном `case`. Появилось в Java 14
+```java
+switch(animal) {
+   case 1,2: System.out.print("Lion");
+   case 3:   System.out.print("Tiger");
+}
+```
+ранее нужно было писать так
+
+```java
+switch(animal) {
+   case 1: case 2: System.out.print("Lion");
+   case 3:         System.out.print("Tiger");
+}
+``` 
+
+```java
+public void printSeason(int month) {
+   switch(month) {
+      case 1, 2, 3:    System.out.print("Winter");
+      case 4, 5, 6:    System.out.print("Spring");
+      default:         System.out.print("Unknown");
+      case 7, 8, 9:    System.out.print("Summer");
+      case 10, 11, 12: System.out.print("Fall");
+   } 
+}
+
+// WinterSpringUnknownSummerFall
+```
+
+В case можно писать только константы и значения, которые известны в момент компиляции. 
+```java
+final int getCookies() { return 4; }
+void feedAnimals() {
+   final int bananas = 1;
+   int apples = 2;
+   int numberOfAnimals = 3;
+   final int cookies = getCookies();
+   switch(numberOfAnimals) {
+      case bananas:
+      case apples:        // DOES NOT COMPILE
+      case getCookies():  // DOES NOT COMPILE
+      case cookies :      // DOES NOT COMPILE
+      case 3 * 5 :
+   } }
+```   
+
+## Switch expression. Новый switch, который может возвращать значения
+![Switch](images/switch_2.png)
+
+После оператора `->` идет НЕ лямбда. 
+
+После значений через зяпутую идет оператор `->` а не двоеточие `:`
+
+обязателен `;` если используется не блок кода а одно выражение.
+
+Также обязателен `;` после всего switch, так как есть присвоение к переменной результата switch
+
+Также не нужен `break` ветки исполняются только если case совпадает. 
+```java
+public void printDayOfWeek(int day) {
+   var result = switch(day) {
+      case 0 -> "Sunday";
+      case 1 -> "Monday";
+      case 2 -> "Tuesday";
+      case 3 -> "Wednesday";
+      case 4 -> "Thursday";
+      case 5 -> "Friday";
+      case 6 -> "Saturday";
+      default -> "Invalid value";
+   };
+   System.out.print(result);
+}
+```
+
+тут нет присвоения к переменной. 
+```java
+public void printSeason(int month) {
+   switch(month) {
+      case 1, 2, 3    -> System.out.print("Winter");
+      case 4, 5, 6    -> System.out.print("Spring");
+      case 7, 8, 9    -> System.out.print("Summer");
+      case 10, 11, 12 -> System.out.print("Fall");
+   } 
+}
+```   
+
+1. All of the branches of a switch expression that do not throw an exception must return a consistent data type (if the switch expression returns a value).
+
+      ```java
+      int measurement = 10;
+      int size = switch(measurement) {
+         case 5 -> 1;
+         case 10 -> (short)2;
+         default -> 5;
+         case 20 -> "3";   // DOES NOT COMPILE
+         case 40 -> 4L;    // DOES NOT COMPILE
+         case 50 -> null;  // DOES NOT COMPILE
+      };
+      ```
+
+2. If the switch expression returns a value, then every branch that isn't an expression must yield a value.
+
+```java
+int fish = 5;
+int length = 12;
+var name = switch(fish) {
+   case 1 -> "Goldfish";
+   case 2 -> {yield "Trout";}
+   case 3 -> {
+      if(length > 10) yield "Blobfish";
+      else yield "Green";
+   }
+   default -> "Swordfish";
+};
+```
+
+```java
+int fish = 5;
+int length = 12;
+var name = switch(fish) {
+   case 1 -> "Goldfish";
+   case 2 -> {}  // DOES NOT COMPILE
+   case 3 -> {
+      if(length > 10) yield "Blobfish";
+   }  // DOES NOT COMPILE
+   default -> "Swordfish";
+};
+```
+
+3. A default branch is required unless all cases are covered or no value is returned.
+
+```java
+String type = switch(canis) { // DOES NOT COMPILE
+   case 1 -> "dog";
+   case 2 -> "wolf";
+   case 3 -> "coyote";
+};
+```
+Есть два способа исправить:
+1. Add a default branch.
+2. If the switch expression takes an enum value, add a case branch for every possible enum value.
+
+```java
+enum Season {WINTER, SPRING, SUMMER, FALL}
+ 
+String getWeather(Season value) {
+   return switch(value) {
+      case WINTER -> "Cold";
+      case SPRING -> "Rainy";
+      case SUMMER -> "Hot";
+      case FALL -> "Warm";
+   };
+}
+```
+
+При использование энумов со switch рекомендуется рассмотреть использользование default ветку тоже, даже при том, что она необязательная. Если в энум добавить выражение, код не скомпилируется, если таких switch много потребуется много правок. 
+
+## Cycles
+
+### do while
+Обязателено ставить `;` после условия do while цикла
+```java
+int lizard = 0;
+do {
+   lizard++;
+} while(false);
+System.out.println(lizard);  // 1
+```
+
+### for
+
+Блоки могут быть составными, тогда нужно писать через запятую внутри них.
+
+Блоки опциональны. Вот это бесконечный цикл. Обязательны `;` между блоками
+```java
+for( ; ; )
+   System.out.println("Hello World");
+```
+такое не скомпилируется `for( )`
+
+
+видимость переменных
+```java
+for(int i=0; i < 10; i++)
+   System.out.println("Value is: "+i);
+System.out.println(i);  // DOES NOT COMPILE
+```
+
+```java
+int i;
+for(i=0; i < 10; i++)
+   System.out.println("Value is: "+i);
+System.out.println(i);
+```
