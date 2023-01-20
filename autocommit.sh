@@ -24,7 +24,6 @@ do
         git add -A
         git commit -m "Auto commit from script"
         git push
-        exit 0
    fi
    
    if [[ $status == *"Your branch is ahead"* ]]; then
