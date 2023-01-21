@@ -1,6 +1,25 @@
-# AWS
 
-## Советы для прохождения экзамена
+# Содержание
+- [Содержание](#содержание)
+- [Советы для прохождения экзамена](#советы-для-прохождения-экзамена)
+- [User management](#user-management)
+  - [Generate sectet key](#generate-sectet-key)
+  - [Billing](#billing)
+- [EC2 (Elastic compute cloud)](#ec2-elastic-compute-cloud)
+  - [Create simple vm](#create-simple-vm)
+  - [Simple network rules](#simple-network-rules)
+  - [Горизонтальное масштабирование путем создания образа инстанса](#горизонтальное-масштабирование-путем-создания-образа-инстанса)
+- [EBS Elastic block storage](#ebs-elastic-block-storage)
+- [EFS Elastic file system](#efs-elastic-file-system)
+- [S3 Simple storage service](#s3-simple-storage-service)
+- [AWS ClI](#aws-cli)
+  - [Installing](#installing)
+  - [конфигурирование](#конфигурирование)
+- [Networking](#networking)
+- [Load balancing](#load-balancing)
+
+
+# Советы для прохождения экзамена
 
 Доллжно быть 3 прохода:
 1. Ищем простые вопросы и отвечаем на них. Отмечаем все остальные
@@ -8,8 +27,7 @@
 3. Задания решать которые без понятия как. Нужно что-то выбрать.
 Перед тем как отправить нужно поставить вариант ответа у каждого вопроса.
 
-
-## User management
+# User management
 
 Есть Root user, при котором доступны все возможные операции с пользователями на aws и также IAM User регулярные пользователи, которые можно добавлять в группы. Для того чтобы возможно было создать IAM User нужно сначала активировать возможность добавления таких пользователей. 
 
@@ -81,9 +99,9 @@
 
 ![Billing prefs](images/billing_prefs_11.png)
 
-## EC2 (Elastic compute cloud)
+# EC2 (Elastic compute cloud)
 
-### Create simple vm
+## Create simple vm
 
 ![Create EC2 instance](images/ec2_1.png)
 
@@ -113,7 +131,7 @@ chmod 400 ~/.ssh/awsdemo.pem
 ssh -i "~/.ssh/awsdemo.pem" ubuntu@ec2-54-157-214-250.compute-1.amazonaws.com
 ```
 
-### Simple network rules
+## Simple network rules
 
 для проверки поставим apache сервер в инстанс
 обновим индекс пакетов в vm
@@ -132,7 +150,7 @@ sudo apt-get install apache2
 
 ![Add security rule to security group](images/security_group_3.png)
 
-### Горизонтальное масштабирование путем создания образа инстанса
+## Горизонтальное масштабирование путем создания образа инстанса
 Идея простая. Настроили инстанс, потом можно создать его образ и раскатить еще один инстанс на основе этого образа.
 Создадим шаблон
 
@@ -152,14 +170,14 @@ sudo apt-get install apache2
 
 ![Horisontal scaling based on image](images/create_image_7.png)
 
-### EBS Elastic block storage
+# EBS Elastic block storage
 К каждому инстансу ec2 подключается volume который можно расширять по мере необходимости. 
 Но он доступн в один момент времени только для одного инстанса. Можно делать периодические снепшоты с volume, т.е слепки файловой системы. Отличается от создание образов на основе инстанса т.к сохраняет только файловую систему.
 
 ![Volume view](images/ebs_1.png)
 
 
-### EFS Elastic file system
+# EFS Elastic file system
 Можно создать общую файловую систему, которую можно разделять между инстансами ec2.
 Итого имеем 2 инстанса, хотим сделать общую папку между ними.
 
@@ -181,12 +199,12 @@ sudo apt-get install apache2
 
 Устанавливаем пакет nfs-common
 
-```
+```bash
 sudo apt install nfs-common
 ```
 
 создадим каталог `/efs`
-```
+```bash
 cd /
 sudo mkdir /efs
 ```
@@ -197,7 +215,7 @@ sudo mkdir /efs
 ![Shared folder via EFS](images/efs_10.png)
 ![Shared folder via EFS](images/efs_11.png)
 
-```
+```bash
 cd /
 sudo mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport fs-0f1e7ae9d1a311501.efs.us-east-1.amazonaws.com:/ efs
 ```
@@ -207,7 +225,7 @@ sudo mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,ret
 теперь можем шарить файлы между инстансами
 ![Shared folder via EFS](images/efs_13.png)
 
-## S3 Simple storage service
+# S3 Simple storage service
 ![S3](images/s3_1.png)
 ![S3](images/s3_2.png)
 Можно создавать бакеты (buckets) и в них создавать файлы. Доступ можно настраивать как на папки так и на бакеты. Лучше для публичных данных создавать отдельный бакет. 
@@ -219,24 +237,24 @@ sudo mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,ret
 
 Также если нужен CDN , есть CloudFront. Например если делаем статический сайт и храним его в S3 бакете, можно настроить CloudFront так, чтобы в зависимости от расположения пользователя выбирался ближайший сервис, чтобы сделать загрузку быстрее.
 
-## AWS ClI
+# AWS ClI
 
-### Installing
+## Installing
 
-```
+```bash
 $ curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
 unzip awscliv2.zip
 sudo ./aws/install
 ```
 
-### конфигурирование
-```
+## конфигурирование
+```bash
 aws configure
 ```
 указать Access Key ID , AWS Secret Access Key далее регион, обычно us-east-1 формат json
 
 посмотреть список бакетов s3 через api
-```
+```bash
  aws s3api list-buckets
 ```
 ![cli S3](images/aws_cli_1.png)
@@ -245,11 +263,11 @@ aws configure
 > An error occurred (RequestTimeTooSkewed) when calling the ListBuckets operation: The difference between the request time and the current time is too large.
 
 такое встречал в wsl ubuntu. Нужно синхронизировать время
-```
+```bash
 sudo hwclock -s
 ```
 посмотреть список бакетов  в простом формате
-```
+```bash
 aws s3 ls
 ```
 
@@ -262,9 +280,9 @@ aws s3 cp ./file.txt s3://tests355465646546/folder_3/
 ```
 ![cli S3](images/aws_cli_3.png)
 
-## Networking
+# Networking
 
-## Load balancing
+# Load balancing
 ELB - Elastic load balancer
 
 
