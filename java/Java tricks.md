@@ -931,3 +931,47 @@ for(i=0; i < 10; i++)
    System.out.println("Value is: "+i);
 System.out.println(i);
 ```
+
+correct
+```java
+int x = 0;
+for(long y = 0, z = 4; x < 5 && y < 10; x++, y++) {
+   System.out.print(y + " "); }
+System.out.print(x + " ");
+```
+
+not corret
+```java
+int x = 0;
+for(long y = 0, int z = 4; x < 5; x++)  // DOES NOT COMPILE
+   System.out.print(y + " ");
+
+```java
+int x = 0;
+for(int x = 4; x < 5; x++)   // DOES NOT COMPILE
+   System.out.print(x + " ");
+```
+
+## Labels
+
+Метки могут помещены перед `if`, `switch` и всеми циклами.
+
+```java
+int[][] myComplexArray = {{5,2,1,3},{3,9,8,9},{5,7,12,7}};
+ 
+OUTER_LOOP:  for(int[] mySimpleArray : myComplexArray) {
+   INNER_LOOP:  for(int i=0; i<mySimpleArray.length; i++) {
+      System.out.print(mySimpleArray[i]+"\t");
+   }
+   System.out.println();
+}
+```
+
+также метки могут быть перед любым блоком
+```java
+int frog = 15;
+BAD_IDEA: if(frog>10)
+EVEN_WORSE_IDEA: {
+   frog++;
+}
+```

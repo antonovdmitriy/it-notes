@@ -32,7 +32,6 @@
     - [Где хранятся конфликты?](#где-хранятся-конфликты)
     - [Стратегии слияния](#стратегии-слияния)
   - [Диагностика](#диагностика)
-    - [Просмотр лога](#просмотр-лога)
     - [Просмотр изменений](#просмотр-изменений)
     - [Автодополнение](#автодополнение)
     - [Чистка веток](#чистка-веток)
@@ -711,93 +710,73 @@ git ls-files -u
 git merge -s ours  
 ```
 
-git merge -s recursive -X ours по дефолту
-
-ignore-space-change, ignore-all-space, ignore-space-at-eol
-
-Стратегии разрешения конфликтов, где отличии только в пробелах
-
-merge.verbosity
-
 ## Диагностика
 
- git branch --all  Посмотреть список веток
+Посмотреть список веток
+
+```
+ git branch --all  
 
   dev
-
   fix_version
-
-\* master
-
+* master
   remotes/origin/fix_version
-
   remotes/origin/master
+```
 
 Более расширенный вариант
 
+```
 git branch -vv
 
   dev         ad25086 good file
+  fix_version 9aff10b [origin/fix_version] some file in branch
+* master      2daa99c \[origin/master\] gitignore modified
+```
 
-  fix\_version 9aff10b \[origin/fix\_version\] some file in branch
-
-\* master      2daa99c \[origin/master\] gitignore modified
-
-$ git remote show origin
 
 Показывает разную инфу о состоянии удаленного репозитория
-
-\[2019-09-07 22:33.45\]  /drives/e/PROJECT/test/test-project
-
-\[1.DESKTOP-8B6DSJ8\] ➤ git remote show origin
-
-stty: standard input: Inappropriate ioctl for device
+```
+git remote show origin
 
 \* remote origin
-
   Fetch URL: dima@192.168.100.6:/opt/git/test-project.git
-
   Push  URL: dima@192.168.100.6:/opt/git/test-project.git
-
   HEAD branch: master
-
   Remote branches:
-
     fix_version tracked
-
     master      tracked
-
   Local branches configured for 'git pull':
-
-    fix\_version merges with remote fix\_version
-
+    fix_version merges with remote fix_version
     master      merges with remote master
-
   Local refs configured for 'git push':
-
-    fix\_version pushes to fix\_version (up to date)
-
+    fix_version pushes to fix_version (up to date)
     master      pushes to master      (up to date)
+```
 
-### Просмотр лога
-
+Показывает история комитов. Пробел - перейти на следующий экран. Q - выход
+```
 git log
+```
 
-Показывает история комитов. Пробел\- перейти на следующий экран. Q- выход
-
-git log topic
 
 Все комиты бранча topic , даже если мы находимся в другом бранче
+```
+git log topic
+```
 
-git log alvin simon
 
 Все комиты в ветках alvin и simon
-
-git log master..my_branch
+```
+git log alvin simon
+```
 
 Все комиты в master, которых нету в my_branch
+```
+git log master..my_branch
+```
 
-О вышесказанном можно добавить, что можно использовать тег, хеш комита или выражение например master~3, а также чтобы выделить группу комитов
+Можно использовать тег, хеш комита или выражение например master~3, а также чтобы выделить группу комитов
 
 --{branches,tags,remotes}\[=pattern\]   например git log --branches='foo*'
 
