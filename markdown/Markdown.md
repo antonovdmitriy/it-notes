@@ -1,4 +1,5 @@
 - [Tables](#tables)
+- [Text highlight](#text-highlight)
 
 
 # Tables
@@ -10,3 +11,7 @@ To add a table, use three or more hyphens (---) to create each column’s header
 | Paragraph   | Text        |
 
 - [Table generator](https://www.tablesgenerator.com/markdown_tables)
+
+# Text highlight
+
+<mark> выделенный текст </mark>

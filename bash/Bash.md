@@ -36,6 +36,10 @@
     - [Примеры скриптов](#примеры-скриптов-1)
   - [Ветвление](#ветвление)
     - [if](#if)
+  - [Циклы](#циклы)
+    - [for](#for)
+    - [while](#while)
+    - [until (oposite while)](#until-oposite-while)
 
 
 ## История
@@ -763,3 +767,47 @@ fi
 
 [[ $var = img* && ($var = *.png || $var = *.jpg) ]] && echo $var starts with img and ends wirh .jpg or .png
 ```
+
+## Циклы
+
+### for
+
+Итерируемся по массиву, либо по списку файлов.
+
+однострочный цикл бежит по всем аргументам скрипта
+```bash
+for i in $@; do echo $i; done
+```
+
+сделаем хитрый массив range и проитерируемся по нему
+```bash
+for i in {115..127}; do echo $i; done
+```
+
+сделаем на основе цикла пинг
+```bash
+for i in {115..127}; do ping -c 1 192.168.0.$i; done
+```
+
+```bash
+for i in anna liza andrey
+do
+  grep $i /etc/passwd > /dev/null 2>&1 || echo $i user does not exist
+done  
+```
+
+
+
+### while
+
+```bash
+while true; do true; done
+```
+
+### until (oposite while)
+
+```bash
+until who | grep $1; do echo $1 in not logged in; done
+```
+
+
