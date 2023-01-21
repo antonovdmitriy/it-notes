@@ -1,5 +1,11 @@
 # Java tricks
 
+## OCP preparation
+
+>  Some of the most time-consuming questions you may see on the exam could involve nested loops with lots of branching. Unless you spot an obvious compiler error, we recommend skipping these questions and coming back to them at the end. Remember, all questions on the exam are weighted evenly!
+
+
+
 ## Main method trics
 
 Allowed final word in main main method and arguments
@@ -973,5 +979,87 @@ int frog = 15;
 BAD_IDEA: if(frog>10)
 EVEN_WORSE_IDEA: {
    frog++;
+}
+```
+
+`break` with label
+```java
+public class FindInMatrix {
+   public static void main(String[] args) {
+      int[][] list = {{1,13},{5,2},{2,2}};
+      int searchValue = 2;
+      int positionX = -1;
+      int positionY = -1;
+ 
+      PARENT_LOOP: for(int i=0; i<list.length; i++) {
+         for(int j=0; j<list[i].length; j++) {
+            if(list[i][j]==searchValue) {
+               positionX = i;
+               positionY = j;
+               break PARENT_LOOP;
+            }
+         }
+      }
+      if(positionX==-1 || positionY==-1) {
+         System.out.println("Value "+searchValue+" not found");
+      } else {
+         System.out.println("Value "+searchValue+" found at: " +
+            "("+positionX+","+positionY+")");
+      }
+   }
+}
+```
+
+можно прерывать циклы в том числе и `return`
+```java
+   private static int[] searchForValue(int[][] list, int v) {
+      for (int i = 0; i < list.length; i++) {
+         for (int j = 0; j < list[i].length; j++) {
+            if (list[i][j] == v) {
+               return new int[] {i,j};
+            }
+         }
+      }
+      return null;
+   }
+```   
+
+
+`continue` with label
+```java
+public class CleaningSchedule {
+   public static void main(String[] args) {
+      CLEANING: for(char stables = 'a'; stables<='d'; stables++) {
+         for(int leopard = 1; leopard<4; leopard++) {
+            if(stables=='b' || leopard==2) {
+               continue CLEANING;
+            }
+            System.out.println("Cleaning: "+stables+","+leopard);
+} } } }
+```
+
+недостижимый код для break, continue, return
+```java
+int checkDate = 0;
+while(checkDate<10) {
+   checkDate++;
+   if(checkDate>100) {
+      break;
+      checkDate++;  // DOES NOT COMPILE
+   }
+}
+
+int minute = 1;
+WATCH: while(minute>2) {
+   if(minute++>2) {
+      continue WATCH;
+      System.out.print(minute);  // DOES NOT COMPILE
+   }
+}
+ 
+int hour = 2;
+switch(hour) {
+   case 1: return; hour++;  // DOES NOT COMPILE
+   case 2:
 }
 ```
