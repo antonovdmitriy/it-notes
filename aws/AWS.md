@@ -1,7 +1,7 @@
 
-# Содержание
-- [Содержание](#содержание)
-- [Советы для прохождения экзамена](#советы-для-прохождения-экзамена)
+# Table of contents
+- [Table of contents](#table-of-contents)
+- [Advice for the Amazon exams](#advice-for-the-amazon-exams)
 - [User management](#user-management)
   - [Generate sectet key](#generate-sectet-key)
   - [Billing](#billing)
@@ -19,29 +19,32 @@
 - [Load balancing](#load-balancing)
 
 
-# Советы для прохождения экзамена
+# Advice for the Amazon exams
 
-Доллжно быть 3 прохода:
-1. Ищем простые вопросы и отвечаем на них. Отмечаем все остальные
-2. Решаем сложные вопросы, задания в которых понятны, но нужно больше времени чтобы дать верный ответ
-3. Задания решать которые без понятия как. Нужно что-то выбрать.
-Перед тем как отправить нужно поставить вариант ответа у каждого вопроса.
+You should have three times to solve every task. Starting from first to last.:
+1. We try to find easy questions and do it immediately. And mark others by categories.
+2. We solve complex tasks but which we understood but we need just more time for them
+3. Others which we don't know how to solve. We need to choose answers for each of the questions. Perhaps it will work
 
 # User management
 
-Есть Root user, при котором доступны все возможные операции с пользователями на aws и также IAM User регулярные пользователи, которые можно добавлять в группы. Для того чтобы возможно было создать IAM User нужно сначала активировать возможность добавления таких пользователей. 
+There is root user, who has full rights for all operations in aws. As well there are IAM regular users, which possible to add to groups. To create IAM User we need first to activate capability to add such users. 
+
+- Log in as root user
+- Open Account Settings
+- Find that sections 'IAM User and Role Access to Billing Information' and enable 'activate IAM access'
 
 ![Enable AIM users](images/1.png)
 
-Войдем в консоль пользователей
+- Open AIM panel
 ![Enter to AIM management](images/2.png)
 
 ![Enter to AIM management2](images/3.png)
 
-Создадим группу admins
+- Create admins group
 ![Group creation](images/group_creation.png)
 
-Поставим права AdministratorsAccess
+- Put rights as AdministratorsAccess
 ![Rights to group](images/group_right_access.png)
 
 У всего есть ARN идентификатор амазона, используется в ссылках на компоненты. вот у той группы которую создали. Тут цифра это ID аккаунта. 
