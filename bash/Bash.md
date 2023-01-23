@@ -36,10 +36,12 @@
     - [Примеры скриптов](#примеры-скриптов-1)
   - [Ветвление](#ветвление)
     - [if](#if)
+    - [case](#case)
   - [Циклы](#циклы)
     - [for](#for)
     - [while](#while)
     - [until (oposite while)](#until-oposite-while)
+    - [break and contiue](#break-and-contiue)
 
 
 ## История
@@ -767,6 +769,29 @@ fi
 
 [[ $var = img* && ($var = *.png || $var = *.jpg) ]] && echo $var starts with img and ends wirh .jpg or .png
 ```
+### case
+
+Если ответ на вопрос yes или oui пишем nice, если ответ no пишем no, иначе пишем okay.
+```bash
+#!/bin/bash
+
+echo are you good?
+reed GOOD
+GOOD=$(echo $GOOD | tr [:upper:] [:lower:])
+
+case $GOOD in
+yes|oui)
+  echo nice
+  ;;
+no)
+  echo not nice
+  ;;
+*)
+  echo okay
+  ;;
+esac
+```
+
 
 ## Циклы
 
@@ -795,13 +820,44 @@ do
   grep $i /etc/passwd > /dev/null 2>&1 || echo $i user does not exist
 done  
 ```
-
-
-
 ### while
 
 ```bash
 while true; do true; done
+```
+
+```bash
+while true 
+do 
+  echo true 
+done
+```
+
+```bash
+#!/bin/bash
+
+COUNTER=$1
+COUNTER=$(( COUNTER * 60))
+
+minusone(){
+  COUNTER=$(( COUNTER - 1))
+  sleep 1
+}
+
+while [ $COUNTER -gt 0 ]
+do
+  echo you still have $COUNTER seconds left
+  minusone
+done  
+
+[ $COUNTER = 0] && echo time is up && minusone
+[ $COUNTER = "-1" ] && echo you now are one second late && minusone
+
+while true
+do
+  echo you now are ${COUNTER#-} second late
+  minusone
+done  
 ```
 
 ### until (oposite while)
@@ -809,5 +865,14 @@ while true; do true; done
 ```bash
 until who | grep $1; do echo $1 in not logged in; done
 ```
+
+```bash
+until who | grep $1
+do 
+  echo $1 in not logged in
+ done
+```
+
+### break and contiue
 
 

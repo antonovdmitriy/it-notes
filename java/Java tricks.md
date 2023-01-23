@@ -209,6 +209,16 @@ int i1; int i2; // COMPILE
 int i3; i4; // DOES NOT COMPILE. Statement is finished ; and next statement without type
 ```
 
+With final
+```java
+final int a =5, b = 4;
+b = 5; // DOES NOT COMPILE
+
+final int c =5, d;
+d = 4;
+d = 5; // DOES NOT COMPLIE
+```
+
 ```java
 public void findAnswer(boolean check) {
    int answer;
@@ -724,7 +734,7 @@ void printOnlyIntegers(Number number) {
 
 ![Switch](images/switch_1.png)
 
-`default` может быть где угодно среди case. В том числе кейсов может и не быть, а default при этом будет работать. Более того может быть вообще ничего внутри скобок
+ `default` может быть где угодно среди case. В том числе кейсов может и не быть, а default при этом будет работать. Более того может быть вообще ничего внутри скобок
 
 ```java
 switch(month) {}
@@ -768,8 +778,6 @@ public void printSeason(int month) {
       case 10, 11, 12: System.out.print("Fall");
    } 
 }
-
-// WinterSpringUnknownSummerFall
 ```
 
 В case можно писать только константы и значения, которые известны в момент компиляции. 
@@ -792,15 +800,11 @@ void feedAnimals() {
 ## Switch expression. Новый switch, который может возвращать значения
 ![Switch](images/switch_2.png)
 
-После оператора `->` идет НЕ лямбда. 
-
-После значений через зяпутую идет оператор `->` а не двоеточие `:`
-
-обязателен `;` если используется не блок кода а одно выражение.
-
-Также обязателен `;` после всего switch, так как есть присвоение к переменной результата switch
-
-Также не нужен `break` ветки исполняются только если case совпадает. 
+- После оператора `->` идет НЕ лямбда. 
+- После значений через зяпутую идет оператор `->` а не двоеточие `:`
+- обязателен `;` если используется не блок кода а одно выражение.
+- Обязателен `;` после всего switch, так как есть присвоение к переменной результата switch
+- Не нужен `break` ветки исполняются только если case совпадает. 
 ```java
 public void printDayOfWeek(int day) {
    var result = switch(day) {
@@ -882,7 +886,7 @@ String type = switch(canis) { // DOES NOT COMPILE
 };
 ```
 Есть два способа исправить:
-1. Add a default branch.
+1. Добавить default ветку.
 2. If the switch expression takes an enum value, add a case branch for every possible enum value.
 
 ```java
@@ -898,7 +902,7 @@ String getWeather(Season value) {
 }
 ```
 
-При использование энумов со switch рекомендуется рассмотреть использользование default ветку тоже, даже при том, что она необязательная. Если в энум добавить выражение, код не скомпилируется, если таких switch много потребуется много правок. 
+- При использование энумов со switch рекомендуется рассмотреть использользование default ветку тоже, даже при том, что она необязательная. Если в энум добавить выражение, код не скомпилируется, если таких switch много потребуется много правок. 
 
 ## Cycles
 
