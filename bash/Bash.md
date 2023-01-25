@@ -16,6 +16,8 @@
   - [Пользовательский ввод](#пользовательский-ввод)
   - [Ссылки на файлы с переменными и функциями](#ссылки-на-файлы-с-переменными-и-функциями)
   - [Аргументы скрипта](#аргументы-скрипта)
+    - [Positional arguments](#positional-arguments)
+    - [More commplex arguments](#more-commplex-arguments)
   - [Оператор shift](#оператор-shift)
   - [Command substitution](#command-substitution)
   - [Parameter substitution](#parameter-substitution)
@@ -41,7 +43,7 @@
     - [for](#for)
     - [while](#while)
     - [until (oposite while)](#until-oposite-while)
-    - [break and contiue](#break-and-contiue)
+    - [break and contiunue](#break-and-contiunue)
 
 
 ## История
@@ -243,6 +245,8 @@ source path_to_file_with_variables
 ```
 
 ## Аргументы скрипта
+
+### Positional arguments
 Можно ссылать на аргументы скрипта через `$1` и до `$9` . Если аргументов больше тогда ссылки будут с использованием фигурных скобок `${10}`. 
 
 Переменная `$0` содержит имя текущего скрипта. 
@@ -291,6 +295,100 @@ done
 ```
 
 ![output](images/positional_arguments_2.png)
+
+### More commplex arguments
+
+
+```bash
+#!/bin/bash
+while getopts "hs:" arg; do
+case $arg in
+	h)
+		echo "usage"
+		;;
+	s)
+		strength=$OPTARG
+		echo $strength
+		;;
+	esac
+done
+```
+
+![output](images/arguments_1.png)
+
+complex example
+
+```bash
+
+#!/bin/bash
+#makeusr [-u uid] [-g gid] [-i info] [-h homedir] [-s shell] username
+	function usage
+	{
+			echo ‘usage: makeusr [-u uid] [-g gid] [-i info] [-h homedir] ‘
+			echo ‘[-s shell] username
+			exit 1
+	}
+
+	function helpmessage
+	{
+			echo "makeusr is a script ... "
+			echo "blablabla"
+	}
+
+	while getopts "u:g:i:h:s:" opt; do
+			case $opt in
+				u ) uid=$OPTARG ;;
+				g ) gid=$OPTARG ;;
+				i ) info=$OPTARG ;;
+				h ) home=$OPTARG ;;
+				s ) shell=$OPTARG ;;
+				? ) helpmessage ;;
+				* ) usage ;;
+			esac
+	shift $(($OPTIND -1))
+	done
+
+	if [ -z "$1" ]; then
+			usage
+	fi
+
+	if [ -n "$2" ]; then
+			usage
+	fi
+
+	if [ -z "$uid" ]; then
+			uid=500
+			while cut -d : -f3 /etc/passwd | grep -x $uid
+			do
+				uid=$((uid+1)) > /dev/null
+			done
+	fi
+
+	if [ -z "$gid" ]; then
+			gid=$(grep users /etc/group | cut -d: -f3)
+	fi
+
+	if [ -z "$info" ]; then
+			echo Provide information about the user.
+			read info
+	fi
+
+	if [ -z "$home" ]; then
+			home=/home/$1
+	fi
+
+	if [ -z "$shell" ]; then
+			shell=/bin/bash
+	fi
+
+	echo $1:x:$uid:$gid:$info:$home:$shell >> /etc/passwd
+	echo $1:::::::: >> /etc/shadow
+	mkdir -p $home
+	chmod 660 $home
+	chown $1:users $home
+	passwd $1
+```
+
 
 ## Оператор shift
 
@@ -820,6 +918,33 @@ do
   grep $i /etc/passwd > /dev/null 2>&1 || echo $i user does not exist
 done  
 ```
+
+```bash
+#!/bin/bash
+
+if [ -z $1]
+then
+  echo you have to provide at least one argument
+  exit 3
+fi
+
+MEMFREE=$(free -m | grep Mem | awk '{ print $4 }')
+
+if [ $MEMFREE -lt 256 ]
+then
+  echo insufficient memory available
+  exit 4
+fi
+
+sudo apt install -y "$@"
+
+for s in "$@"
+do
+  sudo systemctl enable --now $s
+done  
+```
+
+
 ### while
 
 ```bash
@@ -873,6 +998,59 @@ do
  done
 ```
 
-### break and contiue
+### break and contiunue
+
+```bash
+#!/bin/bash
+
+# backup script that stops if insufficient disk space is available
+
+if [ -z $1 ]
+then
+	echo enter the name of a directory to back up
+	read dir
+else
+	dir=$1
+fi
+
+[ -d ${dir}.backup ] || mkdir ${dir}.backup
+
+for file in $dir/*
+do
+	used=$( df $dir | tail -1 | awk '{ print $5 }' | sed 's/%//' )
+	if [ $used -gt 98 ]
+	then
+		echo stopping: low disk space
+		break
+	fi
+
+	cp $file ${dir}.backup
+done
+```
+
+```bash
+#!/bin/bash
+
+# convert file names to lower case if required
+
+FILES=$(ls)
+
+for file in $FILES
+do
+	if [[ "$file" != *[[:upper:]]* ]]; then
+		echo "$file" doesn\'t contain uppercase
+		continue
+	fi
+
+	OLD="$file"
+	NEW=$(echo $file | tr '[:upper:]' '[:lower:]')
+
+	mv "$OLD" "$NEW"
+	echo "$OLD has been renamed to $NEW"
+done
+```
+
+
+
 
 

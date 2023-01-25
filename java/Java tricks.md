@@ -1,19 +1,60 @@
-# Java tricks
+# Table of contents
 
-## OCP preparation
+- [Table of contents](#table-of-contents)
+- [OCP preparation](#ocp-preparation)
+- [Main method trics](#main-method-trics)
+- [Compile and Run](#compile-and-run)
+  - [Create Jar via CLI](#create-jar-via-cli)
+- [Main arguments trics](#main-arguments-trics)
+- [Import packages tricks](#import-packages-tricks)
+- [Initializing class](#initializing-class)
+- [Numeric literals](#numeric-literals)
+- [Underscores](#underscores)
+- [Wrapper classes](#wrapper-classes)
+- [Text blocks](#text-blocks)
+- [Naming](#naming)
+- [Variables declaration and initizlization](#variables-declaration-and-initizlization)
+  - [Var](#var)
+- [Eligibility for GC](#eligibility-for-gc)
+- [Operators](#operators)
+  - [Order of operator precedence](#order-of-operator-precedence)
+  - [Some of uniry operator](#some-of-uniry-operator)
+      - [Logical complement\*\*	`!a`](#logical-complementa)
+    - [Bitwise complement\*\*	`~b`](#bitwise-complementb)
+    - [Negation operator](#negation-operator)
+    - [Increment decrement operators](#increment-decrement-operators)
+    - [Modulus](#modulus)
+- [Numeric promotion](#numeric-promotion)
+- [Casting primitives](#casting-primitives)
+- [Comparison](#comparison)
+- [Ternary Operator tricks](#ternary-operator-tricks)
+- [Pattern matching](#pattern-matching)
+- [switch](#switch)
+  - [switch statement](#switch-statement)
+  - [Switch expression. Новый switch, который может возвращать значения](#switch-expression-новый-switch-который-может-возвращать-значения)
+- [Cycles](#cycles)
+  - [do while](#do-while)
+  - [for](#for)
+- [Labels](#labels)
+- [Strings](#strings)
+  - [String concatination](#string-concatination)
+- [Data races](#data-races)
+
+
+# OCP preparation
 
 >  Some of the most time-consuming questions you may see on the exam could involve nested loops with lots of branching. Unless you spot an obvious compiler error, we recommend skipping these questions and coming back to them at the end. Remember, all questions on the exam are weighted evenly!
 
 
 
-## Main method trics
+# Main method trics
 
 Allowed final word in main main method and arguments
 ```java
 public final static void main(final String[] args) {}
 ```
 
-## Compile and Run
+# Compile and Run
 
 If file doesn't contain any public class it can named any. After compiling this name of file will be vanish, and we get several file with classes.
 
@@ -72,7 +113,7 @@ with '-C' option to specify directory with classes
 jar -cvf myNewFile.jar -C dir .
 ```
 
-## Main arguments trics
+# Main arguments trics
 ---
 use quates for arguments with spaces
 ```
@@ -85,7 +126,7 @@ single file source code - compile and launch with one command and pass parameter
 java Zoo.java Bronx Zoo
 ```
 
-## Import packages tricks
+# Import packages tricks
 
 The import statement doesn't bring in child packages, fields, or methods; it imports only classes directly under the package
 
@@ -102,19 +143,18 @@ import java.util.*;
 import java.sql.*;  // causes Date declaration to not compile
 ```
 
-## Initializing class
+# Initializing class
 
 > Sometimes code blocks are inside a method. These are run when the method is called. Other times, code blocks appear outside a method. These are called **instance initializers**
 
 > Class can have name started with lower case. 
 
-## Numeric literals
+# Numeric literals
 
 - Octal (digits 0–7), which uses the number 0 as a prefix—for example, 017.
 - Hexadecimal (digits 0–9 and letters A–F/a–f), which uses 0x or 0X as a prefix—for example, 0xFF, 0xff, 0XFf. Hexadecimal is case insensitive, so all of these examples mean the same value.
 - Binary (digits 0–1), which uses the number 0 followed by b or B as a prefix—for example, 0b10, 0B10.
-
-## Underscores
+# Underscores
 
 You can add underscores anywhere except at the beginning of a literal, the end of a literal, right before a decimal point, or right after a decimal point. You can even place multiple underscore characters next to each other, although we don't recommend it.
 
@@ -128,7 +168,7 @@ double annoyingButLegal = 1_00_0.0_0;  // Ugly, but compiles
 double reallyUgly = 1__________2;      // Also compiles
 ```
 
-## Wrapper classes
+# Wrapper classes
 
 | Primitive type | Wrapper class | inherits Number? | Example of creating         |
 |----------------|---------------|------------------|---------------------------- |
@@ -168,7 +208,7 @@ public abstract class Number implements java.io.Serializable {
 
 The `Boolean` and `Character` wrapper classes include `booleanValue()` and `charValue()`, respectively.
 
-## Text blocks
+# Text blocks
 
 > new line after first """ or compile error
 
@@ -180,14 +220,14 @@ The `Boolean` and `Character` wrapper classes include `booleanValue()` and `char
 
 ![Escaping rules](images/text_blocks_2.png)
 
-## Naming
+# Naming
 
 - Identifiers must begin with a letter, a currency symbol, or a `_` symbol. Currency symbols include dollar `$`, yuan `¥`, euro `€`, and so on.
 - Identifiers can include numbers but not start with them.
 - A single underscore `_` is not allowed as an identifier.
 - You cannot use the same name as a Java reserved word.
 
-## Variables declaration and initizlization
+# Variables declaration and initizlization
 
 initialized only `i3`
 ```java
@@ -244,7 +284,7 @@ public void checkAnswer() {
 
 > Instance and class variables (static) do not require you to initialize them. As soon as you declare these variables, they are given a default value. The compiler doesn't know what value to use and so wants the simplest value it can give the type: null for an object, zero for the numeric types, and false for a boolean. You don't need to know the default value for char, but in case you are curious, it is '\u0000' (NUL).
 
-### Var
+## Var
 > local variable type inference. Let's take that apart. First comes **local** variable. This means just what it sounds like. You can only use this feature for local variables.
 
 > The compiler looks at the code **on the line of the declaration** and uses it to infer the type
@@ -313,7 +353,7 @@ public class Var {
 }
 ```
 
-## Eligibility for GC
+# Eligibility for GC
 ```java
  public class Scope {
     public static void main(String[] args) {
@@ -325,9 +365,9 @@ public class Var {
        one = null;
     } }
 ```
-## Operators
+# Operators
 
-### Order of operator precedence
+## Order of operator precedence
 
 
 | Operator                        | Symbols and examples                             | Evaluation    | 
@@ -349,7 +389,7 @@ public class Var {
 | Assignment operators            | `= += -= *= /= %= &= ^= \|= <<= >>= >>>=`         | Right-to-left |
 | Arrow operator                  | `->`                                             | Right-to-left |
 
-### Some of uniry operator
+## Some of uniry operator
 
 ```java
 int pelican = !5;         // DOES NOT COMPILE
@@ -367,7 +407,7 @@ System.out.print(isAnimalAsleep);  // true
 ```
 
 
-#### Bitwise complement**	`~b`	
+### Bitwise complement**	`~b`	
 which flips all of the 0s and 1s in a number. It can only be applied to integer numeric types such as byte, short, char, int, and long. Let's try an example. For simplicity, we only show the last four bits (instead of all 32 bits).
 
 ```java
@@ -383,7 +423,7 @@ System.out.println(-1*value - 1);      // -4
 System.out.println(-1*complement - 1); // 3
 ```
 
-#### Negation operator
+### Negation operator
 
 ```java
 double zooTemperature = 1.21;
@@ -394,7 +434,7 @@ zooTemperature = -(-zooTemperature);
 System.out.println(zooTemperature);  // -1.21
 ```
 
-#### Increment decrement operators
+### Increment decrement operators
 
 Pre-increment	`++w`	Increases the value by 1 and returns the **new** value
 
@@ -421,7 +461,7 @@ System.out.println(parkAttendance);    // 0
 
 > All of the arithmetic operators may be applied to any Java primitives, with the exception of boolean. Furthermore, only the addition operators + and += may be applied to String values, which results in String concatenation
 
-#### Modulus 
+### Modulus 
 
 ```java
 System.out.println(9 / 3);  // 3
@@ -441,7 +481,7 @@ System.out.println(12 % 3); // 0
 
 > The modulus operation is not limited to positive integer values in Java; it may also be applied to negative integers and floating-point numbers. For example, if the divisor is 5, then the modulus value of a negative number is between -4 and 0. 
 
-## Numeric promotion
+# Numeric promotion
 
 1. If two values have different data types, Java will automatically promote one of the values to the larger of the two data types.
 2. If one of the values is integral and the other is floating-point, Java will automatically promote the integral value to the floating-point value's data type.
@@ -475,7 +515,7 @@ double y = 30;
 var z = w * x / y; // double 
 ```
 
-## Casting primitives
+# Casting primitives
 
 ```java
 int fish = 1.0;        // DOES NOT COMPILE
@@ -575,7 +615,7 @@ public class CandyCounter {
       System.out.print(addCandy((long)(int)(short)2, (float)4)); } } // correct
 ```
 
-## Comparison
+# Comparison
 
 >The equality operator can be applied to numeric values, boolean values, and objects (including String and null). When applying the equality operator, you cannot mix these types. I.E it's legal to compare different numeric types with each other.
 
@@ -642,7 +682,7 @@ boolean tasty = 7 ˂= --ph;
 System.out.println(clear + "-" + safe + "-" + tasty);  // true, false, false 
 ```
 
-## Ternary Operator tricks
+# Ternary Operator tricks
 
 ```java
 int food1 = owl < 4 ? owl > 2 ? 3 : 4 : 5;
@@ -672,7 +712,7 @@ int sleep = sheep>=10 ? sheep++ : zzz++;
 System.out.print(sleep + "," + sheep + "," + zzz);  // 1,1,2
 ```    
 
-## Pattern matching 
+# Pattern matching 
 
 Для избежания проверки на тип, а потом приведения к типу с Java 16 появилось это. Переменная data относится к так называемым *pattern variable*.
 ```java
@@ -726,16 +766,32 @@ void printOnlyIntegers(Number number) {
       return;
    System.out.print(data.intValue());
 }
-
-
 ```
+
+# switch
 
 ## switch statement
 
 ![Switch](images/switch_1.png)
 
- `default` может быть где угодно среди case. В том числе кейсов может и не быть, а default при этом будет работать. Более того может быть вообще ничего внутри скобок
+ - `default` может быть где угодно среди case. В том числе кейсов может и не быть, а default при этом будет работать. Более того может быть вообще ничего внутри скобок
+ - Если после значения идет `:` далее может идти как блок так и последовательность выражение разделенных `;`
 
+```java
+switch (random) {
+       case 4:
+        System.out.println("first");
+        System.out.println("second");
+        break;
+    case 5: {
+        System.out.println("third");
+        System.out.println("other");
+        break;
+    }
+}
+```        
+
+- допускается пустой switch
 ```java
 switch(month) {}
 ```
@@ -797,6 +853,8 @@ void feedAnimals() {
    } }
 ```   
 
+
+
 ## Switch expression. Новый switch, который может возвращать значения
 ![Switch](images/switch_2.png)
 
@@ -804,7 +862,8 @@ void feedAnimals() {
 - После значений через зяпутую идет оператор `->` а не двоеточие `:`
 - обязателен `;` если используется не блок кода а одно выражение.
 - Обязателен `;` после всего switch, так как есть присвоение к переменной результата switch
-- Не нужен `break` ветки исполняются только если case совпадает. 
+- Не нужен `break` ветки исполняются только если case совпадает.
+- Если используется блок кода, после всего блока запрещено ставить `;` 
 ```java
 public void printDayOfWeek(int day) {
    var result = switch(day) {
@@ -904,9 +963,9 @@ String getWeather(Season value) {
 
 - При использование энумов со switch рекомендуется рассмотреть использользование default ветку тоже, даже при том, что она необязательная. Если в энум добавить выражение, код не скомпилируется, если таких switch много потребуется много правок. 
 
-## Cycles
+# Cycles
 
-### do while
+## do while
 Обязателено ставить `;` после условия do while цикла
 ```java
 int lizard = 0;
@@ -916,7 +975,7 @@ do {
 System.out.println(lizard);  // 1
 ```
 
-### for
+## for
 
 Блоки могут быть составными, тогда нужно писать через запятую внутри них.
 
@@ -962,7 +1021,7 @@ for(int x = 4; x < 5; x++)   // DOES NOT COMPILE
    System.out.print(x + " ");
 ```
 
-## Labels
+# Labels
 
 Метки могут помещены перед `if`, `switch` и всеми циклами.
 
@@ -1014,7 +1073,7 @@ public class FindInMatrix {
 }
 ```
 
-можно прерывать циклы в том числе и `return`
+you can interrupt cycles using `return`
 ```java
    private static int[] searchForValue(int[][] list, int v) {
       for (int i = 0; i < list.length; i++) {
@@ -1042,7 +1101,7 @@ public class CleaningSchedule {
 } } } }
 ```
 
-недостижимый код для break, continue, return
+unrecheable code for break, continue, return
 ```java
 int checkDate = 0;
 while(checkDate<10) {
@@ -1065,5 +1124,117 @@ int hour = 2;
 switch(hour) {
    case 1: return; hour++;  // DOES NOT COMPILE
    case 2:
+}
+```
+# Strings
+
+## String concatination
+
+Rules:
+- If both operands are numeric, + means numeric addition.
+- If either operand is a String, + means concatenation.
+- The expression is evaluated left to right.
+
+```java
+System.out.println(1 + 2);           // 3
+System.out.println("a" + "b");       // ab
+System.out.println("a" + "b" + 3);   // ab3
+System.out.println(1 + 2 + "c");     // 3c
+System.out.println("c" + 1 + 2);     // c12
+System.out.println("c" + null);      // cnull
+```
+
+```java
+int three = 3;
+String four = "4";
+System.out.println(1 + 2 + three + four);
+```
+
+important methods for OCP exam
+```java
+public int length()
+
+public char charAt(int index)
+
+public int indexOf(int ch) 
+public int indexOf(int ch, int fromIndex)
+public int indexOf(String str)
+public int indexOf(String str, int fromIndex)
+
+public String substring(int beginIndex)
+public String substring(int beginIndex, int endIndex)
+
+public String toLowerCase()
+public String toUpperCase()
+
+public boolean equals(Object obj)
+public boolean equalsIgnoreCase(String str)
+```
+
+```java
+var name = "animals";
+System.out.println(name.indexOf('a'));       // 0
+System.out.println(name.indexOf("al"));      // 4
+System.out.println(name.indexOf('a', 4));    // 4
+System.out.println(name.indexOf("al", 5));   // -1
+```
+
+second argument in substring doesn't included. Such as math `[left_arg, right_arg)`
+```java
+var name = "animals";
+System.out.println(name.substring(3));                 // mals
+System.out.println(name.substring(name.indexOf('m'))); // mals
+System.out.println(name.substring(3, 4));              // m
+System.out.println(name.substring(3, 7));              // mals
+
+System.out.println(name.substring(3, 3)); // empty string
+System.out.println(name.substring(3, 2)); // exception
+System.out.println(name.substring(3, 8)); // exception
+```
+
+```java
+System.out.println("abc".equals("ABC"));            // false
+System.out.println("ABC".equals("ABC"));            // true
+System.out.println("abc".equalsIgnoreCase("ABC"));  // true
+```
+
+# Data races
+
+example from String class:
+
+The hash or hashIsZero fields are subject to a benign data race,
+making it crucial to ensure that any observable result of the
+calculation in this method stays correct under any possible read of
+these fields. Necessary restrictions to allow this to be correct
+without explicit memory fences or similar concurrency primitives is
+that we can ever only write to one of these two fields for a given
+String instance, and that the computation is idempotent and derived
+from immutable state
+
+хорошая задачка попросить проанализировать корректную синхронизацию и возможность гонок.
+```java
+
+public final class String
+    implements java.io.Serializable, Comparable<String>, CharSequence,
+               Constable, ConstantDesc {
+
+    private final byte[] value;
+    private int hash;
+    private boolean hashIsZero; // Default to false;
+
+public int hashCode() {
+    int h = hash;
+    if (h == 0 && !hashIsZero) {
+        h = isLatin1() ? StringLatin1.hashCode(value)
+                       : StringUTF16.hashCode(value);
+        if (h == 0) {
+            hashIsZero = true;
+        } else {
+            hash = h;
+        }
+    }
+    return h;
+}
+
 }
 ```
