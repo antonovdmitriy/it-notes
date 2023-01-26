@@ -4,17 +4,18 @@
 - [Настройка](#настройка)
   - [Подготовка узлов](#подготовка-узлов)
   - [inventory](#inventory)
-    - [ansible.cfg](#ansiblecfg)
-    - [первые команды](#первые-команды)
-  - [Понимание ad-hoc модулей и playbook](#понимание-ad-hoc-модулей-и-playbook)
-  - [Модули](#модули)
-    - [Вызов модуля](#вызов-модуля)
-    - [Получение справки по модулю](#получение-справки-по-модулю)
-  - [Playbook](#playbook)
-    - [Создание и вызов playbook](#создание-и-вызов-playbook)
-    - [Расширенная диагностика запуска playbook](#расширенная-диагностика-запуска-playbook)
-    - [Использование переменных](#использование-переменных)
-      - [Обьявление переменных внутри playbook](#обьявление-переменных-внутри-playbook)
+  - [Первая команда ansible .](#первая-команда-ansible-)
+  - [ansible.cfg](#ansiblecfg)
+  - [первые команды](#первые-команды)
+- [Понимание ad-hoc модулей и playbook](#понимание-ad-hoc-модулей-и-playbook)
+- [Модули](#модули)
+  - [Вызов модуля](#вызов-модуля)
+  - [Получение справки по модулю](#получение-справки-по-модулю)
+- [Playbook](#playbook)
+  - [Создание и вызов playbook](#создание-и-вызов-playbook)
+  - [Расширенная диагностика запуска playbook](#расширенная-диагностика-запуска-playbook)
+  - [Использование переменных](#использование-переменных)
+    - [Обьявление переменных внутри playbook](#обьявление-переменных-внутри-playbook)
       - [Обьявление переменных внутри отдельного файла для группы хостов](#обьявление-переменных-внутри-отдельного-файла-для-группы-хостов)
     - [Ansible Facts](#ansible-facts)
     - [Ansible vault - средство для хранения секретов](#ansible-vault---средство-для-хранения-секретов)
@@ -62,191 +63,178 @@ ansible1
 - можно делать группы серверов. Есть группа `all`, куда входят все сервера.
 - эталонный инвентори файл `/etc/ansible/hosts` с примерами, как писать inventory. Видно, что можно писать хосты, ip адреса,  а также группы серверов , диапазоны в названии. Не рекомендуется править его, лучше создать собственный inventory.
 
-
-
 - Выше речь шла про статический inventory- список хостов. Для небольшого окружения он вполне подходит. Часто бывает полезным получать список хостов извне. Ansible поддерживает это. В документации есть набор скриптов для различного окружения, например получить список хостов ec2 Amazon.
 
 Можно создавать вложенные группы черед  nodes:children. Например
+
+```
+ansible1
+ansible2
+
+[lamp]
+ansible1
+
+[file]
+ansible2
+
+[nodes:children]
+lamp
+file
+```
 
 ![](images/image101.png)
 
 ![](images/image62.png)
 
-Первая команда ansible . Показать все имена хостов из инвентори. Указываем файл инвентори через -i
+## Первая команда ansible . 
 
+Показать все имена хостов из инвентори. Указываем файл инвентори через `-i`
+```
 ansible all -i inventory --list-hosts
+```
 
 ![](images/image53.png)
 
-### ansible.cfg
+## ansible.cfg
 
-Файл настроек Ansible : /etc/ansible/ansible.cfg
+Файл настроек Ansible `/etc/ansible/ansible.cfg`
 
 Рекомендуется создать собственный файл в каталоге пользователя c таким же именем
-
-\[defaults\]
-
+```properties
+[defaults]
 remote_user = ansible
-
-host\_key\_checking = false
-
+host_key_checking = false
 inventory = inventory
 
-\[privilege_escalation\]
-
+[privilege_escalation]
 become = True
-
 become_method = sudo
-
 become_user = root
-
-become\_ask\_pass = False
-
+become_ask_pass = False
+```
 ![](images/image31.png)
 
-### первые команды
+## первые команды
 
 Запускаем из домашней папки пользователя ansible
-
+```
 ansible all -m command -a "useradd bob"
+```
 
-All - группа серверов
-
--m модуль. В данном случае модуль command
-
--a агрументы для модуля
+- `All` группа серверов
+- `-m` модуль. В данном случае модуль command
+- `-a` агрументы для модуля
 
 Итого создадим на серверах пользователя bob
 
 ![](images/image25.png)
 
-Понимание ad-hoc модулей и playbook
------------------------------------
+# Понимание ad-hoc модулей и playbook
 
-Через m можем вызвать 1 модуль. Но часто конфигурация это вызов нескольких действий. В этом случае делают плейбуки, которые вызывают несколько модулей.
+Через `m` можем вызвать 1 модуль. Но часто конфигурация это вызов нескольких действий. В этом случае делают плейбуки, которые вызывают несколько модулей.
 
 ![](images/image49.png)
 
-Модули
-------
+# Модули
 
-### Вызов модуля
+## Вызов модуля
 
 Пример простого вызова (ad-hoc) модуля.
-
+```
 ansible all -m command -a "yum install -y mc"
-
+```
 ![](images/image99.png)
 
 Пример вызова модуля с аргументами
-
+```
 ansible all -m user -a "name=linda shell=/bin/bash"
-
+```
 ![](images/image5.png)
 
 Модуль command не позволяют делать piping, но есть модуль shell
-
+```
 ansible all -m shell -a "cat /etc/passwd | grep ansible"
-
+```
 ![](images/image56.png)
 
-Выше был пример вызова пакетного менеджера yum. Есть модуль package который может тоже самое, только через модуль
+Выше был пример вызова пакетного менеджера `yum`. Есть модуль `package` который может тоже самое, только через модуль
 
-Стейт можно указать absent или present или
-
-![](images/image46.png)
-
+```
 ansible all -m package -a "name=vsftpd state=installed"
+```
 
 ![](images/image50.png)
 
-### Получение справки по модулю
+Стейт можно указать `absent` или `present` или
+![](images/image46.png)
 
-Вывести список всех модулей (их очень много \- много экранов):
+## Получение справки по модулю
 
+Вывести список всех модулей (их очень много - много экранов):
+```
 ansible-doc -l | less
-
+```
 ![](images/image84.png)
 
 ![](images/image67.png)
 
-В примере выше добавляли пользователя через модуль command. Но есть модуль для работы с пользователями. Поищем его:
-
+В примере выше добавляли пользователя через модуль `command`. Но есть модуль для работы с пользователями. Поищем его:
 ![](images/image17.png)
-
+```
  ansible-doc -l | grep user
-
+```
 ![](images/image91.png)
 
-По каждому модулю есть справка, например ansible-doc user
+По каждому модулю есть справка, например `ansible-doc user`
 
 ![](images/image104.png)
 
-Обязательные аргументы при вызове отмечены символом =
+Обязательные аргументы при вызове отмечены символом `=`
 
 ![](images/image72.png)
 
-Внизу есть примеры. Правда они для плейбуков в yml формате![](images/image90.png)
+Внизу есть примеры. Правда они для плейбуков в `yml` формате![](images/image90.png)
 
-Playbook
---------
+# Playbook
 
-### Создание и вызов playbook
+## Создание и вызов playbook
 
 Пример:
-
-\-\-\-
-
-\- name: mytest
-
+```yml
+---
+- name: mytest
   hosts: all
-
   tasks:
-
-  \- name: task1
-
+  - name: task1
     debug:
-
       msg: this is the debug module
+```
 
 ![](images/image3.png)
 
-Используем плагин debug который просто напишет сообщение в консоль:
-
+Используем плагин `debug` который просто напишет сообщение в консоль:
+```
 ansible-playbook test.yml
-
+```
 ![](images/image21.png)
 
 Пример посложнее:
-
-\-\-\-
-
-\- name: deploy vsftpd
-
+```yaml
+---
+- name: deploy vsftpd
   hosts: ansible1
-
   tasks:
-
-  \- name: install vsftpd
-
+  - name: install vsftpd
     yum: name=vsftpd
-
-  \- name: enable vsftpd
-
+  - name: enable vsftpd
     service: name=vsftpd enabled=true
-
-  \- name: create readme file
-
+  - name: create readme file
     copy:
-
       content: "welcome to this FTP server"
-
       dest: /var/ftp/pub/README
-
       force: no
-
       mode: 0444
-
+```
 Тут главное заметить, что аргументы можно передавать как одной строкой сразу после модуля, так и делать полноценную yml структуру.
 
 ![](images/image35.png)
@@ -260,123 +248,79 @@ ansible-playbook test.yml
 ![](images/image98.png)
 
 Установка httpd
-
-\-\-\-
-
-\- name: install httpd
-
+```yml
+---
+- name: install httpd
   hosts: ansible2
-
   tasks:
-
-    \- name: install package
-
+    - name: install package
       package:
-
         name: httpd
-
         state: present
-
-    \- name: create an index.html
-
+    - name: create an index.html
       copy:
-
         content: "welcome to this webserver"
-
         dest: /var/www/html/index.html
-
-    \- name: start the service
-
+    - name: start the service
       service:
-
         name: httpd
-
         state: started
-
         enabled: true
-
-    \- name: open firewall
-
+    - name: open firewall
       firewalld:
-
         service: http
-
         permanent: yes
-
         state: enabled
-
+```
 ![](images/image28.png)
 
 Удаление httpd
-
-\-\-\-
-
-\- name: remove httpd
-
+```yml
+---
+- name: remove httpd
   hosts: ansible2
-
   tasks:
-
-    \- name: close firewall
-
+    - name: close firewall
       firewalld:
-
         service: htpd
-
         permanent: yes
-
         state: disabled
-
-    \- name: remove file
-
+    - name: remove file
       file:
-
         path: /var/www/html/index.html
-
         state: absent
-
-    \- name: remove package
-
+    - name: remove package
       package:
-
         name: httpd
-
         state: absent
+```
 
-### Расширенная диагностика запуска playbook
+## Расширенная диагностика запуска playbook
 
-Ключ -v позволяет увидеть расширенный вывод при запуске плейбука.
-
+Ключ `-v` позволяет увидеть расширенный вывод при запуске плейбука.
+```
 ansible-playbook -v ./uninstall-httpd.yml
-
-Причем, есть до 4-х уровней детализации. Т.е -vv, -vvv, -vvvv. Последний вообще очень подробный.
+```
+Причем, есть до 4-х уровней детализации. Т.е `-vv`, `-vvv`, `-vvvv`. Последний вообще очень подробный.
 
 ![](images/image58.png)
 
-### Использование переменных
+## Использование переменных
 
-#### Обьявление переменных внутри playbook
+### Обьявление переменных внутри playbook
 
 Внутри playbook можно использовать переменные.
-
-\-\-\-
-
-\- name: create a user using a variable
-
+```yml
+---
+- name: create a user using a variable
   hosts: all
-
   vars:
-
     user: lisa
-
   tasks:
-
-    \- name: create a user {{ user }}
-
+    - name: create a user {{ user }}
       user:
-
         name: "{{ user }}"
-
+```
 ![](images/image87.png)
 
 Тут важно, что в name ссылка на переменную в кавычках. Это важно, когда в строчке встречается переменная и она идет первой

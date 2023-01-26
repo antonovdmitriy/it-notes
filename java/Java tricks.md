@@ -44,6 +44,10 @@
   - [replace](#replace)
   - [strip and trim](#strip-and-trim)
   - [Working with indent](#working-with-indent)
+  - [translateEscapes](#translateescapes)
+  - [empty string](#empty-string)
+  - [Formatting](#formatting)
+  - [StringBuilder](#stringbuilder)
 - [Data races](#data-races)
 
 
@@ -1190,6 +1194,15 @@ public String trim()
 
 public String indent(int numberSpaces)
 public String stripIndent()
+
+public String translateEscapes()
+
+public boolean isEmpty()
+public boolean isBlank()
+
+public static String format(String format, Object args…)
+public static String format(Locale loc, String format, Object args…)
+public String formatted(Object args…)
 ```
 
 ```java
@@ -1292,6 +1305,97 @@ System.out.println(concat.indent(-1).length());     // 7
 System.out.println(concat.indent(-4).length());     // 6
 System.out.println(concat.stripIndent().length());  // 6
 ```
+
+## translateEscapes
+
+```java
+public String translateEscapes()
+```
+
+```java
+var str = "1\\t2";
+System.out.println(str);                    // 1\t2
+System.out.println(str.translateEscapes()); // 1    2
+```
+
+> this method can be used for escape sequences such as \t (tab), \n (new line), \s (space), \" (double quote), and \' (single quote.)
+
+## empty string
+```java
+public boolean isEmpty()
+public boolean isBlank()
+```
+
+```java
+System.out.println(" ".isEmpty()); // false
+System.out.println("".isEmpty());  // true
+System.out.println(" ".isBlank()); // true
+System.out.println("".isBlank());  // true
+```
+
+## Formatting
+
+```java
+var name = "Kate";
+var orderId = 5;
+ 
+// All print: Hello Kate, order 5 is ready
+System.out.println("Hello "+name+", order "+orderId+" is ready");
+System.out.println(String.format("Hello %s, order %d is ready", 
+   name, orderId));
+System.out.println("Hello %s, order %d is ready"
+   .formatted(name, orderId));
+```
+
+- `%s`	Applies to any type, commonly String values
+- `%d`	Applies to integer values like int and long
+- `%f`	Applies to floating-point values like float and double
+- `%n`	Inserts a line break using the system-dependent line separator
+
+```java
+var name = "James";
+var score = 90.25;
+var total = 100;
+System.out.println("%s:%n   Score: %f out of %d"
+   .formatted(name, score, total));
+
+/*
+James:
+   Score: 90.250000 out of 100
+*/      
+```
+
+don't mix that types
+```java
+var str = "Food: %d tons".formatted(2.0); // IllegalFormatConversionException
+```
+
+> By default, %f displays exactly six digits past the decimal. If you want to display only one digit after the decimal, you can use %.1f instead of %f.
+
+## StringBuilder
+
+```java
+StringBuilder sb1 = new StringBuilder();
+StringBuilder sb2 = new StringBuilder("animal");
+StringBuilder sb3 = new StringBuilder(10);
+```
+
+```java
+StringBuilder sb = new StringBuilder("start");
+sb.append("+middle"); // sb = "start+middle"
+StringBuilder same = sb.append("+end"); // "start+middle+end"
+```
+
+```java
+StringBuilder a = new StringBuilder("abc");
+StringBuilder b = a.append("de");
+b = b.append("f").append("g");
+System.out.println("a=" + a);
+System.out.println("b=" + b);
+//only one StringBuilder here
+```
+
+
 
 # Data races
 

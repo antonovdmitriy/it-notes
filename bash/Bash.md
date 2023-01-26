@@ -3,7 +3,7 @@
 - [Bash](#bash)
   - [History](#history)
   - [Recommended sources to help](#recommended-sources-to-help)
-  - [Переменные](#переменные)
+  - [Variables](#variables)
     - [Дефолтные переменные](#дефолтные-переменные)
   - [Bash options](#bash-options)
     - [set](#set)
@@ -17,7 +17,7 @@
   - [Ссылки на файлы с переменными и функциями](#ссылки-на-файлы-с-переменными-и-функциями)
   - [Аргументы скрипта](#аргументы-скрипта)
     - [Positional arguments](#positional-arguments)
-    - [More commplex arguments](#more-commplex-arguments)
+    - [More complex arguments](#more-complex-arguments)
   - [Оператор shift](#оператор-shift)
   - [Command substitution](#command-substitution)
   - [Parameter substitution](#parameter-substitution)
@@ -47,6 +47,8 @@
     - [until (oposite while)](#until-oposite-while)
     - [break and contiunue](#break-and-contiunue)
   - [Menu](#menu)
+  - [trap](#trap)
+  - [Arrays](#arrays)
 
 
 ## History
@@ -63,13 +65,12 @@ Bash это Bourne again shell
 - [Text book for Beginner. Recomended by Sandar van Vagt](https://tldp.org/LDP/Bash-Beginners-Guide/html/)
 - [Text book for Advanced. Recomended by Sandar van Vugt](https://tldp.org/LDP/abs/html/)
 
-## Переменные
-Важно понимать что при создании переменной в скрипте она видима только в текущем bash.
-Многие команды исполняются в отдельном bash. В этом случае важно использовать `export`
+## Variables
+When you create new variable it can be seen only in current bash. Many commands invoke another bash. In that case you can use `export`
 
 ![](images/1.png)
 
-можно сразу создать переменную экспортировать во все дочерние shell и присвоить значение
+we can create variable and at the same place export to all child bashes
 ```bash
 export KEY=VALUE
 ```
@@ -192,9 +193,9 @@ echo $SHELL
 ``` 
 
 ## Кавычки
-`"` - двойные кавычки используются для указания того, что проблемы в подстроке относятся к одному аргументы. Все внедрения переменных через $ будут работать.
+`"` - двойные кавычки используются для указания того, что проблемы в подстроке относятся к одному аргументу. Все внедрения переменных через $ будут работать.
 
-`'` - одинакрные кавычки используются для остановки внедрения переменных и сприктов. 
+`'` - одинарные кавычки используются для остановки внедрения переменных и скриптов. 
 
 ## Типы данных
 В баше нет типов данных, но есть массивы. 
@@ -303,7 +304,7 @@ done
 
 ![output](images/positional_arguments_2.png)
 
-### More commplex arguments
+### More complex arguments
 
 
 ```bash
@@ -465,6 +466,7 @@ echo ${username:-$(whoami)}
 filename=${1:-$DEFAULT_FILENAME}
 ```
 
+тут происходит присваивание в случае отсутствия
 ```bash
 echo ${username:=$(whoami)}
 filename=${1:=$DEFAULT_FILENAME}
@@ -1116,5 +1118,39 @@ do
 
 - Control C to interrupt.
 
+## trap
 
+Use to catch information about signals (exeprt -9).
 
+For help `man 7 signal` and `trap -l`
+
+```bash
+#!/bin/bash
+trap "echo ignoring signal" SIGINT SIGTERM
+echo pid is $$
+
+while :
+do
+	sleep 60
+done
+```
+`EXIT` for normal exit. 
+```bash
+#!/bin/bash
+tempfile=/tmp/tmpdata
+touch $tempfile
+ls -l $tempfile
+trap "rm -f $tempfile" EXIT
+```
+
+## Arrays
+
+Let's compare. We want to copy list of files to directory. With simple string it will not work with names with spaces.
+
+```bash
+files=$(ls *.doc); cp $files ~/backup
+```
+but with array it will work
+```bash
+files=(*.txt); cp "${files[@]}" ~/backup
+```
