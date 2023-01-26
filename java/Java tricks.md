@@ -38,6 +38,12 @@
 - [Labels](#labels)
 - [Strings](#strings)
   - [String concatination](#string-concatination)
+  - [important methods for OCP exam](#important-methods-for-ocp-exam)
+  - [substring](#substring)
+  - [equals](#equals)
+  - [replace](#replace)
+  - [strip and trim](#strip-and-trim)
+  - [Working with indent](#working-with-indent)
 - [Data races](#data-races)
 
 
@@ -1150,7 +1156,7 @@ String four = "4";
 System.out.println(1 + 2 + three + four);
 ```
 
-important methods for OCP exam
+## important methods for OCP exam
 ```java
 public int length()
 
@@ -1169,6 +1175,21 @@ public String toUpperCase()
 
 public boolean equals(Object obj)
 public boolean equalsIgnoreCase(String str)
+
+public boolean startsWith(String prefix)
+public boolean endsWith(String suffix)
+public boolean contains(CharSequence charSeq)
+
+public String replace(char oldChar, char newChar)
+public String replace(CharSequence target, CharSequence replacement)
+
+public String strip()
+public String stripLeading()
+public String stripTrailing()
+public String trim()
+
+public String indent(int numberSpaces)
+public String stripIndent()
 ```
 
 ```java
@@ -1179,7 +1200,14 @@ System.out.println(name.indexOf('a', 4));    // 4
 System.out.println(name.indexOf("al", 5));   // -1
 ```
 
-second argument in substring doesn't included. Such as math `[left_arg, right_arg)`
+## substring 
+
+```java
+public String substring(int beginIndex)
+public String substring(int beginIndex, int endIndex)
+```
+
+second argument in `substring` doesn't included. Such as math `[left_arg, right_arg)`
 ```java
 var name = "animals";
 System.out.println(name.substring(3));                 // mals
@@ -1192,10 +1220,77 @@ System.out.println(name.substring(3, 2)); // exception
 System.out.println(name.substring(3, 8)); // exception
 ```
 
+## equals
+
+```java
+public boolean equals(Object obj)
+public boolean equalsIgnoreCase(String str)
+```
+
 ```java
 System.out.println("abc".equals("ABC"));            // false
 System.out.println("ABC".equals("ABC"));            // true
 System.out.println("abc".equalsIgnoreCase("ABC"));  // true
+```
+
+## replace
+
+```java
+public String replace(char oldChar, char newChar)
+public String replace(CharSequence target, CharSequence replacement)
+```
+
+```java
+System.out.println("abcabc".replace('a', 'A')); // AbcAbc
+System.out.println("abcabc".replace("a", "A")); // AbcAbc
+```
+
+## strip and trim
+
+```java
+public String strip()
+public String stripLeading()
+public String stripTrailing()
+```
+
+```java
+System.out.println("abc".strip());                 // abc
+System.out.println("\t   a b c\n".strip());        // a b c
+ 
+String text = " abc\t ";
+System.out.println(text.trim().length());          // 3
+System.out.println(text.strip().length());         // 3
+System.out.println(text.stripLeading().length());  // 5
+System.out.println(text.stripTrailing().length()); // 4
+```
+
+## Working with indent
+
+```java
+public String indent(int numberSpaces)
+public String stripIndent()
+```
+
+- The `indent()` method adds the same number of blank spaces to the beginning of each line if you pass a positive number. If you pass a negative number, it tries to remove that number of whitespace characters from the beginning of the line. If you pass zero, the indentation will not change.
+- `indent()` also normalizes whitespace characters. What does normalizing whitespace mean, you ask? First, a line break is added to the end of the string if not already there. Second, any line breaks are converted to the \n format. Regardless of whether your operating system uses \r\n (Windows) or\n (Mac/Unix), Java will standardize on \n for you.
+- The `stripIndent()` method is useful when a String was built with concatenation rather than using a text block. It gets rid of all incidental whitespace. This means that all non-blank lines are shifted left so the same number of whitespace characters are removed from each line and the first character that remains is not blank. Like indent(), \r\n is turned into \n. However, the stripIndent() method does not add a trailing line break if it is missing.
+
+![Differences between indent and stripIndent](images/indent_and_stript_indent_diff_1.png)
+
+```java
+var block = """
+            a
+             b
+            c""";
+var concat = " a\n"
+           + "  b\n"
+           + " c";
+System.out.println(block.length());                 // 6
+System.out.println(concat.length());                // 9
+System.out.println(block.indent(1).length());       // 10
+System.out.println(concat.indent(-1).length());     // 7
+System.out.println(concat.indent(-4).length());     // 6
+System.out.println(concat.stripIndent().length());  // 6
 ```
 
 # Data races

@@ -126,7 +126,7 @@ There is root user, who has full rights for all operations in aws. As well there
 
 Далее копируем публичный ключ, применяем права доступа и заходим через ssh
 
-```
+```bash
 mv /mnt/c/Users/anton/Downloads/awsdemo.pem ~/.ssh
 
 chmod 400 ~/.ssh/awsdemo.pem
@@ -138,10 +138,8 @@ ssh -i "~/.ssh/awsdemo.pem" ubuntu@ec2-54-157-214-250.compute-1.amazonaws.com
 
 для проверки поставим apache сервер в инстанс
 обновим индекс пакетов в vm
-```
+```bash
 sudo apt-get update
-```
-```
 sudo apt-get install apache2
 ```
 потом попробуем подключиться из браузера на порт 80 по публичному dns имени, его можно найти в деталях инстанса

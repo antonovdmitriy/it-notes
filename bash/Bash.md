@@ -1,8 +1,8 @@
 # Bash
 
 - [Bash](#bash)
-  - [История](#история)
-  - [Рекомендуемые источники для справки](#рекомендуемые-источники-для-справки)
+  - [History](#history)
+  - [Recommended sources to help](#recommended-sources-to-help)
   - [Переменные](#переменные)
     - [Дефолтные переменные](#дефолтные-переменные)
   - [Bash options](#bash-options)
@@ -23,7 +23,9 @@
   - [Parameter substitution](#parameter-substitution)
   - [Here document](#here-document)
   - [Function](#function)
-  - [Приммр простого скрипта](#приммр-простого-скрипта)
+    - [Arguments](#arguments)
+    - [Variable scope](#variable-scope)
+  - [Simple script example](#simple-script-example)
   - [Pattern matching](#pattern-matching)
     - [почистить строку](#почистить-строку)
     - [сделать замену в переменной](#сделать-замену-в-переменной)
@@ -44,9 +46,10 @@
     - [while](#while)
     - [until (oposite while)](#until-oposite-while)
     - [break and contiunue](#break-and-contiunue)
+  - [Menu](#menu)
 
 
-## История
+## History
 
 ![](images/2.png)
 
@@ -54,11 +57,11 @@
 
 Bash это Bourne again shell
 
-## Рекомендуемые источники для справки
+## Recommended sources to help
 
 - `man bash`
-- [Самоучитель Beginner рекомендуемый Sandar van Vagt](https://tldp.org/LDP/Bash-Beginners-Guide/html/)
-- [Самоучитель Advanced рекомендуемый Sandar van Vugt](https://tldp.org/LDP/abs/html/)
+- [Text book for Beginner. Recomended by Sandar van Vagt](https://tldp.org/LDP/Bash-Beginners-Guide/html/)
+- [Text book for Advanced. Recomended by Sandar van Vugt](https://tldp.org/LDP/abs/html/)
 
 ## Переменные
 Важно понимать что при создании переменной в скрипте она видима только в текущем bash.
@@ -99,7 +102,7 @@ unset variable
 
 `$HISTCMD`- номер текущей команды в истории команд
 
-`$GROUPS`- массис с именами групп, в которые входит текущий пользователь
+`$GROUPS`- массиd с именами групп, в которые входит текущий пользователь
 
 `$DIRSTACK`- история недавно посещаемых директорий
 
@@ -162,7 +165,12 @@ exit n где n это код
 
 ## Производительность.
 
-Для лучшей производительности лучше не использовать утилиты, подгружаемые с диска, например `sed` и `awk`. По возможности использовать встроенными в баш командами. Команда `help` выводит все встроенные команды в баш. Также команда `type` выводит тип команды. Командой `time` можно проверить время исполнения конкретной команды. Также можно посмотреть от каких библиотек зависит команда, командой `ldd`. Детальнее смотри заметки по линуксу. 
+- Для лучшей производительности лучше не использовать утилиты, подгружаемые с диска, например `sed` и `awk`. 
+- По возможности использовать встроенными в баш командами. 
+- Команда `help` выводит все встроенные команды в баш. 
+- Команда `type` выводит тип команды. 
+- Командой `time` можно проверить время исполнения конкретной команды. 
+- Можно посмотреть от каких библиотек зависит команда, командой `ldd`. Детальнее смотри заметки по линуксу. 
 
 ## Начало скрипта
 
@@ -175,7 +183,6 @@ exit n где n это код
 ```bash
 #!/usr/bin/env bash
 ``` 
-
 
 в этом случае если текущий shell не bash, например zsh, все равно будет исполняться bash
 
@@ -505,9 +512,10 @@ EOF
 
 ## Function
 
-Два способа обьявить функцию
+Two option to write function
 
-пробелы между скобками не важны
+> spaces between braces are mot matter
+
 ```bash
 function_name () {
 
@@ -520,7 +528,9 @@ function function {
 }
 ```
 
-> Аргументы функции имеют локальный скоуп. 
+### Arguments
+
+> Function argument has local scope
 
 ```bash
 #!/bin/bash
@@ -530,9 +540,34 @@ hello(){
 hello bob
 ```
 
-> Аргументы всего скрипта при этом недоступны в функции
+> Arguments for all script are unavailable for function
 
-## Приммр простого скрипта
+### Variable scope
+
+> No matter where try are defined, variables always have a global scope - even if defined in a fuction
+
+`local` keyword to define local variable
+
+```bash
+#!/bin/bash
+var1=A
+
+my_function () {
+	local var2=B
+	var3=C
+	echo "inside function: var1: $var1, var2: $var2, var3: $var3"
+}
+
+echo "before runninng function: var1: $var1, var2: $var2, var3: $var3"
+
+my_function
+
+echo "after running function: var1: $var1, var2: $var2, var3: $var3"
+```
+
+![Funciton variables scope](images/variable_func_scope_1.png)
+
+## Simple script example
 ```bash
 #!/bin/bash
 
@@ -1050,7 +1085,36 @@ do
 done
 ```
 
+## Menu
 
+```bash
+#!/bin/bash
+
+PS3='Enter your choice: '
+options=("Option 1" "Option 2" "Option 3" "Quit")
+
+select opt in "${options[@]}"
+do
+	case $opt in
+		"Option 1")
+			echo "you have selected option 1"
+			;;
+		"Option 2")
+			echo "you have selected option 2"
+			;;
+		"Option 3")
+			echo "you have selected $REPLY with is $opt"
+			;;
+		"Quit")
+			break
+			;;
+		*) echo "invalid option $REPLY";;
+	esac
+```  
+
+![menu](images/menu_1.png)
+
+- Control C to interrupt.
 
 
 
