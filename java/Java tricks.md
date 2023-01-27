@@ -48,6 +48,17 @@
   - [empty string](#empty-string)
   - [Formatting](#formatting)
   - [StringBuilder](#stringbuilder)
+    - [Important methods](#important-methods)
+    - [substring returns String](#substring-returns-string)
+    - [append](#append)
+    - [insert](#insert)
+    - [delete](#delete)
+    - [replace](#replace-1)
+    - [reverse](#reverse)
+  - [String pool](#string-pool)
+- [Arrays](#arrays)
+  - [Sort](#sort)
+  - [Search](#search)
 - [Data races](#data-races)
 
 
@@ -180,16 +191,16 @@ double reallyUgly = 1__________2;      // Also compiles
 
 # Wrapper classes
 
-| Primitive type | Wrapper class | inherits Number? | Example of creating         |
-|----------------|---------------|------------------|---------------------------- |
-| boolean	    | Boolean        | No	            | `Boolean.valueOf(true)`     |
-| byte	        | Byte	         | Yes       	    | `Byte.valueOf((byte) 1)`    |
-| short	        | Short   	     | Yes              | `Short.valueOf((short) 1)`  |
-| int	        | Integer	     | Yes	            | `Integer.valueOf(1)`        |
-| long          | Long           | Yes              | `Long.valueOf(1)`           |
-| float	        | Float	         | Yes	            | `Float.valueOf((float) 1.0)`|
-| double	    | Double	     | Yes	            | `Double.valueOf(1.0)`       |
-| char          | Character	     | No	            | `Character.valueOf('c')`    |
+| Primitive type | Wrapper class | inherits Number? | Example of creating          |
+| -------------- | ------------- | ---------------- | ---------------------------- |
+| boolean        | Boolean       | No               | `Boolean.valueOf(true)`      |
+| byte           | Byte          | Yes              | `Byte.valueOf((byte) 1)`     |
+| short          | Short         | Yes              | `Short.valueOf((short) 1)`   |
+| int            | Integer       | Yes              | `Integer.valueOf(1)`         |
+| long           | Long          | Yes              | `Long.valueOf(1)`            |
+| float          | Float         | Yes              | `Float.valueOf((float) 1.0)` |
+| double         | Double        | Yes              | `Double.valueOf(1.0)`        |
+| char           | Character     | No               | `Character.valueOf('c')`     |
 
 There is also a `valueOf()` variant that converts a String into the wrapper class and `parse()`
 ```java
@@ -380,8 +391,8 @@ public class Var {
 ## Order of operator precedence
 
 
-| Operator                        | Symbols and examples                             | Evaluation    | 
-|---------------------------------|--------------------------------------------------|---------------|
+| Operator                        | Symbols and examples                             | Evaluation    |
+| ------------------------------- | ------------------------------------------------ | ------------- |
 | Post-unary operators            | `exprestion++`, `expression--`                   | Left-to-right |
 | Pre-unary operators             | `++exprestion`, `--expression`                   | Left-to-right |
 | Other unary operators           | `- ! ~ + (type)`                                 | Right-to-left |
@@ -392,11 +403,11 @@ public class Var {
 | Relational operators            | `< > <= >= instanceof`                           | Left-to-right |
 | Logical AND                     | `&`                                              | Left-to-right |
 | Logical exclusive OR            | `^`                                              | Left-to-right |
-| Logical inclusive OR            | `\|`                                              | Left-to-right |
+| Logical inclusive OR            | `\|`                                             | Left-to-right |
 | Conditional AND                 | `&&`                                             | Left-to-right |
-| Conditional OR                  | `\|\|`                                             | Left-to-right |
+| Conditional OR                  | `\|\|`                                           | Left-to-right |
 | Ternary operators               | `boolean expression ? expression1 : expression2` | Right-to-left |
-| Assignment operators            | `= += -= *= /= %= &= ^= \|= <<= >>= >>>=`         | Right-to-left |
+| Assignment operators            | `= += -= *= /= %= &= ^= \|= <<= >>= >>>=`        | Right-to-left |
 | Arrow operator                  | `->`                                             | Right-to-left |
 
 ## Some of uniry operator
@@ -1374,6 +1385,25 @@ var str = "Food: %d tons".formatted(2.0); // IllegalFormatConversionException
 
 ## StringBuilder
 
+### Important methods
+
+> <mark> StringBuild does not have overriden `equals` </mark>
+
+```java
+
+public String substring(int start, int end) 
+public int length()
+public char charAt(int index)
+public int indexOf(String str)
+
+public StringBuilder append(String str)
+public StringBuilder insert(int offset, String str)
+public StringBuilder delete(int startIndex, int endIndex)
+public StringBuilder deleteCharAt(int index)
+public StringBuilder replace(int startIndex, int endIndex, String newString)
+public StringBuilder reverse()
+```
+
 ```java
 StringBuilder sb1 = new StringBuilder();
 StringBuilder sb2 = new StringBuilder("animal");
@@ -1395,7 +1425,217 @@ System.out.println("b=" + b);
 //only one StringBuilder here
 ```
 
+```java
+var one = new StringBuilder();
+var two = new StringBuilder();
+var three = one.append("a");
+System.out.println(one == two);   // false
+System.out.println(one == three); // true
+```
 
+### substring returns String
+
+
+
+
+```java
+var sb = new StringBuilder("animals");
+String sub = sb.substring(sb.indexOf("a"), sb.indexOf("al"));
+int len = sb.length();
+char ch = sb.charAt(6);
+System.out.println(sub + " " + len + " " + ch);
+```
+
+### append
+
+```java
+public StringBuilder append(String str)
+```
+
+```java
+var sb = new StringBuilder().append(1).append('c');
+sb.append("-").append(true);
+System.out.println(sb);      // 1c-true
+```
+
+### insert
+```java
+public StringBuilder insert(int offset, String str)
+```
+
+```java
+var sb = new StringBuilder("animals");
+sb.insert(7, "-");                  // sb = animals-
+sb.insert(0, "-");                  // sb = -animals-
+sb.insert(4, "-");                  // sb = -ani-mals-
+System.out.println(sb);
+```
+
+### delete
+```java
+public StringBuilder delete(int startIndex, int endIndex)
+public StringBuilder deleteCharAt(int index)
+```
+
+```java
+var sb = new StringBuilder("abcdef");
+sb.delete(1, 3);                   // sb = adef
+sb.deleteCharAt(5);                // exception
+```
+
+delete is method with no exception when we put too big right value
+```java
+var sb = new StringBuilder("abcdef");
+sb.delete(1, 100);                  // sb = a
+```
+
+### replace
+
+```java
+public StringBuilder replace(int startIndex, int endIndex, String newString)
+```
+
+```java
+var builder = new StringBuilder("pigeon dirty");
+builder.replace(3, 6, "sty");
+System.out.println(builder);  // pigsty dirty
+// First, Java deletes the characters starting with index 3 and ending right before index 6. This gives us pig dirty. Then Java inserts the value "sty" in that position.
+
+var builder = new StringBuilder("pigeon dirty");
+builder.replace(3, 100, "");
+System.out.println(builder); // pig
+
+```
+
+### reverse
+
+```java
+public StringBuilder reverse()
+```
+```java
+var sb = new StringBuilder("ABC");
+sb.reverse();
+System.out.println(sb);
+```
+
+## String pool
+
+The string pool, also known as the intern pool, is a location in the Java Virtual Machine (JVM) that collects all these strings.
+
+```java
+var x = "Hello World";
+var y = "Hello World";
+System.out.println(x == y); // true
+```
+
+```java
+var x = "Hello World";
+var z = " Hello World".trim();
+System.out.println(x == z); // false
+```
+
+```java
+var singleString = "hello world";
+var concat = "hello ";
+concat += "world";
+System.out.println(singleString == concat); // false
+```
+
+```java
+var x = "Hello World";
+var y = new String("Hello World");
+System.out.println(x == y); // false
+```
+
+The intern() method will use an object in the string pool if one is present.
+
+```java
+public String intern()
+```
+
+```java
+var name = "Hello World";
+var name2 = new String("Hello World").intern();
+System.out.println(name == name2); // true
+```
+
+Tricky. Concatenation of literals is just literal because compiler insert in byte code just one string. Except += like above. 
+```java
+var first = "rat" + 1;
+var second = "r" + "a" + "t" + "1";
+var third = "r" + "a" + "t" + new String("1");
+System.out.println(first == second);          // true
+System.out.println(first == second.intern()); // true
+System.out.println(first == third);           // false
+System.out.println(first == third.intern());  // true
+```
+
+# Arrays
+
+The array does not allocate space for the objects. Instead, it allocates space for a reference to where the objects are really stored.
+
+anonymous array
+```java
+int[] moreNumbers = new int[] {42, 55, 99};
+
+int[] moreNumbers = {42, 55, 99};
+```
+
+```java
+int[] numAnimals;
+int [] numAnimals2;
+int []numAnimals3;
+int numAnimals4[];
+int numAnimals5 [];
+```
+
+```java
+int[] ids, types; 
+  ```
+
+```java
+String[] strings = { "stringValue" };
+Object[] objects = strings;
+String[] againStrings = (String[]) objects;
+againStrings[0] = new StringBuilder();   // DOES NOT COMPILE
+objects[0] = new StringBuilder();        // ArrayStoreException in runtime
+```
+
+```java
+String[] mammals = {"monkey", "chimp", "donkey"};
+System.out.println(mammals.length());               // DOES NOT COMPILE
+```
+
+## Sort
+
+```java
+int[] numbers = { 6, 9, 1 };
+Arrays.sort(numbers);
+for (int i = 0; i < numbers.length; i++)
+   System.out.print(numbers[i] +  " ");  // 1 6 9
+```
+
+```java
+String[] strings = { "10", "9", "100" };
+Arrays.sort(strings);
+for (String s : strings)
+   System.out.print(s + " "); // 10 100 9
+```
+
+## Search
+
+Negative value showing one smaller than the negative of the index, where a match needs to be inserted to preserve sorted order
+
+```java
+int[] numbers = {2,4,6,8};
+System.out.println(Arrays.binarySearch(numbers, 2)); // 0
+System.out.println(Arrays.binarySearch(numbers, 4)); // 1
+System.out.println(Arrays.binarySearch(numbers, 1)); // -1
+System.out.println(Arrays.binarySearch(numbers, 3)); // -2
+System.out.println(Arrays.binarySearch(numbers, 9)); // -5
+```
+
+Unsorted array	A surprise; this result is undefined
 
 # Data races
 

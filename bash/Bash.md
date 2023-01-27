@@ -49,6 +49,11 @@
   - [Menu](#menu)
   - [trap](#trap)
   - [Arrays](#arrays)
+    - [Types of arrays:](#types-of-arrays)
+    - [Reference to arrya values](#reference-to-arrya-values)
+    - [Example script indexed array](#example-script-indexed-array)
+    - [Example of associative array](#example-of-associative-array)
+  - [Reading output to an array](#reading-output-to-an-array)
 
 
 ## History
@@ -75,7 +80,7 @@ we can create variable and at the same place export to all child bashes
 export KEY=VALUE
 ```
 
-> Переменные регистронезависимые
+> Variables is caseinsensitive
 
 > Обычно переменные окружения пишутся с заглавных букв. Локальные переменные пишет кто как, автор курса пишет с большой буквы, но не все люди с этим согласны, аргумент, что происходит путанница.
 
@@ -1153,4 +1158,189 @@ files=$(ls *.doc); cp $files ~/backup
 but with array it will work
 ```bash
 files=(*.txt); cp "${files[@]}" ~/backup
+```
+
+### Types of arrays:
+- indexed array.
+  - do not required using `declare`
+  - `my_array=(one two three)` 
+  - don't confuse with command substitution. `myname=$(whoami)`
+- associative array. 
+  - ` declare -A`
+  - key value
+  - reference to one value of such array `${value[XYZ]}`
+  - ordering is not guaranteed
+
+### Reference to arrya values
+
+> always use quotes. 
+
+- Reference to All elements in the array.
+  ```bash
+  "${myarray[@]}"
+  ```
+- Reference to second element
+  ```bash
+  "${myarray[1]}"
+  ```
+- Reference to all keys in array
+  ```bash
+  "${!myarray[@]}"
+  ```
+
+### Example script indexed array
+
+```bash
+  #!/bin/bash
+my_array=( a b c )
+
+# print index value 1
+echo ${my_array[1]}
+
+# print all items in the array
+echo ${my_array[@]}
+echo ${my_array[*]}
+
+# print all index values and not their value
+echo ${!my_array[@]}
+
+# print the length of the array
+echo ${#my_array[@]}
+
+# loop over all items in the array; printing all keys as well as all values
+for i in "${!my_array[@]}"
+do
+	echo "$i" "${my_array[$i]}"
+done
+
+# loop on just the values and not the keys
+for i in "${my_array[@]}"
+do
+	echo "$i" 
+done
+
+# adding a value at a specific position
+# using 9 to make sure it is last
+my_array[9]=d
+echo ${my_array[@]}
+echo ${my_array[9]}
+
+# adding items to the end of the array, using the first available index
+my_array+=( e f )
+for i in "${!my_array[@]}"
+do
+        echo "$i" "${my_array[$i]}"
+done
+```
+
+![](images/array_1.png)
+
+### Example of associative array
+
+```bash
+declare -A my_array
+
+my_array=([value1]=cow [value2]=sheep)
+```
+
+## Reading output to an array
+
+- `mapfile`
+```bash
+mapfile -t my_array <<(my_command)
+```
+
+- `cycle with IFS and read`
+
+```bash
+my_array=()
+while IFS= read -r line; do
+  my_array+=( "$line")
+done < <(my_command)
+```
+
+- `readarray`
+
+```bash
+readarray -t my_array < <(seq 5)
+declare -p my_array # print array
+# output: declare -a my_array=([0]="1" [1]="2" [2]="3" [3]="4" [4]="5" )
+```
+
+```bash
+readarray -t myfiles < <(ls)
+declare -p myfiles  # print array
+```
+
+with `cycle` 
+
+```bash
+#!/bin/bash
+
+# scanning hosts on $NETWORK
+echo enter the IP address of the network that you want to scan for available hosts
+read NETWORK
+
+# enabling some debugging so that we see what happens
+set -x 
+hosts=()
+# below IFS is set at the same line as the read statement to make sure it affects the read statement only
+# IFS is set to a space to make sure that as long as it finds a space after an item the script continues
+while IFS= read -r line; do
+	hosts+=( "$line" )
+done < <( nmap -sn ${NETWORK}/24 | grep ${NETWORK%.*} | awk '{ print $5 }')
+set +x
+
+# the two lines below are for debugging only
+echo press enter to continue
+read
+
+# and here we check that the array works as intended
+for value in "${hosts[@]}"
+do
+	echo $value
+```
+
+with `mapfile`
+
+```bash
+#!/bin/bash
+
+# generating SSH key for local user
+[ -f /etc/.ssh/id_rsa ] || ssh-keygen
+
+# scanning hosts on $NETWORK
+echo enter the IP address of the network that you want to scan for available hosts
+read NETWORK
+
+# you can fill an array with command output in two ways. The lines below are not as efficient but also work
+#hosts=()
+#while IFS= read -r line; do
+#	hosts+=( "$line" )
+#done < <( nmap -sn ${NETWORK}/24 | grep ${NETWORK%.*} | awk '{ print $5 }')
+
+# alternative notation
+mapfile -t hosts < <(nmap -sn ${NETWORK}/24 | grep ${NETWORK%.*} | awk '{ print $5 }')
+
+# this line shows debug information; useful while developing but can be removed now
+for value in "${hosts[@]}"
+do
+	echo $value
+done
+
+PS3='which host do you want to setup? (Ctrl-C to quit) '
+select host in "${hosts[@]}"
+do
+	case $host in
+		*)
+			echo you selected $host
+			set -v
+			ssh-copy-id root@$host
+			scp /etc/hosts root@$host:/etc
+			set +v
+			echo this is enough for the proof of concept script
+			;;
+	esac
+
+done
 ```

@@ -16,20 +16,31 @@
   - [Расширенная диагностика запуска playbook](#расширенная-диагностика-запуска-playbook)
   - [Использование переменных](#использование-переменных)
     - [Обьявление переменных внутри playbook](#обьявление-переменных-внутри-playbook)
-      - [Обьявление переменных внутри отдельного файла для группы хостов](#обьявление-переменных-внутри-отдельного-файла-для-группы-хостов)
-    - [Ansible Facts](#ansible-facts)
-    - [Ansible vault - средство для хранения секретов](#ansible-vault---средство-для-хранения-секретов)
-    - [Лучшие практики по организации файловой структуры:](#лучшие-практики-по-организации-файловой-структуры)
-    - [Управление задачами](#управление-задачами)
-      - [Register (Результат команды помещаем в переменную)](#register-результат-команды-помещаем-в-переменную)
-    - [Циклы:](#циклы)
-    - [When (условие)](#when-условие)
-    - [Handler](#handler)
-    - [Шаблоны (Templates)](#шаблоны-templates)
-    - [Операции с файлами](#операции-с-файлами)
-    - [Ansible roles (Ansible Galaxy)](#ansible-roles-ansible-galaxy)
-    - [Создание кастомных ролей](#создание-кастомных-ролей)
-      - [Использование системных ролей](#использование-системных-ролей)
+    - [Обьявление переменных внутри отдельного файла для группы хостов](#обьявление-переменных-внутри-отдельного-файла-для-группы-хостов)
+    - [Приоритеты переменных](#приоритеты-переменных)
+      - [Приоритеты](#приоритеты)
+- [Ansible Facts](#ansible-facts)
+  - [Удобная команда, чтобы посмотреть значения факта для набора серверов](#удобная-команда-чтобы-посмотреть-значения-факта-для-набора-серверов)
+- [Ansible vault - средство для хранения секретов](#ansible-vault---средство-для-хранения-секретов)
+  - [Создание защифрованного хранилища](#создание-защифрованного-хранилища)
+  - [Демонстрация использования.](#демонстрация-использования)
+- [Лучшие практики по организации файловой структуры:](#лучшие-практики-по-организации-файловой-структуры)
+- [Управление задачами](#управление-задачами)
+  - [Register (Результат команды помещаем в переменную)](#register-результат-команды-помещаем-в-переменную)
+  - [Циклы:](#циклы)
+  - [When (условие)](#when-условие)
+    - [Пример установки пакетов только если дистрибутив линукса из списка допустимых:](#пример-установки-пакетов-только-если-дистрибутив-линукса-из-списка-допустимых)
+    - [Пример установки пакета с использованием цикла.](#пример-установки-пакета-с-использованием-цикла)
+    - [Пример рестартуем сервис, если команда вернула return code 0](#пример-рестартуем-сервис-если-команда-вернула-return-code-0)
+    - [пример с несколькими условиями](#пример-с-несколькими-условиями)
+  - [Handler](#handler)
+- [Шаблоны (Templates)](#шаблоны-templates)
+- [Операции с файлами](#операции-с-файлами)
+  - [Сложный пример ( не проверено)](#сложный-пример--не-проверено)
+- [Ansible roles](#ansible-roles)
+  - [(Ansible Galaxy)](#ansible-galaxy)
+  - [Создание кастомных ролей](#создание-кастомных-ролей)
+  - [Использование системных ролей](#использование-системных-ролей)
 
 # Настройка
 
@@ -323,73 +334,66 @@ ansible-playbook -v ./uninstall-httpd.yml
 ```
 ![](images/image87.png)
 
-Тут важно, что в name ссылка на переменную в кавычках. Это важно, когда в строчке встречается переменная и она идет первой
+Тут важно, что в name ссылка на переменную в фигурных скобках . Это важно, когда в строчке встречается переменная и она идет первой
 
 ![](images/image52.png)
 
-#### Обьявление переменных внутри отдельного файла для группы хостов
+### Обьявление переменных внутри отдельного файла для группы хостов
 
-Переменные можно задавать в отдельном файле для группы хостов.
-
-Каталог для создания файла с переменными group_vars
-
+- Переменные можно задавать в отдельном файле для группы хостов.
+- Каталог для создания файла с переменными `group_vars`
+```
 mkdir group_vars
+```
 
 ![](images/image54.png)
 
-Создадим в нем файле для группы серверов lamp и укажем в нем переменные:
+- Создадим в нем файле для группы серверов `lamp` и укажем в нем переменные:
 
 ![](images/image24.png)
 
 ![](images/image9.png)
 
-Добавим группу lamp в inventory
+- Добавим группу `lamp` в inventory
 
 ![](images/image13.png)
 
 И напишем простой плейбук:
-
-\-\-\-
-
-\- name: configure web services
-
+```yml
+---
+- name: configure web services
   hosts: lamp
-
   tasks:
-
-    \- name: this is the {{ web_package }} package
-
+    - name: this is the {{ web_package }} package
       debug:
-
         msg: "Installing {{ web_package }}"
-
-    \- name: this is the {{ web_service }} service
-
+    - name: this is the {{ web_service }} service
       debug:
-
         msg: "Starting {{ web_service }}"
+```
 
 ![](images/image19.png)
 
-Запустим плейбук
+- Запустим плейбук
 
 ![](images/image41.png)
 
-Видим, что переменные подставились из файла.
+- Видим, что переменные подставились из файла.
 
-Также можно объявлять переменные для конкретного хоста в каталоге host_vars
+
+### Приоритеты переменных
+
+- Можно объявлять переменные для конкретного хоста в каталоге `host_vars`
 
 ![](images/image76.png)
 
-Есть встроенные переменные, переменные уровня группы groups , а также hostvars (список переменных окружения на хосте)
+- Есть встроенные переменные, переменные уровня группы `groups` , а также `hostvars` (список переменных окружения на хосте)
 
-У свойств есть приоритет. Наивысший приоритет имеют те, которые передаются из командной строки под ключом -e key=value
-
-Далее идит переменные на уровне плейбука. Они имеют приоритет выше чем дефолтные переменные группы.
-
-Переменные группы имеют приоритет выше чем переменные плейбука, выше них только переменные командной строки.
-
-Наконец посление по приоритету это переменны из inventory.
+#### Приоритеты
+- передаются из командной строки под ключом `-e key=value`
+- Переменные на уровне плейбука. Они имеют приоритет выше чем дефолтные переменные группы.
+- Переменные на уровне группы
+- Наконец последние по приоритету это переменны из inventory.
 
 Выше был пример с переменными из группы. Покажем, что переменные из командной строки имеют выше приоритет.
 
@@ -401,87 +405,82 @@ mkdir group_vars
 
 ![](images/image61.png)
 
-### Ansible Facts
+# Ansible Facts
 
-Каждый раз при исполнении плейбука, ансибле запускает фазу gathering facts. Во время нее собирается много информации о хосте, которая  в дальнейшем может быть использована в плейбуке. Эта информация присваивается переменной ansible_facts
+Каждый раз при исполнении плейбука, ансибле запускает фазу `gathering facts`. Во время нее собирается много информации о хосте, которая  в дальнейшем может быть использована в плейбуке. Эта информация присваивается переменной `ansible_facts`
 
 Простой пример:
-
-\- name: show facts
-
+```yml
+- name: show facts
   hosts: all
-
   tasks:
-
-    \- name: pring facts
-
+    - name: pring facts
       debug:
-
         var: ansible_facts
+```
 
 ![](images/image66.png)
 
 ![](images/image44.png)
 
-\-\-\-
-
-\- name: show ip of hosts
-
+```yml
+---
+- name: show ip of hosts
   hosts: all
-
   tasks:
-
-    \- name: show IP address
-
+    - name: show IP address
       debug:
-
-        msg: IP address {{ansible\_facts.default\_ipv4.address}}
+        msg: IP address {{ansible_facts.default_ipv4.address}}
+```
 
 ![](images/image113.png)
 
 ![](images/image23.png)
 
-### Ansible vault - средство для хранения секретов
 
-Создание защифрованного хранилища
+## Удобная команда, чтобы посмотреть значения факта для набора серверов
+```
+ansible all -m setup -a "filter=ansible_distribution"
+```
 
+![](images/image39.png)
+
+![](images/image12.png)
+
+
+# Ansible vault - средство для хранения секретов
+
+## Создание защифрованного хранилища
+```
 ansible-vault create secret.yml
+```
 
 ![](images/image36.png)
 
-Введем пароль для хранилища, затем откроется редактор с пустым файлом, добавим туда те свойства, которые хотим хранить внутри хранилища
+- Введем пароль для хранилища, затем откроется редактор с пустым файлом, добавим туда те свойства, которые хотим хранить внутри хранилища
 
 ![](images/image111.png)
 
-И сохраним файл
-
-Вот содержимое файла:
+- И сохраним файл
+- Вот содержимое файла:
 
 ![](images/image68.png)
 
-Демонстрация использования.
+## Демонстрация использования.
 
 Создадим простой плейбук:
-
-\-\-\-
-
-\- name: create a user
-
+```yml
+---
+- name: create a user
   hosts: all
-
   vars_files:
-
-    \- secret.yml
-
+    - secret.yml
   tasks:
-
-    \- name: creating user
-
+    - name: creating user
       user:
-
         name: "{{ username }}"
-
         password: "{{ pwhash }}"
+```
 
 ![](images/image64.png)
 
@@ -489,206 +488,456 @@ ansible-vault create secret.yml
 
 ![](images/image10.png)
 
-Передавать пароли так нельзя. Т.к их будет видно в shadow
+- Передавать пароли так нельзя. Т.к их будет видно в shadow
 
 ![](images/image96.png)
 
-### Лучшие практики по организации файловой структуры:
+# Лучшие практики по организации файловой структуры:
 
 [https://docs.ansible.com/ansible/2.8/user\_guide/playbooks\_best_practices.html#directory-layout](https://www.google.com/url?q=https://docs.ansible.com/ansible/2.8/user_guide/playbooks_best_practices.html%23directory-layout&sa=D&source=editors&ust=1674732886701807&usg=AOvVaw2RBhPQozIHid4hNW-B5SxY)
 
 ![](images/image55.png)
 
-### Управление задачами
+# Управление задачами
 
 ![](images/image95.png)
 
-#### Register (Результат команды помещаем в переменную)
+## Register (Результат команды помещаем в переменную)
 
-Пример показывает, вызывали команду , сохранили результат stdout в переменную, далее можем использовать failed_when - условие определения неуспешности команды. Все последующие команды будут отменны.
+Пример показывает, вызывали команду, сохранили результат stdout в переменную, далее можем использовать `failed_when` - условие определения неуспешности команды. Все последующие команды будут отменны.
+
+```yml
+---
+- name: failed one command by condition
+  hosts: all
+  tasks:
+    - name: run a script
+      command: echo hello world
+      register: command_result
+      failed_when: "'world' in command_result.stdout"
+    - name: see if we get here
+      debug:
+        msg: hello
+```
 
 ![](images/image97.png)
 
 ![](images/image48.png)
 
-T
+Если напишем `Ignore_errors` тогда попадем во второй шаг
 
-Если напишем ![](images/image32.png)
-
-Ignore_errors тогда попадем во второй шаг
+```yml
+---
+- name: failed one command by condition
+  hosts: all
+  tasks:
+    - name: run a script
+      command: echo hello world
+      register: command_result
+      failed_when: "'world' in command_result.stdout"
+      ignore_errors: yes
+    - name: see if we get here
+      debug:
+        msg: hello
+```
+![](images/image32.png)
 
 ![](images/image71.png)
 
-### Циклы:
+## Циклы:
+
+Записали переменную в виде массива. Далее с помощью loop итерируемся по нему и подставляем в item значение из массива.
+```yml
+---
+- name: start some services
+  hosts: all
+  vars:
+    my_services:
+      - crond
+      - sshd
+  tasks:
+    - name: start some services
+      service:
+        name: "{{ item }}"
+        state: started
+      loop: "{{ my_services }}"
+```
 
 ![](images/image15.png)
 
-Записали переменную в виде массива. Далее с помощью loop итерируемся по нему и подставляем в item значение из массива.
-
 ![](images/image108.png)
 
-|     |     |
-| --- | --- |
-| \# Problem: |     |
-|     | #   |
-|     | \# If you use git submodules linking two private github repos, you'll need to create a separate deploy key for each. |
-|     | \# Multiple keys are not supported by Ansible, nor does ansible (when running git module) resort to your `.ssh/config` file. |
-|     | \# This means your ansible playbook will hang in this case. |
-|     | #   |
-|     | \# You can however use the ansible git module to checkout your repo in multiple steps, like this: |
-|     | #   |
-|     | \- hosts: webserver |
-|     | vars: |
-|     | \- destination: /your/dest/path |
-|     | tasks: |
-|     | \- name: App \| Cloning repos + submodules |
-|     | git: repo=git@github.com:Organisation/{{ item.repo }}.git |
-|     | dest={{ item.dest }} |
-|     | accept_hostkey=yes |
-|     | force=yes |
-|     | recursive=no |
-|     | key\_file=/home/user/.ssh/id\_rsa.github-{{ item.repo }} |
-|     | with_items: |
-|     | -   |
-|     | dest: "{{ destination }}" |
-|     | repo: PrimaryRepo |
-|     | -   |
-|     | dest: "{{ destination }}/app/core" |
-|     | repo: SubmoduleRepo |
+## When (условие)
 
-### When (условие)
+Выполняем команды, если выполнилось условие. `When` использует массив фактов, которые собираеются на фазе `gathering facts` или проверки переменных, которые ранее поместили через `register`
 
-Выполняем команды, если выполнилось условие. When использует массив фактов, которые собираеются на фазе gathering facts или проверки переменных, которые ранее поместили через register
+```yml
+---
+- name: test command result
+  hosts: all
+  tasks:
+    - name: check a fact
+      debug:
+        msg: echo today is 26
+      when: '"26" in ansible_date_time.day'
+```
 
 ![](images/image6.png)
 
 ![](images/image26.png)
 
-Поменяем дату и увидим, что условие не выполнилось и команда не выполнилась.
+- Поменяем дату и увидим, что условие не выполнилось и команда не выполнилась.
+
+```yml
+---
+- name: test command result
+  hosts: all
+  tasks:
+    - name: check a fact
+      debug:
+        msg: echo today is 26
+      when: '"27" in ansible_date_time.day'
+```
+
 
 ![](images/image92.png)
 
 ![](images/image93.png)
 
-Важно понимать что есть статегии сбора тасков. Можно посмотреть их описание в файле конфигурации.
-
-/etc/ansible/ansible.cfg
+- Важно понимать что есть статегии сбора тасков. Можно посмотреть их описание в файле конфигурации `/etc/ansible/ansible.cfg`
 
 ![](images/image75.png)
 
-Если поставить explicit факты будут собираться только если выставлена опция gathering_facts: True. По-умолчанию поведение implicitit , т.е собирается всегда, если не передана опция не собирать.
+- Если поставить `explicit` факты будут собираться только если выставлена опция `gathering_facts: True`. По-умолчанию поведение `implicitit` , т.е собирается всегда, если не передана опция не собирать.
+- Помним что мы создавали файл локальных конфигураций для пользователя в его домашней директории. Добавим туда строчку включающую  `explicity` режим сбора фактов.
 
-Помним что мы создавал файл локальных конфигураций для пользователя в его домашней директории. Добавим туда строчку включающую explicity режим сбора фактов.
+```properties
+[defaults]
+remote_user = vagrant
+host_key_checking = false
+inventory = inventory
+gathering = explicit
+
+[privilege_escalation]
+become = True
+become_method = sudo
+become_user = root
+become_ask_pass = False
+```
 
 ![](images/image85.png)
 
-Если запустим опять плейбук, получим ошибку. Т.к факты не собрались и нет такой переменной с датой.
+- Если запустим опять плейбук, получим ошибку. Т.к факты не собрались и нет такой переменной с датой.
 
 ![](images/image103.png)
 
-Чтобы починить, явно указать на сбор фактов в плейбуке
+- Чтобы починить, явно указать на сбор фактов в плейбуке
+
+```yml
+---
+- name: test command result
+  hosts: all
+  gather_facts: yes
+  tasks:
+    - name: check a fact
+      debug:
+        msg: echo today is 26
+      when: '"26" in ansible_date_time.day'
+```
 
 ![](images/image1.png)
 
-Починилось
+- Починилось
 
 ![](images/image86.png)
 
-Пример установки пакетов только если дистрибутив линукса из списка допустимых:
+### Пример установки пакетов только если дистрибутив линукса из списка допустимых:
+
+```yml
+---
+- name: when demo
+  gather_facts: yes
+  hosts: all
+  vars:
+    supported_distros:
+      - RedHat
+      - CentOS
+      - Fedora
+  tasks:
+    - name: install RH family specific packages
+      yum:
+        name: nginx
+        state: present
+      when: ansible_distribution in supported_distros
+```
 
 ![](images/image59.png)
 
 ![](images/image8.png)
 
-Пример установки пакета с использованием цикла. Если есть определенная точка монтирования и места на ней достаточно, тогда устанавливаем пакет
+### Пример установки пакета с использованием цикла.
+ 
+Если есть определенная точка монтирования и места на ней достаточно, тогда устанавливаем пакет
+
+```yml
+---
+- name: condiionals test
+  gather_facts: yes
+  hosts: all
+  tasks:
+  - name: install vsftpd if sufficient space on /var/ftp
+    package:
+      name: vsftpd
+      state: latest
+    with_items: "{{ ansible_mounts }}"
+    when: item.mount == "/var/ftp" and item.size_available > 100000
+```
 
 ![](images/image79.png)
 
 ![](images/image60.png)
 
-Посмотрим какие точки монтирования есть на машинах
+- Посмотрим какие точки монтирования есть на машинах
 
+```bash
+ansible all -m command -a "df -h"
+```
 ![](images/image102.png)
 
-Поменяем на /vagrant
+- Поменяем на `/vagrant`
+
+```yml
+---
+- name: condiionals test
+  gather_facts: yes
+  hosts: all
+  tasks:
+  - name: install vsftpd if sufficient space on /var/ftp
+    package:
+      name: vsftpd
+      state: latest
+    with_items: "{{ ansible_mounts }}"
+    when: item.mount == "/vagrant" and item.size_available > 100000
+```
 
 ![](images/image80.png)
 
 ![](images/image4.png)
 
-Пример рестартуем сервис, если команда вернула return code 0
+### Пример рестартуем сервис, если команда вернула return code 0
+
+```yml
+---
+- name: restart sshd only if crond is running
+  gather_facts: yes
+  hosts: all
+  tasks:
+    - name: get the crond server status
+      command: /usr/bin/systemctl is-active crond
+      ignore_errors: yes
+      register: result
+    - name: restart sshd based on crond status
+      service:
+        name: sshd
+        state: restarted
+      when: result.rc == 0
+```
 
 ![](images/image107.png)
 
-![](images/image73.png)пример с несколькими условиями
+![](images/image73.png)
 
+### пример с несколькими условиями
+
+```yml
+---
+- name: using multiple conditions
+  gather_facts: yes
+  hosts: all
+  tasks:
+    - package:
+        name: httpd
+        state: installed
+      when:
+        - ansible_distribution == "CentOS"
+        - ansible_memfree_mb > 256
+```
+        
 ![](images/image88.png)
 
 ![](images/image112.png)
 
-Удобная команда, чтобы посмотреть значения факта для набора серверов
-
-ansible all -m setup -a "filter=ansible_distribution"
-
-![](images/image39.png)
-
-![](images/image12.png)
-
-Сложное условие
+и еще условие посложнее
+```yml
+---
+- name: using multipe conditions
+  gather_facts: yes
+  hosts: all
+  tasks:
+    - package:
+        name: httpd
+        state: removed
+      when: >
+        ( ansible_distribution == "RedHat" and
+          ansible_memfree_mb > 512 )
+        or
+        ( ansible_distribution == "CentOS" and
+          ansible_memfree_mb < 100000 )
+```
 
 ![](images/image89.png)
-
 ![](images/image70.png)
 
-### Handler
+
+## Handler
+
+В случае если все таски успешно пройдены, то словом `notify` запускаем `handler`
+
+```yml
+---
+- name: set up web server
+  hosts: all
+  tasks:
+    - name: install httpd
+      yum:
+        name: httpd
+        state: latest
+    - name: copy index.html
+      copy:
+        src: /tmp/index.html
+        dest: /var/www/html/index.html
+      notify:
+        - restart_web
+    - name: copy nothing - intended to fail
+      copy:
+        src: /tmp/nothing
+        dest: /var/www/html/nothing.html
+  handlers:
+    - name: restart_web
+      service:
+        name: httpd
+        state: restarted
+```
 
 ![](images/image18.png)
 
-В случае если все таски успешно пройдены, то словом notify запускаем handler
-
 ![](images/image94.png)
 
-Видно, что т.к вторая таска упала, хендлер не запустился.
+- Видно, что т.к вторая таска упала, хендлер не запустился.
+- Поправим плейбук
 
-Поправим плейбук
+```yml
+---
+- name: set up web server
+  ignore_errors: yes
+  hosts: all
+  tasks:
+    - name: install httpd
+      yum:
+        name: httpd
+        state: latest
+    - name: copy index.html
+      copy:
+        src: /tmp/index.html
+        dest: /var/www/html/index.html
+      notify:
+        - restart_web
+    - name: copy nothing - intended to fail
+      copy:
+        src: /tmp/nothing
+        dest: /var/www/html/nothing.html
+  handlers:
+    - name: restart_web
+      service:
+        name: httpd
+        state: restarted
+```
+
 
 ![](images/image63.png)
 
 ![](images/image57.png)
 
-Видим, что все такси завершились и ошибка игнорируется. Но хендлер не запустился. Почему? Потому что хедлер запускается только если таска, которая вызывает notify должна менять состояние хоста, если было бы changed , то хендлер бы вызвался. В принципе логично, т.к не было копирования файла (файл уже был скопирован ранее) нет необходимости в перезагрузке сервиса.
+- Видим, что все таски завершились и ошибка игнорируется. Но хендлер не запустился. Почему? Потому что хедлер запускается только если таска, которая вызывает `notify` должна менять состояние хоста, если было бы `changed`, то хендлер бы вызвался. В принципе логично, т.к не было копирования файла (файл уже был скопирован ранее) нет необходимости в перезагрузке сервиса.
+- Удалим файл из одного из хостов
 
-Удалим файл из одного из хостов
+```bash
+ansible ansible2 -a "rm /var/www/html/index.html"
+```
 
 ![](images/image33.png)
 
-Тут не указываем модуль, т.к если не передан модуль, значит по умолчанию модуль command
-
-Запустим плейбук заново
+- Тут не указываем модуль, т.к если не передан модуль, значит по умолчанию модуль command
+- Запустим плейбук заново
 
 ![](images/image78.png)
+- И ура. У нас вызвался хендлер который рестартанул сервис.
 
-И ура. У нас вызвался хендлер который рестартанул сервис.
+# Шаблоны (Templates)
 
-### Шаблоны (Templates)
+```yml
+---
+- name: configure VSFTPD using a template
+  hosts: all
+  vars:
+    anonymous_enable: yes
+    local_enable: yes
+    write_enable: yes
+    anon_upload_enable: yes
+  tasks:
+    - name: install vsftpd
+      yum:
+        name: vsftpd
+    - name: use template to copy FPT config
+      template:
+        src: vsftpd.j2
+        dest: /etc/vsftpd/vsftpd.conf
+```
 
 ![](images/image74.png)
 
-Шаблоны располагаются в папке /templates
-
-Шаблон в нашем случае выглядит так
+- Шаблоны располагаются в папке `/templates`
+- Шаблон в нашем случае выглядит так
 
 ![](images/image43.png)
+- Тут можно использовать переменные в том числе и из `ansible_facts`. Можно их писать через точку, а можно через квадратные скобки.
 
-Тут можно использовать переменные в том числе и из ansible_facts. Можно их писать через точку, а можно через квадратные скобки.
+# Операции с файлами
 
-### Операции с файлами
+```yml
+---
+- name: file copy modules
+  hosts: all
+  tasks:
+    - name: copy file demo
+      copy:
+        src: /etc/hosts
+        dest: /tmp
+    - name: add some lines to /tmp/hosts
+      blockinfile:
+        path: /tmp/hosts
+        block: |
+          192.168.4.110 host1.example.com
+          192.168.4.120 hosts2.example.com
+        state: present
+    - name: verify file checksum
+      stat:
+        path: /tmp/hosts
+        checksum_algorithm: md5
+      register: result
+    - debug:
+        msg: "The checksum of /tmp/hosts is {{ result.stat.checksum }}"
+    - name: fetch a file
+      fetch:
+        src: /tmp/hosts
+        dest: /tmp
+```
 
 ![](images/image20.png)
 
 ![](images/image14.png)
 
-Т.к запускали на нескольких хостах файлы скопируются в /tmp но для каждого хоста будет создан отдельный каталог
+- Т.к запускали на нескольких хостах файлы скопируются в `/tmp` но для каждого хоста будет создан отдельный каталог
 
 ![](images/image82.png)
 
@@ -696,7 +945,7 @@ ansible all -m setup -a "filter=ansible_distribution"
 
 Добавились и комменты к блоку добавления через ansible
 
-Сложный пример ( не проверено)
+## Сложный пример ( не проверено)
 
 ![](images/image34.png)
 
@@ -712,25 +961,29 @@ ansible all -m setup -a "filter=ansible_distribution"
 
 ![](images/image106.png)
 
-### Ansible roles (Ansible Galaxy)
+# Ansible roles 
 
-Существует сайт ansible galaxy
+Роли позволяют существенно облегчить работу с ansible
 
+## (Ansible Galaxy)
+
+Существует сайт `ansible galaxy`
 [https://galaxy.ansible.com/](https://www.google.com/url?q=https://galaxy.ansible.com/&sa=D&source=editors&ust=1674732886728697&usg=AOvVaw3-Xpf2INfudZYLi9TH2hfu)
 
  где есть всевозможные плейбуки написанные другими.
 
 ![](images/image22.png)
 
-Также можно поискать командой:
-
-ansible-galaxy seach name\_of\_roles
-
+можно поискать командой:
+```
+ansible-galaxy seach name_of_roles
+```
 ![](images/image30.png)
 
-Также есть команда ansible-galaxy которая может скачать роль ( набор файлов плейбука) с этого сайта.
-
-Установким в систему это роль:
+есть команда ansible-galaxy которая может скачать роль ( набор файлов плейбука) с этого сайта.
+```bash
+ansible-galaxy install geerlingguy.nginx
+```
 
 ![](images/image51.png)
 
@@ -738,27 +991,47 @@ ansible-galaxy seach name\_of\_roles
 
 Для использование роли нужно написать плейбук и вызвать роль.
 
+```yml
+---
+- name: use galxy nginx role
+  gather_facts: yes
+  hosts: all
+  roles:
+    - role: geerlingguy.nginx
+```
+
 ![](images/image109.png)
 
 ![](images/image2.png)
 
-Роли позволяют существенно облегчить работу с ansible
+## Создание кастомных ролей
 
-### Создание кастомных ролей
+```bash
+ansible-galaxy init hello
+```
 
 ![](images/image16.png)
 
 ![](images/image47.png)
 
-#### Использование системных ролей
+## Использование системных ролей
 
-Почти каждый дистрибутив линукса имеет набор системных ролей. В нем роли для администрирования этого дистрибутива. Если приходится поддерживать множество серверов они могут быть очень полезны \- так например есть роли для настройки сети.
+Почти каждый дистрибутив линукса имеет набор системных ролей. В нем роли для администрирования этого дистрибутива. Если приходится поддерживать множество серверов они могут быть очень полезны - так например есть роли для настройки сети.
+
+```bash
+sudo yum search system-role
+sudo yum install rhel-system-roles
+```
 
 ![](images/image38.png)
 
 ![](images/image27.png)
 
 Посмотрим содержимое установочного пакета
+
+```bash
+sudo rpm -ql rhel-system-roles
+```
 
 ![](images/image40.png)
 
