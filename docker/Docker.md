@@ -256,7 +256,7 @@ docker save -o ./java-hello.tar java-hello
 ## Docker file
 
 ### Простой докер файл:
-```docker
+```dockerfile
 FROM openjdk:8-jre-alpine
 CMD java -version
 ``` 
