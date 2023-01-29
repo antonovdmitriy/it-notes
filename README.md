@@ -2,12 +2,13 @@
 
 Just notes, compilation from different courrses and own thoughts. 
 
-- [Ansible](/ansible/ansible.md)
-- [Docker](/docker/Docker.md)
-- [Bash](/bash/Bash.md)
 - [Linux](/linux/linux.md)
+- [Bash](/bash/Bash.md)
+- [Ansible](/ansible/ansible.md)
+- [Git](/git/git.md) 
+- [Docker](/docker/Docker.md)
 - [Java](/java/Java%20tricks.md)
-- [Git](/git/git.md)
+- [Oracle](/oracle/oracle.md)
 - [Kubernates](kubernates/kubernates.md)
 - [Amazon](/aws/AWS.md)
 - [Testing](/testing/Testing.md)
