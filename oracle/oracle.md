@@ -9,13 +9,20 @@
 - [Data types](#data-types)
   - [NUMBER](#number)
   - [DATE](#date)
-    - [Contraints](#contraints)
-    - [Создание модели таблицы (ERD)](#создание-модели-таблицы-erd)
-    - [Концепция NULL значения в Oracle](#концепция-null-значения-в-oracle)
-    - [Первичный ключ](#первичный-ключ)
-    - [Натуральные и суррогатные первичные ключи](#натуральные-и-суррогатные-первичные-ключи)
-    - [Нормализация](#нормализация)
-      - [1-ая форма (Атомарность данных в колоноках)](#1-ая-форма-атомарность-данных-в-колоноках)
+  - [CHAR](#char)
+  - [VARCHAR 2](#varchar-2)
+- [Contraints](#contraints)
+  - [Check constraint example](#check-constraint-example)
+- [Create table model (ERD)](#create-table-model-erd)
+  - [Anylize of model](#anylize-of-model)
+  - [Example of analysis](#example-of-analysis)
+  - [NULL values](#null-values)
+  - [Create table in Oracle Data Modeller](#create-table-in-oracle-data-modeller)
+  - [Primary key. Natural and surrogate keys.](#primary-key-natural-and-surrogate-keys)
+- [Normalization](#normalization)
+  - [Process of normalization](#process-of-normalization)
+  - [Pros vs cons](#pros-vs-cons)
+  - [1NF (First normal form - Entity atomicity)](#1nf-first-normal-form---entity-atomicity)
       - [Обозначение связей на ERD](#обозначение-связей-на-erd)
       - [Foreign ключи](#foreign-ключи)
       - [2-ая нормальная форма (зависимость колонок от первичного ключа)](#2-ая-нормальная-форма-зависимость-колонок-от-первичного-ключа)
@@ -101,115 +108,187 @@ Data is organized into tables.
     - `01/01/2015`
     - `1/1/2015 21:30:00`
     - `1/1/15 09:30:00`
-  
-  
-![](images/image44.png)
+- Support is provided for
+  - Daylight savings
+  - Different time zone offsets
+  - Date/Time arithmetic. For example: `1/31/2015 - 1/1/2015 = 30 days`
 
-![](images/image215.png)
+## CHAR 
+- Fixed length storage of character values
+- `CHAR` data type can stope up to 2000 bytes of character data
+- `CHAR(10)` can store up to 10 characters. However each entry will require the same amount of storage (generally 10 bytes for a `CHAR(10) but there are exceptions) for any of these values
+  - CAR
+  - CART
+  - CARTWHEELS
+- A lot of wasted space 
 
-![](images/image60.png)
+## VARCHAR 2
 
-### Contraints
+- Variable length storate of character values
+- In Oracle Database 12c a VARCHAR2 can store either:
+  - 4000 characters by default
+  - 32737 characters if extended data types are enabled
+- There is no overhead for a `VARCHAR2`. An emptry `VARCHAR2` data type consumes no storage
+- Generally you should use `VARCHAR2` datatypes instead of `CHAR`
 
-![](images/image107.png)
+# Contraints
 
-Check constraint - проверка бизнес правил при вставке записи.
+Relational database constraints:
+- Datatypes
+- Check (check business rules while inserting data)
+- Primary key. Created index for this.
+- Unique (differ from primary key in that it can be null value in the column). Created index for this.
+- Foreign key
 
-Отличия unique constraint от primary key в том, что значение в колонке с unique constraint могут быть null значения.
+## Check constraint example
 
-И для unique и для primary key создается индекс.
+- Create table and show it
+```sql
+create table demo_table
+(
+    primary_row_id      number      primary key,
+    date_row_created    date,
+    some_comment        varchar2(30)
+);
 
+desc demo_table
+```
 ![](images/image193.png)
 
-Добавление check contraint
+
+- Add check constraint to check date after than 1900 year
+```sql
+alter table demo_table add constraint ck_not_to_old check (date_row_created > to_date('01-01-1900', 'mm/dd/yyyy'));
+```
 
 ![](images/image10.png)
 
-При вставке будем проверять, что дата не раньше чем 1900 год.
+- try to insert wrong row
 
+```sql
+insert into demo_table values (1, to_date('01-01-1800', 'mm/dd/yyyy'), 'test2');
+```
 ![](images/image19.png)
 
-### Создание модели таблицы (ERD)
+# Create table model (ERD)
 
-![](images/image123.png)
+## Anylize of model 
 
-![](images/image219.png)
+- Before we actually create a model, we need to perform some analysis and understand the data we are modeling
+- Generally this is done with various stakeholders - people who understand the business, developers, managers who understand the data you are modeling and how it will be used
+- This process is an iterative process and can take some time
+- The model will start taking form as this analysis is done
 
-![](images/image65.png)
+The Entity Relationship (ER) Diagram (ERD)
+- The ERD is a "picture" of the physical model of the database
+- When you model a database you will do so by creating an ER diagram for the database
 
-![](images/image3.png)
+ERD provides details on
+- individual tables, columns and column definitions
+- Constraint definitions
+- Relationships between tables
 
-![](images/image21.png)
+## Example of analysis
 
-Можно создать модель базы данных в Oracle Data Modeller.
+- Create in Oracle Data Modeller first table and called it PERSON (not PEOPLE)
+- Oracle support lower or mixed case, but uppercase is the accepted standart
 
-![](images/image129.png)
+- The column and its name should represent a single atomic data element stored in the column. Don't combine city, state and zip code in one column.
+- Carefully consider data type and lengths. Don't store dates in VARCHAR2 for example.
+- Understand the business rules related to the table columns. These translate into column constraints. 
+  - Valid language related characters
+  - Standardized formats (Upper case?)
+  - Valid data range (minimum or maximum data ranges?)
+  - Security (Encryption/PCI?)
 
-![](images/image35.png)
+Our example:
+- `LAST_NAME` and `FIRST_NAME`
+  - Init-capped name is required
+  - Required in each record
+  - `VARCHAR2(30)`
+- `MIDDLE_NAME`
+  - The business rule calls for it to be a single capitalized initial
+  - The middle name is optional
+  - we will rename the column to `MIDDLE_INITIAL` to more properly describe the data it contains
+  - `VARCHAR2(1)`
+- `BIRTH_DATE`
+  - Entered can not be over 100 years ago
+- `SSN`
+  - Unique
+  - will not be stored with dashes or any other kind of delimiter
+  - Each SSN must be 9 characters in length
+  - No mathematical calculations on SSN's will be needed
+- `ZIP_CODE`
+  - We will change the name of the `POSTAL_CODE`
+  - Because the `POSTAL_CODE` in many countries is not always numeric, we will make the `POSTAL_CODE` column a varchar2(10) column
 
-![](images/image94.png)
+##  NULL values
 
-![](images/image20.png)
+- NULL usuallly represents an unknown or undetermined state
+- When designing tables you need to consider if a column should be allowed to be NULL or not. 
+- If the column MUST contain data then it should be defined as `NOT NULL`
+- If the column MIGHT contain data then it should not be defined as `NOT NULL`
+- In cases where the business rules do not require the column to contain data then it should not be defined as `NOT NULL`
+- By default, a column in a table can contain NULL values
+- Make a column `NOT NULL` when you create the table or you can alter an existing column to be NOT NULL as long as it does not contain any NULL values
+- A column that is going to be part of a primary key (for example SSN) is always going to be `NOT NULL`
+  
+  You can define columns as `NOT NULL` or `NULL` when:
+    - You initially create a table
+    - You use the `alter table` command to modify the column
+    - Add a column to a table with the `alter table` command
 
-![](images/image217.png)
-
-![](images/image138.png)
-
-![](images/image36.png)
-
-![](images/image12.png)
-
-![](images/image199.png)
-
-### Концепция NULL значения в Oracle
-
-![](images/image224.png)
-
-![](images/image187.png)
-
-![](images/image205.png)
-
-![](images/image183.png)
-
-![](images/image200.png)
+## Create table in Oracle Data Modeller
 
 ![](images/image79.png)
 
-Повторим ERD в Oracle Data Modeller
+- ERD in Oracle Data Modeller
 
 ![](images/image214.png)
 
-### Первичный ключ
-
-![](images/image190.png)
-
-![](images/image26.png)
+## Primary key. Natural and surrogate keys.
 
 ![](images/image172.png)
 
-### Натуральные и суррогатные первичные ключи
+- in our `PERSON` table we used the SSN in the row to identify each row uniquely
+- In reality the SSN is what is known as a surrogate key
+  - It is a number generated by the government that is supposed to be unique for each person
+  - However, there is nothing about the number that forses it to be unique
+- If we had a way to store the entire DNA of a person then that wouild represent a natual key
+  - A natural key is a column or combination of columns that uniquely identifies a row in a natural way
+  - For example, latitude and longtitude might be sufficient to uniquely identify a given building in a table that contains building information.
 
-![](images/image40.png)
+# Normalization
 
-![](images/image178.png)
+## Process of normalization
 
-### Нормализация
+- Normalizing a database model typically involves developing the model so that it is in what is called third mormal form (3NF)
+- Normalizing a database model is a progressive process starting with first normal form and progressing from there (1NF, 2NF, 3NF)
+- Each level of normalization requires the completion of the previous level of normalization
+  
+## Pros vs cons
+Benefits of normalization:
+- Reduction in overall logical and physical IO
+- Reduction in data duplication/redundancy
+- Data anomalies related to data modification less likely to occur
+- Reduction in overall storage required
+- Indexes tend to be smaller and therefore provide faster access
 
-![](images/image11.png)
+Negatives of normalization:
+- A 3NF model can require more joins in a SQL statement making the SQL statement longer and potentially more complex
+- In some rare cases a de-normalized table can perform better. More often than not in cases like this some basic SQL tuning - rather than de-normalizing the model - is the best solution.
 
-![](images/image110.png)
+## 1NF (First normal form - Entity atomicity)
 
-![](images/image56.png)
+- Data stored in each column of the table is "atomic" in value
+- If a table has more than one entities information in it you separate that information into individual tables for each entity
 
-![](images/image220.png)![](images/image196.png)
-
-#### 1-ая форма (Атомарность данных в колоноках)
-
-![](images/image104.png)
-
-Посмотрим на структуру таблицы
-
+Example: 
+- Let's look at this table
+- 
 ![](images/image169.png)
+
+
 
 Тут видно, что телефон входит целиком. Но внутри телефона есть код города, который будет повторяться во многих телефонных номерах. Всегда стоит дилемма насколько глубоко дробить данные. Тут нужно смотреть на бизнес\-требования. Если возможно представить случай, когда данные понадобятся для анализа, следует данные нормализировать. В данном случае создать отдельное поле для кода \- города. Так создается 1-ая нормальная форма. Каждая колонка должна отражать отдельное свойство (атрибут) сущности (entity).
 
