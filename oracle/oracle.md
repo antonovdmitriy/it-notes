@@ -19,15 +19,18 @@
   - [NULL values](#null-values)
   - [Create table in Oracle Data Modeller](#create-table-in-oracle-data-modeller)
   - [Primary key. Natural and surrogate keys.](#primary-key-natural-and-surrogate-keys)
+  - [Relationships in ERD](#relationships-in-erd)
+    - [One-to-one](#one-to-one)
+    - [One-to-many](#one-to-many)
+    - [Many-to-many](#many-to-many)
+    - [Foreign ключи](#foreign-ключи)
 - [Normalization](#normalization)
   - [Process of normalization](#process-of-normalization)
   - [Pros vs cons](#pros-vs-cons)
   - [1NF (First normal form - Entity atomicity)](#1nf-first-normal-form---entity-atomicity)
-      - [Обозначение связей на ERD](#обозначение-связей-на-erd)
-      - [Foreign ключи](#foreign-ключи)
-      - [2-ая нормальная форма (зависимость колонок от первичного ключа)](#2-ая-нормальная-форма-зависимость-колонок-от-первичного-ключа)
-      - [3-я форма (зависимость колонок только от первичного ключа, но не от других)](#3-я-форма-зависимость-колонок-только-от-первичного-ключа-но-не-от-других)
-    - [Устройство Oracle](#устройство-oracle)
+  - [Second normal form (dependency columns from primary key)](#second-normal-form-dependency-columns-from-primary-key)
+  - [Third normal form (columns depend only on the primary key, but not on others)](#third-normal-form-columns-depend-only-on-the-primary-key-but-not-on-others)
+- [What is inside the Oracle](#what-is-inside-the-oracle)
     - [Установка Oracle](#установка-oracle)
     - [Удаление Oracle](#удаление-oracle)
     - [Создание базы данных Oracle](#создание-базы-данных-oracle)
@@ -258,6 +261,47 @@ Our example:
   - A natural key is a column or combination of columns that uniquely identifies a row in a natural way
   - For example, latitude and longtitude might be sufficient to uniquely identify a given building in a table that contains building information.
 
+## Relationships in ERD
+
+### One-to-one
+
+- One record in table A will have zero or one record in table B
+- One record in table B **must** have one record in table A
+
+
+![](images/image171.png)
+
+### One-to-many
+
+- One record in the A table must have one record in the B table
+- One record in the B table will have zero, one or many records in A table
+
+![](images/image33.png)
+
+### Many-to-many
+
+- One record in table A will have zero, one or many records in table B
+- One record in table B must have one or more records in table A
+
+![](images/image73.png)
+
+![](images/image29.png)
+
+This shows that if we enter an entry in the departments, then 0 or more employee objects can refer to it. But when entering an employee in the table of employees, there must be one or more records in the departments.
+
+In such cases, a associative table is often introduced
+
+![](images/image153.png)
+
+### Foreign ключи
+
+![](images/image14.png)
+
+If we insert an employee with a department that is not in the department table, then there will be an insert error
+
+![](images/image147.png)
+
+
 # Normalization
 
 ## Process of normalization
@@ -285,80 +329,61 @@ Negatives of normalization:
 
 Example: 
 - Let's look at this table
-- 
+  
 ![](images/image169.png)
 
-
-
-Тут видно, что телефон входит целиком. Но внутри телефона есть код города, который будет повторяться во многих телефонных номерах. Всегда стоит дилемма насколько глубоко дробить данные. Тут нужно смотреть на бизнес\-требования. Если возможно представить случай, когда данные понадобятся для анализа, следует данные нормализировать. В данном случае создать отдельное поле для кода \- города. Так создается 1-ая нормальная форма. Каждая колонка должна отражать отдельное свойство (атрибут) сущности (entity).
-
-![](images/image149.png)
+- Here you can see that the phone is included in its entirety. But inside the phone there is an area code that will be repeated in many phone numbers. There is always a dilemma how deep to split the data. Here you need to look at the business requirements. If it is possible to imagine a case where the data is needed for analysis, the data should be normalized. In this case, create a separate field for the  country code. This creates the 1st normal form. Each column should reflect a separate property (attribute) of the entity.
 
 ![](images/image137.png)
 
-![](images/image177.png)
-
-Что будет если нужно добавить несколько телефонных номеров
-
+- 1NF also prohibits repeating groups. 
+- What if we wanted to have more than one phone number in our table?
+- If we add more phone number like this, we violate 1NF because adding another phone number would create a repeating group
+  
 ![](images/image32.png)
 
-![](images/image41.png)
-
-Тут есть проблема. Что если у человека может быть несколько телефонов одного типа. Т.к у нас в первичный ключ входит тип телефона в этой схеме это сделать нельзя.
-
-#### Обозначение связей на ERD
-
-![](images/image171.png)
-
-![](images/image33.png)
+- To avoid this problem we will break the phone number information into its own table
+  - Note that we also created a SSN column in the new PHONE table. This maintains the relationship between the person and their phone number
+  - The combination of the SSN and the PNONE_TYPE are the pK of the PHONE table
 
 ![](images/image139.png)
+  
 
-![](images/image73.png)
+## Second normal form (dependency columns from primary key)
 
-![](images/image29.png)
+- In 2NF all non-key columns must depends on the whole primary key to uniquely identify them
+- The non-key columns must depend on the entire primary key in the case of a multiple column primary key
+- As we did our analysis we discovered that a person might have certifications we want to track
 
-Тут показано, что если вводим запись в депарартаменты, то на нее могут ссылаться 0 или более объектов работников. Но при вводе работника в таблицу работников, обязательно должны быть записи в департаментах одна или более.
-
-В таких случаях часто вводят таблицу связку
-
-![](images/image153.png)
-
-#### Foreign ключи
-
-![](images/image14.png)
-
-Если добавляем работника с департаментом, которого нет в таблице департарментом, то будет ошибка вставки. Реализуем бизнес-требование.
-
-![](images/image147.png)
-
-#### 2-ая нормальная форма (зависимость колонок от первичного ключа)
-
-![](images/image96.png)
-
-![](images/image52.png)
+Example:
+- to track these we added certification table
+- To track who they were certified by we added the certifier table
 
 ![](images/image173.png)
 
-Проверяем все ли колонки зависят от первичного ключа. Это проверка на вторую нормализованную форму. Тут проблемы.в таблицы с сертификация co_code входит в состав первичного ключа. Не может быть нескольких сертификатов у человека выданных одной компанией.
-
-URL компании не зависит от всех полей первичного ключа. Логично вынести его в таблицу cert_company.
+- Check if all columns depend on the primary key. This is a test for the second normalized form. There are problems here. In tables with `co_code` certification is part of the primary key. A person cannot have several certificates issued by one company.
+- The company URL is independent of all primary key fields. It is logical to move it to the cert_company table.
 
 ![](images/image100.png)
 
 ![](images/image126.png)
 
-#### 3-я форма (зависимость колонок только от первичного ключа, но не от других)
+## Third normal form (columns depend only on the primary key, but not on others)
 
-![](images/image189.png)
+- Moving data that is not solely dependent on a tables primary key into its own table
+- If a column could change in a table because of a change to any non-primary key column in that table then that is a violation of 3NF. This is called a transient dependency
+- Columns should only depend on the primary key. If, when changing one column, we must edit others, then we have a transitive dependency.
 
-Колонки должны зависеть только от первичного ключа. Если при изменении одной колонки мы должны править другие, значит у нас есть транзитивная зависимость.
-
-![](images/image90.png)
+Example:
+- The `PHONE_TYPE_DESC` column is not dependenent on the entire primary of `PHONE`
+- It is only dependent on the `PHONE_TYPE` column
+- Because of this we need to create another table to deal with `PHONE_TYPE`
 
 ![](images/image70.png)
 
-### Устройство Oracle
+# What is inside the Oracle 
+
+- Oracle 
 
 ![](images/image43.png)
 
