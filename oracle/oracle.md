@@ -31,7 +31,16 @@
   - [Second normal form (dependency columns from primary key)](#second-normal-form-dependency-columns-from-primary-key)
   - [Third normal form (columns depend only on the primary key, but not on others)](#third-normal-form-columns-depend-only-on-the-primary-key-but-not-on-others)
 - [What is inside the Oracle](#what-is-inside-the-oracle)
-    - [Установка Oracle](#установка-oracle)
+  - [Oracle Database Instance](#oracle-database-instance)
+    - [SGA](#sga)
+      - [Database Buffer Cache](#database-buffer-cache)
+      - [Shared Pool](#shared-pool)
+    - [Oracle Database Instance background processes](#oracle-database-instance-background-processes)
+  - [Analyzing an Existing Oracle Instance](#analyzing-an-existing-oracle-instance)
+    - [Database Location](#database-location)
+    - [How to know ORACLE\_SID](#how-to-know-oracle_sid)
+    - [Important files](#important-files)
+- [Установка Oracle](#установка-oracle)
     - [Удаление Oracle](#удаление-oracle)
     - [Создание базы данных Oracle](#создание-базы-данных-oracle)
       - [Планирование мощностей](#планирование-мощностей)
@@ -383,93 +392,103 @@ Example:
 
 # What is inside the Oracle 
 
-- Oracle 
+- Oracle Database is a Relational Database Management System (RDBMS)
+- There are two main parts to an Oracle Database
+  - the Oracle Database instance
+  - The Oracle database
 
-![](images/image43.png)
+## Oracle Database Instance
 
-![](images/image98.png)
+- Oracle database instance is a program - an operating system process that allows the database to work.
+- Consisted of Processes/Threads/Services
+- Instance is identified by its unique SID. 
+- To connect to the Oracle database we have to know what `SID` we want to connect to
 
-Oracle database instance - это программа  - процесс операционной системы, которые позволяет работать базе данных работать.
+### SGA  
+- Memory - Called the `SGA` (System Global Area) - memory area allocated at the start of the instance.
+- The `SGA` is subdevided into smaller pools of memory
+  -  Shared Pool
+  -  Database Buffer Cache
+  -  Relo Log Buffer
+- The larger the SGA, the longer the objects are stored in memory. This greatly affects performance. If the data is not in the Buffer Cache, loading it there is expensive and time consuming.
 
-SGA - область памяти, аллоцируемая при старте инстанса.
-
-Может занимать от нескольких гигабайт до терабайт.
-
-![](images/image167.png)
-
-Разделена на более несколько пулов памяти.
 
 ![](images/image47.png)
 
-Shared Pool
 
-Database Buffer Cache
+#### Database Buffer Cache
 
-А также Redo Log Buffer и другие
-
-![](images/image17.png)
-
-Buffer Cache состоит из блоков фиксированного размера. Этот размер задается при создании базы данных. Т.е размер блоков в оперативной памяти такой же как и на диске.
+- Dynamic storage of database data
+- Data moves from disk to memory and back to disk
+- Individual blocks of memory of the same size
+- Size o the memory buffers is based on the DB block size
+- DB Block size is defined when the database is created
+- The size of blocks in RAM is the same as on disk.
+- In Buffer Cache, client processes put data from disk.
+- From Buffer Cache writes to disk process DBWR (Database Writer)
 
 ![](images/image175.png)
 
-В Buffer Cache клиентские процессы помещают данные с диска.
+#### Shared Pool 
 
-Из Buffer Cache записывает на диск процесс DBWR (Database Writer)
-
-Shared Pool состоит из нескольких областей памяти.
-
-Shared SQL Area. Отвечает за исполнение SQL выражений. Когда клиентский процесс запускает sql Oracle кладет это выражение в shared sql area. Когда выражение перестает часто вызываться Oracle убирает его зи Shared SQL Area
-
-Также это Data Dictionary Cache. Сюда загружаются системные таблицы Oracle
+consists of several memory areas:
+- **Shared SQL Area**. Responsible for executing SQL statements. When a client process starts sql Oracle puts this statement in the shared sql area. When an expression is no longer called frequently, Oracle removes it from the Shared SQL Area
+- **Data Dictionary Cache**. Oracle system tables are loaded here
 
 ![](images/image135.png)
 
-Чем больше размер SGA тем дольше объекты сохраняются в памяти. Это сильно влияет на производительность. Если данные не находятся в Buffer Cache грузить их туда дорого и долго.
+### Oracle Database Instance background processes
 
-![](images/image54.png)
+- Over 46 Linux processes in Oracle Database 12c when it's just idle, doing nothing
+- Each of them has its own `PGA` memory area.
+- If the base is loaded then there are much more processes.
 
-После старта инстанса, даже база ничего не делает, запущено более 46 процессов Linux. У каждого из них есть собственная область памяти PGA. Если база нагружена процессов намного больше.
+The most important from them:
+- **ARCH** - Archive Process
+- **CKPT** - Checkpoint Process
+- **DBWn** - Database Writer Process
+- **LGWR** - Log Writer Process
+- **PMON** - Process Monitor Process
+- **SMON** - System Monitor Process 
+- **Client Processes**
+---
 
-Наиболее важные из них
+- If one of the 6 processes stops, it will most likely crash the database
+- Client processes are created when a client session is opened.
 
-![](images/image27.png)
+## Analyzing an Existing Oracle Instance
 
-Если один из 6 процессов остановится, скорее всего это приведет к поломке базы данных
+### Database Location
 
-Клиентские процессы создаются, когда открывается клиентская сессия.
-
-Посмотрим параметры памяти:
-
-show parameter memory
-
-![](images/image38.png)
-
-Важно уметь смотреть параметр ORACLE_HOME, чтобы понимать где установлена база данных на сервере.
-
-env | grep ORACLE_SID
-
-![](images/image99.png)
-
-Обычно на расположение базы данных указывает переменная окружения ORACLE_HOME. Однако в примерах на виртуальных машинах от Oracle, база может быть установлена тут:
-
-/u01/app/oracle/product/version/db_1
+- It is important to be able to look at the `ORACLE_HOME` environment variable in order to understand where the database is installed on the server.
+- However, in the virtual machine examples from Oracle, the base can be installed here `/u01/app/oracle/product/version/db_1`
 
 ![](images/image9.png)
 
-Важные файлы тут в каталоге dbs
+Важные файлы тут в каталоге `dbs`
 
 ![](images/image91.png)
 
-Все SID имеют файл с окончанием cdb. Он управляется ораклом, но его можно открыть и частично прочитать cat.
 
+### How to know ORACLE_SID
+
+```
+env | grep ORACLE_SID
+```
+![](images/image99.png)
+
+All SIDs have a file ending with cdb. It is managed by oracle, but it can be opened and partially read by cat.
 ![](images/image66.png)
 
-![](images/image92.png)
+### Important files
 
-В init.ora описываются параметры инстанса. Например размер SGA.
+- Instance and database parameter settings are set in the database parameter file
+- The database parameter file is required to start the instance and then open the database
+- Two kind of parameter files:
+  - **SPFILE** - Automatically maintained by Oracle
+  - **init.ora** - Manually managed parameter file. For example, the size of SGA.
 
-### Установка Oracle
+# Установка Oracle
 
 При выделении оперативной памяти, больше внимание уделяют памяти для базы данных, но для памяти процессов Oracle, что может существенно влиять на его работу
 
