@@ -1,10 +1,14 @@
-# Содержание
+# Table of contents
 
-- [Содержание](#содержание)
-- [Полезные ссылки](#полезные-ссылки)
-    - [Полезные команды](#полезные-команды)
-    - [Основы реляционных баз данных](#основы-реляционных-баз-данных)
-    - [Типы данных](#типы-данных)
+- [Table of contents](#table-of-contents)
+- [Useful links](#useful-links)
+- [Usefual commands](#usefual-commands)
+- [Relational db foundation](#relational-db-foundation)
+  - [ACID](#acid)
+  - [Tables](#tables)
+- [Data types](#data-types)
+  - [NUMBER](#number)
+  - [DATE](#date)
     - [Contraints](#contraints)
     - [Создание модели таблицы (ERD)](#создание-модели-таблицы-erd)
     - [Концепция NULL значения в Oracle](#концепция-null-значения-в-oracle)
@@ -26,11 +30,11 @@
       - [Redo logs](#redo-logs)
 
 
-# Полезные ссылки
+# Useful links
 
-[Виртуальная машина для Virtual Box  с Oracle 19](https://www.google.com/url?q=https://www.oracle.com/database/technologies/databaseappdev-vm.html&sa=D&source=editors&ust=1674949804304876&usg=AOvVaw2iaL0hD0EL7hZUdHVdkFIf)
+[Virtual Machine for Virtual Box  with Oracle 19](https://www.google.com/url?q=https://www.oracle.com/database/technologies/databaseappdev-vm.html&sa=D&source=editors&ust=1674949804304876&usg=AOvVaw2iaL0hD0EL7hZUdHVdkFIf)
 
-### Полезные команды
+# Usefual commands
 
 Просмотр описания таблицы или view
 ```sql
@@ -39,28 +43,66 @@ desc table_name
 
 ![](images/image46.png)
 
-### Основы реляционных баз данных
+# Relational db foundation
+
+What is a relational database?
+- A collection of "things" (entities)
+- Tables provide a way of storing information about entities
+- Rows indicate a unique entity
+- Columns describ attributes related to an antity
 
 ![](images/image2.png)
 
+- Provides a way to define rules that exist for the entities (tables) and their attributes (columns) we are storing in database (constraints)
+- Provides a way of defining how different things are related (foreign keys)
+  
 ![](images/image76.png)
 
-![](images/image124.png)
+## ACID
+A relational database adheres to the principles of ACID:
+- (A)tomicity - Each transaction is all or nothing
+- (C)onsistency - Each transaction will be valid according to all defined rules (contraints, cascades, triggers and so on)
+- (I)solation - No dirty reads. Results of concurrent transactions are as if the transactions were run serially.
+- (D)urability - Once a commit occurs the database ensures that it has been stored permanently and is recoverable in the event of failure
 
-![](images/image105.png)
-
+## Tables
+Data is organized into tables.
+- Each table has rows and columns
+- One or more columns in each row makes that row unique. This is known as the tables's `primary key`
+- The general convention when naming a table is to use the singular form (driver vs. drivers)
+- Another general convention is to upper case the table name as well as the names of all of the columns
+- The primary key is always unique
+- A column can be empty (NULL)
+- The data in the table in not sorted
+  
 ![](images/image7.png)
 
 ![](images/image45.png)
 
-### Типы данных
+# Data types
 
-![](images/image210.png)
+## NUMBER
+
+- Non-integer datatype used to store positive, negative numbers with a default precision of up to 38 digits total
+- Optionally define precision and scale when defining a number
+  - Precision and scale provide additional integrity checking
+  - Precision - up to 38 digits
+    - For example, precision of 4 is 1234. Precision of 6 is 123456
+  - Scale - Number of digits after the decimal point. Part of the total precision
+    - For example, precisition of 4 and scale of 2 is `12.35`. `1234.56` would cause an error.
 
 ![](images/image93.png)
 
-![](images/image164.png)
+## DATE
 
+- Integrity checking on stored dates. No invalid leap years or 09/31/2015 dates will be stored in your database
+- A single data type can store a date/time that can be displayed using any number of formats.
+    - `01-JAN-2015 01:00:00`
+    - `01/01/2015`
+    - `1/1/2015 21:30:00`
+    - `1/1/15 09:30:00`
+  
+  
 ![](images/image44.png)
 
 ![](images/image215.png)
