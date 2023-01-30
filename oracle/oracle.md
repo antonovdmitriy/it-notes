@@ -44,6 +44,7 @@
   - [Installation Features](#installation-features)
   - [Environment variables](#environment-variables)
   - [Installer](#installer)
+- [Install Oracle on Linux with x forwarding](#install-oracle-on-linux-with-x-forwarding)
 - [Uninstall Oracle](#uninstall-oracle)
 - [OFA Oracle Flexible Architecture](#ofa-oracle-flexible-architecture)
 - [Resource planning](#resource-planning)
@@ -93,6 +94,9 @@
   - [Show control file path](#show-control-file-path)
   - [Control file data dictionary view](#control-file-data-dictionary-view)
 - [Redo logs](#redo-logs)
+  - [Redo Logs and Performance](#redo-logs-and-performance)
+  - [Infications of Performance issues](#infications-of-performance-issues)
+  - [Redo Log Administration](#redo-log-administration)
 
 
 # Useful links
@@ -101,14 +105,14 @@
 
 # Usefual commands
 
-Просмотр описания таблицы или view
+Show table or view description
 ```sql
 desc table_name 
 ```
 
 ![](images/image46.png)
 
-Имя текущего пользователя
+Current user name
 ```sql
 show user
 ```
@@ -579,9 +583,37 @@ For example `$ORACLE_BASE/product/12.1.0.2`  `$ORACLE_BASE/product/11.2.0.3`
 
 - Launch `runinstaller`
 
+# Install Oracle on Linux with x forwarding
+
+Via GUI with X11 forwarding
+
+1. See X11 forwarding setup description in the Linux document [Linux Document](../linux/linux.md)
+2. Install packages
+
+  ```bash
+  sudo yum install xdpyinfo
+  sudo yum install xorg-x11-utils
+  ```
+
+3. Give permission to run to the user. It must not be root otherwise the installer will not start
+```
+sudo chown -R vagrant:vagrant *
+sudo chown vagrant:vagrant ./oracle_distr/
+```
+
+3.  Export environment variable 
+  
+```bash
+export CV_ASSUME_DISTID=OEL8.1
+```
+
+4.  Run installer
+
+![](images/image184.png)
+
 # Uninstall Oracle
 
-В папке `$ORACLE_HOME/deinstall` есть файл `deinstall`
+In directory `$ORACLE_HOME/deinstall` there is a file  `deinstall`
 
 ![](images/image64.png)
 
@@ -1375,66 +1407,155 @@ Note that many V$ views are on varioous structures within the database not the c
 
 # Redo logs
 
-![](images/image5.png)
+Each change that happens in the database creates what is called redo
 
-До комита записи лога помещаются в область SGA redo log buffer. После коммита помещаются на диск. Именно это обеспечивает durablility в acid.
+Redo is critical for recovery purposes
 
-На диск могут попасть redo log и не закомиченных транзакций, например если вставляется множество данных и памяти в redo log buffer не хватает.
+Redo is stored both in memory and disk at various times
+- Initially redo is stored n an area of memory in the SGA called the **redo log buffer**
+- When a commit occurs then the redo in the **redo log buffer** is flushed to physical files on disk called **online redo logs**
 
-![](images/image22.png)
+A commit record is also stored in the redo logs. As you remebmer about durability in ACID. 
 
-Если 3 зеркала redo logs после комита записывается в 3, но не синхронно. Синхронно (как я понимаю) только в 1.
+Redo log and uncommitted transactions can get to disk, for example, if a lot of data is inserted and there is not enough memory in the redo log buffer.
 
-Пример. Имеем две группы. В каждом 2 member ( можно думать о них как о файлах). Мемберы одинаковые в одной группе, просто зеркальные копии, их размер. Количество мемберов и их размеры в разных группах могут не совпадать
+An individual redo log is called a redo log member
 
-![](images/image125.png)
+One or more redo log members are assigned to a redo log group
 
-![](images/image122.png)
+All redo log members assigned to the same redo log group are mirrored copies
+  - They are written to at the same time
+  - They are written to in parallel
+  - The mimmrors are used to provide redundancy
+  - The mirrorrs should be palces on sepatate physical disks
 
-![](images/image134.png)
+An Oracle databes must have at least two redo log groups
 
-![](images/image69.png)
+Oracle writes to the redo logs in round-robin sequence. As a result, the contents of older redo logs get over written over time. Any time Oracle stops writing from one redo log group and starts writing to another, this is called a log switch
 
-Размер redo logs важен. Если мы будем делать log switch из одной группы в другую, это будет существенно сказываться на производительности.
+When a log switch occurs the new redo log group is assigned a sequence number. The number starts at 1 when the database is created. The number increments by one for each log switch. This helps to serizlize when the online redo log groups were written too, which is useful during recoveries. 
 
-![](images/image18.png)
+## Redo Logs and Performance
 
-![](images/image101.png)
+A commit can not complete until all the redo information in the redo log buffer has been flushed to the redo logs on disk
 
-![](images/image59.png)
+The session issuing the commit will have to wait until the commit is complete before it can continue
 
-![](images/image16.png)
+Thi smeans that database performance is sensitive to the write performance of the disks that the online redo logs are located on
 
-![](images/image154.png)
+Additionally once as online redo log fils up and a log switch is required all sessions will be blocked from completing any commits until the log switch is complete. This is another reason to make sure the online redo logs are on fast disk.
 
-![](images/image81.png)
+## Infications of Performance issues
 
-![](images/image182.png)
+Oracle provides a lot of metrics around performance
 
-![](images/image130.png)
+The oracle performance view `V$SYSTEM_EVENT` provides statistics of interest on redo log performance. These include
+- log_file_sync
+- log_file_parallel_write
+- log_file_switch_completeion
+
+This view provieds both a count for each time the event occurred and how long the events took in total
+
+All times are in microseconds
+
+```sql
+select event, total_waits, time_waited, average_await from v$system_event where event like `%log%`
+```
+
+```
+EVENT                       TOTAL_WAITS     TIME_WAITED         AVERAGE_WAIT
+----                        ----------      ----------          -----------
+log file sequential read    16              0                   0
+log file single write       16              11                  .67
+log file parallel write     232             23                  .99
+switch log file command     2               16                  7.83
+log file sync               27              55                  2.03
+target log file size        127             75                  .59
+```
+
+Rapid log swithing can be a serious cause of performance issues
+
+Log switches can be queried view the `V$LOG_HISTORY` view. We can then see how long there is between log switches
+
+```sql
+select sequence#, first_change#, first_time, 
+trunc(1440*(first_time - lag(first_time)) over (order by first time) ) )
+    as time_between_switch_min
+from v$log_history
+order by sequence#    
+```
+
+```
+SEQUENCE#   FIRST_CHANGE#   FIRST_TIME              TIME_BETWEEN_SWITCH_MIN
+----        ----------      ----------              -----------
+30          1963095         10/09/2016 13:29:35     
+31          1965817         10/09/2016 13:59:41     30
+32          1986048         10/10/2016 00:00:54     601
+```
+
+## Redo Log Administration
+
+As a DBA you will need to:
+- Add and remove online redo log members to existing groups
+- add and remove new online redo log groups
+- Move members of existing online redo groups to different disk devices
+- These oparations are done using the `alter database` command
+
+To add a redo log member
+
+```sql
+select group#, members from v$log 
+```
+
+```
+GROUP#      MEMBERS
+------      -------
+1           2
+2           2
+3           2
+```
+
+```sql
+alter database add logfile member `u01/redo/member_3/redo01_01c.log` to group 1;
+alter database add logfile member `u01/redo/member_3/redo01_02c.log` to group 2;
+alter database add logfile member `u01/redo/member_3/redo01_03c.log` to group 3;
+```
+
+
+```sql
+select group#, members from v$log 
+```
+
+```
+GROUP#      MEMBERS
+------      -------
+1           3
+2           3
+3           3
+```
+
+To remove a redo log member
+
+```sql
+alter database drop logfile member `u01/redo/member_3/redo01_01c.log`;
+alter database drop logfile member `u01/redo/member_3/redo01_02c.log`;
+alter database drop logfile member `u01/redo/member_3/redo01_03c.log`;
+```
+
+when dropping a mamber or a log file group you might see this error
+`ORA-01609 log 2 is the current log for thread 1 - cannot drop members`
+
+You will need to perform a log switch in this case sinse you can't drop or change members of the current log group
+
+```sql
+alter system switch logfile
+```
+
+You can see the current log group throught this query 
+```sql
+select group#, status from v$log
+```
 
 ![](images/image86.png)
 
-![](images/image80.png)
-
-Установка Oracle на Lunux
-
-Через графический интерфейс с пробросом X11
-
-1.  См. Описание настройки проброса X11 в документе по Linux
-2.  Поставить пакеты
-
-sudo yum install xdpyinfo
-
-sudo yum install xorg-x11-utils
-
-Дать права на запуск пользователю. Это должен быть не root иначе не запуститься инсталлятор
-
-sudo chown -R vagrant:vagrant *
-
-sudo chown vagrant:vagrant ./oracle_distr/
-
-3.  Экспортировать переменную окружения export CV\_ASSUME\_DISTID=OEL8.1
-4.  Запустить инсталлер
-
-![](images/image184.png)
+After performing the switch you can drop the member
