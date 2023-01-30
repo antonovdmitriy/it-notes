@@ -4,7 +4,6 @@
 - [Useful links](#useful-links)
 - [Usefual commands](#usefual-commands)
 - [Relational db foundation](#relational-db-foundation)
-  - [ACID](#acid)
   - [Tables](#tables)
 - [Data types](#data-types)
   - [NUMBER](#number)
@@ -71,6 +70,16 @@
   - [Create dba user , connect and create table](#create-dba-user--connect-and-create-table)
   - [Userul grants](#userul-grants)
 - [Oracle data dictionary](#oracle-data-dictionary)
+  - [Scope to what is seen in the dictionary view](#scope-to-what-is-seen-in-the-dictionary-view)
+  - [Useful views](#useful-views)
+- [Transactions](#transactions)
+  - [Decription](#decription)
+  - [ACID](#acid)
+  - [How does Oracle support ACID](#how-does-oracle-support-acid)
+  - [Read Consistency Model](#read-consistency-model)
+    - [Undo segment](#undo-segment)
+    - [Database timing (SCN)](#database-timing-scn)
+    - [Example Read Consistency](#example-read-consistency)
       - [Администрирования control files и redo logs](#администрирования-control-files-и-redo-logs)
       - [Redo logs](#redo-logs)
 
@@ -88,6 +97,13 @@ desc table_name
 
 ![](images/image46.png)
 
+Имя текущего пользователя
+```sql
+show user
+```
+![](images/image192.png)
+
+
 # Relational db foundation
 
 What is a relational database?
@@ -102,13 +118,6 @@ What is a relational database?
 - Provides a way of defining how different things are related (foreign keys)
   
 ![](images/image76.png)
-
-## ACID
-A relational database adheres to the principles of ACID:
-- (A)tomicity - Each transaction is all or nothing
-- (C)onsistency - Each transaction will be valid according to all defined rules (contraints, cascades, triggers and so on)
-- (I)solation - No dirty reads. Results of concurrent transactions are as if the transactions were run serially.
-- (D)urability - Once a commit occurs the database ensures that it has been stored permanently and is recoverable in the event of failure
 
 ## Tables
 Data is organized into tables.
@@ -957,61 +966,141 @@ select owner, table_name fro all_tables where table_name='MY_TABLE'
 
 # Oracle data dictionary
 
-![](images/image89.png)
+Informatation related to the database is in structure called the **data dictionary**
+Examples of what's stored in it:
+- Names of users
+- Names of tables
+- Names of indexes
 
-![](images/image49.png)
+This information is stored in tables and views in the database. These tables and views are owned by the `SYS` schema
+
+Example. Query the data dictionary views with SQL
+```sql
+select tablespace_name from dba_tablespaces
+```
 
 ![](images/image63.png)
 
-![](images/image152.png)
 
-![](images/image188.png)
+## Scope to what is seen in the dictionary view
 
-Если указываем скоуп all. Значит видим все объекты, к которым имеем привилегии. Т.е объекты в собственной схеме + объекты в других схемах, на которые выданы гранты.
+- `DBA`
+  - Can see everything in the database
+  - Must have `DBA` privileges 
+- `ALL`
+  - Can see only the objects you have privileges too
+  - Can see own objects and objects on that granted in another schemas
+- `USER`
+  - Visibility to only the objects in the schema of the user you are connected too
+  - Cannot cross schhemas
 
-![](images/image163.png)
+```sql
+connect scott/password
+select table_name from user_tables;
+```
 
-User видит объекты только в своей схеме.
+```
+TABLE_NAME
+---------
+BONUS
+SALGRADE
+DEPT
+EMP
+```
 
-![](images/image102.png)
+```sql
+connect scott/password
+select owner, table_name from all_tables;
+```
 
-![](images/image15.png)
+```
+OWNER       TABLE_NAME
+--------- ------------
+SCOTT       EMP
+SCOTT       DEPT
+SCOTT       SALGRADE
+SCOTT       BONUS
+```
 
-![](images/image132.png)
+## Useful views
 
-* * *
+`ALL_INDEXES` to find all tables with indexes assigned to those tables owned by a specific user
 
-![](images/image77.png)
+```sql
+select owner, table_name, index_name from all_indexes where owner='SCOTT'
+```
 
-![](images/image216.png)
+```
+OWNER       TABLE_NAME      INDEX_NAME
+-----       -------         ------
+SCOTT       DEPT            PK_DEPT
+SCOTT       EMP             PK_EMP
+```
 
-![](images/image168.png)
+Views related to users, objects they own and resource restrictions
 
-⁹![](images/image218.png)
+- (DBA, ALL, USER) `USERS`
+- (DBA) `PROFILES`
+- (DBA, ALL, USER) `OBJECTS`
+- (DBA, ALL, USER) `TABLES`
+- (DBA, ALL, USER) `INDEXES`
+- (DBA, ALL, USER) `RECYCLEBIN
 
-![](images/image192.png)
+Dynamic views related to users
+- `V$SESSION` See who is on the database
+- `V$PROCESS` Process related info
 
-Можно создавать таблицу с одинаковыми именами в разных схемах.
+# Transactions
 
-![](images/image51.png)
+## Decription 
 
-![](images/image119.png)
+A transaction is the set of insert, update and delete statements (DML) that occur from the time you log into the database, issue the statements and then issue a `commit` command OR All DML issued between two `commit` commands OR All DML issued between login or the last commit and a DDL statement
 
-![](images/image206.png)
+## ACID
 
-![](images/image4.png)
+A relational database adheres to the principles of ACID:
+- (A)tomicity - Each transaction is all or nothing
+- (C)onsistency - Each transaction will be valid according to all defined rules (contraints, cascades, triggers and so on)
+- (I)solation - No dirty reads. Results of concurrent transactions are as if the transactions were run serially.
+- (D)urability - Once a commit occurs the database ensures that it has been stored permanently and is recoverable in the event of failure
 
-![](images/image108.png)
+## How does Oracle support ACID
 
-![](images/image106.png)
+- Atomicity - The `commit` comand
+- Consistency - Constraints, undo segments, locking
+- Isolation - Undo segments, locking
+- Durability - Commit, redo logs, backups
 
-![](images/image74.png)
+## Read Consistency Model
 
-Селекты никогда не блокируются локами. Может быть кратковременный лок, когда oracle подгружает данные с диска, но это не тот блок, который может произойти между транзакциями.
+Oracle's architecture provides for a read consistent version of database data:
+- View of data is guaranteed to be accurate at the point in time you execute your SQL statement
+- If you are writing data (insert, update or delete) then you many have to contend with other transactions to access to row you are trying to modify
+- Locks only exist for individual rows that are modified. This reduces locking contetion
+- Read consistency is made possible by a special kind of objects called an **undo segment**
+- Along with undo segments Oracle uses locking mechanisms to ensure that transactions are consistent
+- Selects are never blocked by locks. There may be a momentary lock when oracle loads data from disk, but this is not a block that can occur between transactions.
+- DML (insert update and delete ) statements can be blocked by locks
 
-![](images/image211.png)
 
-![](images/image97.png)
+### Undo segment
+
+Undo sements are stored in special tablespaces called **undo tablespaces**
+
+Undo is managed by Oracle automatically. All the DBA needs to do is create the undo tablespace and make sure it's large enought to support the transactional load
+
+### Database timing (SCN)
+
+Oracle assigns all database operations a number to indicate the order of when they happend. This number is called the System Change Nubmer (SQN)
+
+Think of the SCN like a counter on a recording device. Like the timer the SQN is not a clock. It's just a nubmer that start at zero and increments
+
+Like the time the SQN can loosely be related to a point-in-time, but its main purpose is to indicate a place in the transaction stream.
+
+Every time a change is made in the database, the current SCN is assigned to that change and SCN is implemented
+
+### Example Read Consistency
+
 
 ![](images/image146.png)
 
