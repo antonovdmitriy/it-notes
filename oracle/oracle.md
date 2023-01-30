@@ -80,7 +80,10 @@
     - [Undo segment](#undo-segment)
     - [Database timing (SCN)](#database-timing-scn)
     - [Example Read Consistency](#example-read-consistency)
-      - [Администрирования control files и redo logs](#администрирования-control-files-и-redo-logs)
+    - [What if Oracle can't find the row in the Undo tablespace?](#what-if-oracle-cant-find-the-row-in-the-undo-tablespace)
+  - [Oracle Locking](#oracle-locking)
+    - [Example locking](#example-locking)
+- [Administer control files и redo logs](#administer-control-files-и-redo-logs)
       - [Redo logs](#redo-logs)
 
 
@@ -1101,48 +1104,160 @@ Every time a change is made in the database, the current SCN is assigned to that
 
 ### Example Read Consistency
 
+- User 1 will start a select statement
+- User 2 will make a database change with an insert statement
+- Oracle ensures that the database change made by user 2 doesn't change the result that user number one gets
 
-![](images/image146.png)
+Details:
 
-![](images/image68.png)
+- Janice starts a report of all employees and their total pay to date at 12:00 pm. The SCN is **12345** when the report is started. This report uses the EMPLOYEES table
+- An application job starts printing checks at 2:30 which increases the total amount paid to date for each employee. The SCN is **12399**
+- Janice's report reads a record in the EMPLOYEES table for employee **5503**. The block header indicates that the block was last changed/commited at SCN **10234** - since this was before the SCN at the time Janice started her report. It just reads the block in the table
 
-![](images/image117.png)
+    ![](images/image68.png)
 
-![](images/image162.png)
+- The application job then changes information in the EMLOYEES table for employee **5300**. This employee's active status is changed from TRUE to FALSE and commits the change. The CCN for this change is **12465**. 
+- The row is locked
+- The old block image is copied to the Undo tablespace with the old SCN
+- The row is changed. The block is not marked as commited yet
 
-![](images/image109.png)
+    ![](images/image117.png)
 
-![](images/image207.png)
+- The application job then issues a commit. This indicates the change is permanent.
+- The block in the table is marked as commited
+  
+    ![](images/image162.png)
 
-![](images/image103.png)
+- Any transaction that starts after the commit will use this block
+- Janice's report wants to read the EMPLOYEES row for employee **5300** at SCN 12560
+- Oracle checks the block for the row and finds that it's in a commited state. This meaans that the block can be used if the SCN on the block header is before the SCN when Janice started her report
+- Janice started her report at SCN **123456** and the SCN in the block header is **12465**. This means this record was changed after Janice started her report. Oracle can't use this row. If Oracle did use this row, Janice would be using dirty data - or data that changed while her report was running. This couild result in inconsistent results in the report. The report will nedd to get the correct row from the Undo tablespace. 
+- Oracle will search the Undo tablespace for a copy of the block with the highest SCN closest to the SCN when Janice started her report. Oracle finds two old versions of the block with two old versions of a row for EMPID **5300**. Oracle will use version **0765** since it's the closest to SCN **123456**. This is the row that's used by the report
 
-![](images/image75.png)
+    ![](images/image103.png)
 
-![](images/image181.png)
+### What if Oracle can't find the row in the Undo tablespace?
 
-![](images/image145.png)![](images/image222.png)
+By default Undo records are preserved until a commit occurs. If the Undo tablespace is full Oracle will try to make it larger. If Oracle can't make the Undo tablespace larger it will end the transaction with an error.
 
-![](images/image180.png)
+Once a commit occurs Oracle writes to the Undo tablespace in round robin fashion. Oracle will not overwrite undo until the space is needed. Oracle will return **ORA-1555** if it can't find the Undo records it needs and the query will fail
 
-![](images/image203.png)
+## Oracle Locking
 
-![](images/image78.png)
+Locks are used to prevent simultaneous changes to a given row or set of rows.
 
-![](images/image88.png)
+The first session to make a change to a row acquires a lock on that row. This gives that user exclusive access to that row. Other sessions that want to change that row will need to wait for the lock to be released.
 
-![](images/image166.png)
+A lock is released when:
+- The session that holds the lock commits their changes with the `commit` command
+- The session that holds the lock issues a subsequent DDL command that causes an implicit commit to occur
+- The session that holds the lock issues a rollback command and rolls the change back
+- Other operations occur that cause a commit or rollback such as exiting a session.
 
-![](images/image186.png)
+You can see what objects are locked by using the view `V$LOCK`. The view shows the user session id, the kind of lock, the object that is locked
 
-![](images/image133.png)
+### Example locking
 
-![](images/image112.png)
+- Janice inserts a new row into the EMPLOYEE table for Marcus
 
-![](images/image72.png)
+```sql
+insert into employees (empid, last_nm, first_nm, active, hire_date) values (102, 'Smith', 'Marcus', 'FALSE', sysdate)
+```
+- Oracle will create the row and lock it until Janice have commited or rolled back the insert
+- Let's see what if any locks were created as a result of the insert that Janice just executed
 
-![](images/image198.png)
+```sql
+select a.sid, a.type, b.object_name, a.lmode, a.request from v$lock a, dba_objects b where a.id1=b.object_id and b.object_name='EMPLOYEES';
+```
 
-#### Администрирования control files и redo logs
+```
+SID     TYPE        OBJECT_NAME     LMODE       REQUEST
+----    -----       ----------      -----       ------
+166     TM          EMPLOYEES       3           0
+```
+- The insert created a TM lock. A TM lock occurs when a DML statemnt is executed against a table
+- Anry logs in and she happens to execute the same insert command.
+```sql
+insert into employees (empid, last_nm, first_nm, active, hire_date) values (102, 'Smith', 'Marcus', 'FALSE', sysdate)
+```
+```
+1 row created
+```
+- Now we have two inserts. Let's look at the locks again 
+```sql
+select a.sid, a.type, b.object_name, a.lmode, a.request from v$lock a, dba_objects b where a.id1=b.object_id and b.object_name='EMPLOYEES';
+```
+
+```
+SID     TYPE        OBJECT_NAME     LMODE   REQUEST
+----    -----       ----------      -----   ------
+166     TM          EMPLOYEES       3       0
+337     TM          EMPLOYEES       3       0
+```
+- We now have two different locks in place
+- Both Users can commit the changes and the locks will be removed
+- Did you notice that Oracle allowd us to insert two different records? This is because there are no constraints on the EMPLOYEE table. What if we add a primary key to the EMPLOYEES table?
+
+- Add primary key to table end repeat two inserts without commit
+```sql
+trancate table employees;
+alter table employees add constraint pk_employees primary key (empid);
+```
+
+- Now Arny inserts her record
+```sql
+select a.sid, a.type, b.object_name, a.lmode, a.request from v$lock a, dba_objects b where a.id1=b.object_id and b.object_name='EMPLOYEES';
+```
+- Oracle did not display the '1 row created' message
+- Janice's session seem to have hung up
+- Let's look at the lock again
+```sql
+select a.sid, a.type, b.object_name, a.lmode, a.request from v$lock a, dba_objects b where a.id1=b.object_id and b.object_name='EMPLOYEES';
+```
+
+```
+SID     TYPE        OBJECT_NAME     LMODE   REQUEST
+----    -----       ----------      -----   ------
+166     TM          EMPLOYEES       3       0
+337     TM          EMPLOYEES       3       0
+```
+- This looks the same. Clearly one session is blocking another. How do we tell who is blocking who?
+- Remember the ID1 view containded the OBJECT_ID of the locked object
+- The ID2 view contains the session identifier SID of the session that owns the lock
+- Let's see who is blocking who
+  
+```sql
+select l1.sid, 'IS BLOCKING SESSSION' , l2.sid from v$lock l1, v$lock l2 
+where l1.block=1 
+and l2.request > 0 
+and l1.id1=l2.id1 
+and l1.id2=l2.id2
+```
+```
+SID     'IS BLOCKING SESSION'       SID
+---     --------------------        ----
+166     IS BLOCKING                 337
+```
+- So now we can see that session 166 is blocking session 337
+- Another way we can see who is blocking who is to use the `V$SESSION` view as seen here
+```sql
+select sid, serial#, username, blocking_session
+from v$session
+where (blocking_sessioin is not null
+or sid in (select distinct blocking_session from v$session);
+```
+
+```
+SID     SERIAL#     USERNAME        BLOCKING_SESSION
+---     -------     --------        ----------------
+166     27667       JANICE          
+337     25540       AMY             166
+```
+- When Janice commits her change Amy will then get an error that indicates she is trying to insert a duplicate row
+- If Janice rolls her change back then Amy's change will be able to be commited
+- One session ca easily lock many other sessions if it tries to change many rows
+
+# Administer control files и redo logs
 
 ![](images/image155.png)
 
