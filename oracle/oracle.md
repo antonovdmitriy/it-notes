@@ -83,8 +83,16 @@
     - [What if Oracle can't find the row in the Undo tablespace?](#what-if-oracle-cant-find-the-row-in-the-undo-tablespace)
   - [Oracle Locking](#oracle-locking)
     - [Example locking](#example-locking)
-- [Administer control files и redo logs](#administer-control-files-и-redo-logs)
-      - [Redo logs](#redo-logs)
+- [Control files](#control-files)
+  - [Description](#description)
+  - [Oracle instance starting stages](#oracle-instance-starting-stages)
+  - [Creating the Control File](#creating-the-control-file)
+  - [Adding a control file](#adding-a-control-file)
+  - [Moving a control file](#moving-a-control-file)
+  - [Removing a control file](#removing-a-control-file)
+  - [Show control file path](#show-control-file-path)
+  - [Control file data dictionary view](#control-file-data-dictionary-view)
+- [Redo logs](#redo-logs)
 
 
 # Useful links
@@ -1257,43 +1265,115 @@ SID     SERIAL#     USERNAME        BLOCKING_SESSION
 - If Janice rolls her change back then Amy's change will be able to be commited
 - One session ca easily lock many other sessions if it tries to change many rows
 
-# Administer control files и redo logs
+# Control files
 
-![](images/image155.png)
+## Description 
 
-![](images/image150.png)
+The control file is a non-text physical file that contains information that Oracle requires in order to be able to open the database
 
-![](images/image221.png)
+The control file contains database configuration information that includes:
+- Database datafiles
+- Database tablespaces
+- Database redo logs
+- The current database SCN
+- RMAN backup information
 
-На стадии mount Oracle сравнивает SCN из control file и data file, если они совпадают, значит оракл может открыть базу данных, если нет - начинается процедура recovery
+Each Oracle database has one or more control files
 
-![](images/image84.png)
+You should have at least two control files in every database
+- Having multiple control file is considered best practice
+- Provides redundancy should one control file be lost
+- Oracle writes to the control files in parallel
+- Having multiple copies does not impact the database performance
+- Locate each control file on file systems that are supported by separate physical disks
 
-![](images/image179.png)
+## Oracle instance starting stages
 
-![](images/image201.png)
+Modes that the database goes throught when it's being started
+- **NOMOUNT** open parameters file and search control files.
+- **MOUNT**. the control file is located and opened. Views from control file is assessible on this stage. V$.. 
+- **OPEN**. Oracle uses the control file to locate the database datafiles and the online redo logs
 
-![](images/image42.png)
+At the mount stage, Oracle compares the SCN from the control file and data file, if they match, then Oracle can open the database, if not, the recovery procedure begins
 
-![](images/image208.png)
+## Creating the Control File
+
+The ctonrol files are initially created when the database is created
+
+You configure the locations of the control files in the databse parameter file using the `control_file` parameter
+
+Oracle will create the control files for you in those locations
+
+The database creation will fail if you do not create the directories defined in the database paramter file or if Oracle does not have read/write privileges to those directories
+
+## Adding a control file
+
+- To add a control file first create the directory where you want the control file to reside
+- Modify the database parameter `control_files` adding the new control file location
+
+```sql
+alter system set
+control_files='/u01/app/oracle/database/mydb/control/control01.ctl, /u01/app/oracle/database/mydb/control/control02.ctl, /u01/app/oracle/database/mydb/control/control03.ctl'
+scope=spfile;
+```
+
+- copy an existing control file over to the new control file
+- shutdonw and restart the database. The new control file will be used
+
+## Moving a control file
+
+- create the new directory where you want the moved control file to reside
+- Modify the database parameter `control_files` adding the new control file location
+
+```sql
+alter system set
+control_files='/u01/app/oracle/database/mydb/control/control01.ctl, /u01/app/oracle/database/mydb/control/control02.ctl, /u01/app/oracle/database/mydb/control/control03.ctl'
+scope=spfile;
+```
+
+- shutdown the database
+- move the control file from the old location to the new location
+- restart the database
+
+## Removing a control file
+
+- Modify the database parameter `control_files`. Replace the existing string with the new string that does not include control file you wish to remove
+
+
+```sql
+alter system set
+control_files='/u01/app/oracle/database/mydb/control/control01.ctl, /u01/app/oracle/database/mydb/control/control02.ctl'
+scope=spfile;
+```
+
+- shutdown the database
+- physically remove the control file (optional but recommended)
+- restart the database
+
+## Show control file path
+
+```sql
+select name, value from v$parameter where name='control_files'
+```
 
 ![](images/image143.png)
 
-![](images/image113.png)
+## Control file data dictionary view
 
-![](images/image1.png)
+Many of the data dictionary views source their data from the database control file
 
-![](images/image151.png)
+Views that conaint control file information typically have a `V$` prefix followed by the content withing the view
 
-На стадии no_mount oracle открывает файл с параметрами parameters, поднимается oracle instance , аллоцируется память, запускаются процессы и считывает расположение control файлов.
+- `V$DATABASE` Database information from the control file
+- `V$DATAFILE` Database datafile information from the control file
+- `V$TABLESPACE` Database tablespace information from the control file
+- `V$CONTROLFILE` about control files and their path (like control_files params in v$parameter)
 
-Далее на стадии mount oracle находит эти ctl файлы и считывает их. После этого доступны вью V$.
+These views is ascessible after `mount` stage. If database is not mounted view is not accessible. `ORA-01507 database not mounted`.
 
-Далее следует стадия open, где открывается дата-файлы.
+Note that many V$ views are on varioous structures within the database not the control file. For example `V$INSTANCE` view provides information on the database instance once it's started
 
-![](images/image120.png)
-
-#### Redo logs
+# Redo logs
 
 ![](images/image5.png)
 
