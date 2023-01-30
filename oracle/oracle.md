@@ -316,8 +316,11 @@ In such cases, a associative table is often introduced
 
 If we insert an employee with a department that is not in the department table, then there will be an insert error
 
-![](images/image147.png)
+Relationsips are enforced through the definition of foreign keky constraints
 
+FK constraints are defined during or after the creation of the table
+
+FK contraintes are defined on the child table referencing the column of the parent table
 
 # Normalization
 
