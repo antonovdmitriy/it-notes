@@ -40,6 +40,7 @@
     - [Database Location](#database-location)
     - [How to know ORACLE\_SID](#how-to-know-oracle_sid)
     - [Important files](#important-files)
+    - [Is Listener started](#is-listener-started)
 - [Oracle instalation](#oracle-instalation)
   - [Installation Features](#installation-features)
   - [Environment variables](#environment-variables)
@@ -52,7 +53,24 @@
   - [OLTP or OLAP and RAC](#oltp-or-olap-and-rac)
   - [Physical Storage Requirements](#physical-storage-requirements)
   - [Database Memory requirements](#database-memory-requirements)
-      - [Создание базы данных через DBCA](#создание-базы-данных-через-dbca)
+    - [Recomendations to start](#recomendations-to-start)
+    - [Aproaches to setting memory](#aproaches-to-setting-memory)
+    - [Advisor](#advisor)
+    - [Tuning memory areas in SGA](#tuning-memory-areas-in-sga)
+- [Connect to the Oracle](#connect-to-the-oracle)
+  - [Oracle Net Stack](#oracle-net-stack)
+  - [Service name](#service-name)
+  - [Connection string](#connection-string)
+- [User accounts](#user-accounts)
+  - [How to query objects in different user schema](#how-to-query-objects-in-different-user-schema)
+  - [Create Oracle User](#create-oracle-user)
+  - [User privileges](#user-privileges)
+  - [User Profiles](#user-profiles)
+  - [Delete user and all his objects](#delete-user-and-all-his-objects)
+  - [Change user attributes](#change-user-attributes)
+  - [Create dba user , connect and create table](#create-dba-user--connect-and-create-table)
+  - [Userul grants](#userul-grants)
+- [Oracle data dictionary](#oracle-data-dictionary)
       - [Администрирования control files и redo logs](#администрирования-control-files-и-redo-logs)
       - [Redo logs](#redo-logs)
 
@@ -322,6 +340,7 @@ FK constraints are defined during or after the creation of the table
 
 FK contraintes are defined on the child table referencing the column of the parent table
 
+
 # Normalization
 
 ## Process of normalization
@@ -499,6 +518,14 @@ All SIDs have a file ending with cdb. It is managed by oracle, but it can be ope
   - **SPFILE** - Automatically maintained by Oracle
   - **init.ora** - Manually managed parameter file. For example, the size of SGA.
 
+### Is Listener started
+
+```
+lsnrctl status
+```
+![](images/image95.png)
+
+
 # Oracle instalation
 
 ## Installation Features
@@ -623,183 +650,312 @@ The DBCA will ask you where you want to place these files and how big you want t
 
 ## Database Memory requirements
 
+Although there are recommendations to set no more than 60 percent of the server's memory, this is a rather arbitrary figure. So, if the server hosts a 500 MB database, allocating even 1 GB of RAM for it is an unnecessary allocation. Also, if the base is 200 GB, allocating 1 TB of memory is a lot. 
+
+The memory depends on the activity of using the base - a more loaded base will require a larger SGA to perform a given performance. 
+
+The size of the memory depends on the requirements for the response time (response time), if the response should be minimal, you can generally take all the data from memory, it will be faster than our ssd drives.
+
 Memory areas you will need to plan for include
-- SGA
+- **SGA**
   - Buffer Cache
   - Shared Pool
-- PGA 
+- **PGA (Private Global Area)**. Each user session allocates memory to this area. Not only user, but also Oracle processes. The memory size is set depending on the expected number of user sessions for the database) 
 
- Если на сервере предполагается только 1 база данных, выделяем памяти под нее не более 60 процентов.
+### Recomendations to start
 
-PGA (Private Global Area). Каждая пользовательская сессия аллоцирует память в это области. Не только пользовательская, но и процессы Oracle. Размер памяти устанавливается в зависимости от ожидаемого количество пользовательских сессий у базы данных.
+- Determine the refresh cycle of your database hardware (for example 3 years)
+- Determine how big you expect your database to be at the end of that refresh cycle
+- Size the SGA to about 20% of that value
 
-![](images/image170.png)
+Example - 3 years refresh cycle
+- Initial database size 100 GB
+- Growth year 1 - 10 GB
+- Growth year 2 - 100 GB
+- Growth year 3 - 300 GB
+- Total size year three - 510 GB
+- SGA recommended size (10% to 20%) 50 to 100 GB
 
-Существует два подхода (парадигмы) для установки памяти. AMM - тогда правим настройку MEMORY_TARGET . В этом случае оракл автоматически устанавливает размер SGA и PGA и может менять этот размер между этими областями по необходимости в рантайме, перераспределяя память.
+To start I typically add 100 to 200 MB to the `bufer cache size` to allow for sizing of the shared pool.
 
-![](images/image148.png)
+### Aproaches to setting memory
 
-или ASMM - тогда правим настройку SGA_TARGET.
+There are two approaches (paradigms) for setting memory:
 
-Этой настройкой автоматически меняется только SGA. PGA не перераспределяется. PGA\_AGGRIGATE\_TARGET это целевое значение для PGA, но не строгое, база будет стремиться использовать его.
+- **AMM** - then edit the `MEMORY_TARGET` setting. 
+  - In this case, oracle automatically sets the size of SGA and PGA and can change this size between these areas as needed at runtime, reallocating memory.
+- **ASMM** - then edit the `SGA_TARGET` setting.
+    - This setting automatically changes only the `SGA`. `PGA` is not redistributed.In this case use `PGA_AGGRIGATE_TARGET` is a target value for PGA, but not strict, the base will tend to use it.
 
-![](images/image223.png)
+If running on Linux, then recommend using ASMM and also using Linxu hugepages
 
-Также можно настраивать параметры памяти для отдельных областей SGA. Тут устанавливается минимально значение памяти для shared_pool внутри SGA. Он может быть увеличен, но не может быть меньше этой цифры.
+### Advisor
 
-![](images/image157.png)
-
-Хотя и есть рекомендации ставить не более 60 процентов от памяти сервера, это достаточно условная цифра. Так, если на сервере размещена база в 500 МБ, выделять даже 1 ГБ оперативки для нее это излишнее выделения. Также и если база 200 ГБ, выделять 1 ТБ памяти это много. Также память зависит от активности использования базы -  более нагруженная база потребует большего SGA для выполнения заданной производительности. Также размер памяти зависит от требований к времени отклика (response time), если отклик должен быть минимальным, можно вообще все данные брать из памяти, это будет быстрее чем даше ssd диски.
-
-![](images/image141.png)
-
-С чего начать планировать ресурсы:
-
-* Определить какое время будет существовать данные сервер до его замены. Например 3 года
-* Определить размер данных в базе , который будет в конце этого срока.
-* Поставить SGA 20% от этой цифры. Для начала.
-
-![](images/image6.png)
-
-![](images/image127.png)
-
-![](images/image82.png)
-
-![](images/image48.png)
+- Oracle provides an Advisor framework to monitor the use of the SGA and PGA
+- The Advisors provide information that you can use to increase or decrease the SGA and the PGA to make the best use of those memory resources
 
 ![](images/image185.png)
 
-#### Создание базы данных через DBCA
+### Tuning memory areas in SGA
 
-Через администратор можно пройти по нескольким шагам создать и создать базу данных. Нужен GUI
+You can also configure memory settings for areas inside SGAs. 
 
-Посмотреть что Listener стартован
+This sets the minimum memory value for §shared_pool§ inside the SGA. It can be increased, but cannot be less than this figure
 
-lsnrctl status
+```sql
+alter system set shared_pool_size=100m scope=spfile; 
+```
 
-![](images/image95.png)
+# Connect to the Oracle
 
-Пользователи
+## Oracle Net Stack
+Oracle provides it's own networking layer called the Oracle Net Stack.
 
-![](images/image85.png)
+The Oracle Net Stack fits into level 5 (session layer) of the OCI model
 
-![](images/image174.png)
+It's the job of Oracle Net to provide:
+- Communications with the transport layer (TCP/IP) that your network is using
+- Facilitate connectivity between the client and the database server and the services it provides
 
-Схема = пользователь.
+## Service name
 
-Можно давать гранты для доступа к оъектам других схем (пользователей)
+Service names provide a way of abstracting the database from the clients attached to it
 
-![](images/image87.png)
+## Connection string
 
-![](images/image140.png)
+To connect to a database we use a database connection string. The most common are:
+1. **TNS Connection String**
+   
+    ```
+    login/password@serivice_name
+    ```
 
-![](images/image195.png)
+2. **Easy connect naming**
+   
+   ```
+   login/password//host:port/service_name
+   ```
 
-![](images/image50.png)
 
-![](images/image202.png)
 
-Посмотреть пользователей .если зашли по system пользователем в Sql Developer
+# User accounts
+
+When you connect to an Oracle database you will connect to an Oracle database user account
+
+A database account is associated with a database schema. User account has own schema. 
+
+During database creation a default administrative account is created. This account is called **SYS**.
+- Special administrative account
+- Should only use in rare cases
+- Used for things like upgrades, creating admin users
+- Don't use on a regular basis
+
+User accounts can own objects such as tables and indexes. Or they may own nothing at all and just provide a way to access the database.
+
+Each user account has specific privileges called **grants** that are assigned to it. The DBA assigns these privileges. Grants can also be revoked or modified.
+
+It can be possible to assign grant to access to objects in different schemes (users)
+
+## How to query objects in different user schema
+
+- View users if logged in as system user in Sql Developer
 
 ![](images/image204.png)
 
-По-умолчанию у оракла есть тестовый пользователь scott
+- By default, oracle has a test user **scott**
 
 ![](images/image160.png)
 
-Сделать запрос от пользователя system в таблицу пользователя scott. Таблицы созданы scott и находятся в его схеме. Т.е если вы попытаетесь указать без схемы таблицу не найдем
+- Query from user system to user scott's table. The tables are created by scott and are in his schema. That is, if you try to specify a table without a schema, we will not find
 
+```sql
+select * from sample_dataset_intro
+```
 ![](images/image67.png)
+
+- correct command
+
+```sql
+select * from scott.sample_dataset_intro
+```
 
 ![](images/image53.png)
 
-SQL Developer подходит для разработки. Но для задач администрирования Oracle рекомендует использовать Oracle Enterprise Manager
+## Create Oracle User
 
-![](images/image34.png)
+`create` command is used to create database user accounts and defines user account information such as:
+- User account name
+- password
+- Default and Temporary tablespace assignments
+- Tablespace space usage allowances
+- Security settings (profiles)
 
-При создании пользователю может быть присвоен tablespace - физическое место размещение его объектов. А также указать какую долю от tablespace могут занимать объекты этого пользователя, например весь tablespace, или вовсе запретить ему создавать объекты.
+When creating a user, a tablespace can be assigned - the physical location of its objects. And also specify what share of the tablespace the objects of this user can occupy, for example, the entire tablespace, or even prohibit him from creating objects.
 
-Также указывается профиль.
+Example:
+```sql
+create user robert identified by password
+default tablespace users 
+temporary tablespace temp 
+quota inlimited on users;
+```
 
-![](images/image8.png)
+## User privileges
 
-![](images/image161.png)
+When you create a user, by default it lacks any privileges to do anything in the database, even connect
 
-После создания пользователя у него нет никаких прав, даже на соединение с базой. Поэтому нужно выдать права, хотя бы на connect.
+Give create session grant
+```sql
+grant create session to robert;
+```
 
-![](images/image116.png)
+## User Profiles
 
-![](images/image115.png)
+`resource_limit` parameter must be set to `TRUE`
+  
+Profiles are used to:
+- Define basic resource usage limits
+  - logical reads
+  - idle time
+  - total sesstion time
+  - total sga usage 
+- Manage password requirements
+  - control the total number of failed attempts
+  - define the lifetime of an individual password before it must be changed
+  - grace time onse password lock time has passed
+  - custom functions to enforce more complex password rules
 
-![](images/image83.png)
+create profile that locks the account for one hour after  failed login attempts
+```sql
+create profile security_profile limit 
+Failed_login_attempts 5
+Password_lock_time 1/24;
+```
 
-![](images/image58.png)
+create a profile that controls resource usage. Limits a single call to one minute of CPU time. Limits a single connection to 60 minutes
+```sql
+create profile resource_hog limit
+cpu_per_call 6000
+connect time 60;
+```
 
-![](images/image121.png)
+Once a profile is created it can be assigned to a user account
+```sql
+create user robert identified by password
+default tablespace users
+temporary tablespace temp
+quota unlimited on users
+Profile security_profile;
+```
 
-![](images/image144.png)
+There is more advanced resouce management functionality is offered by Oracle
+- Instance caging
+- Resource manager
+.png)
 
-![](images/image31.png)
+## Delete user and all his objects
 
-Удаление пользователя и всех его объектов
+drop a database user
+```sql
+drop user username;
+```
 
-![](images/image131.png)
+If the user owns any database objects then you must include the `cascade` keyword
+```sql
+drop user username cascade;
+```
+![](images/image28.png)
 
-![](images/image30.png)
 
-Изменение атрибутов пользователя
+Once you have dropped the user the only way to get those objects back to recover them using a backup taken **before the drop user command was issued**
 
-![](images/image23.png)
+## Change user attributes
 
-![](images/image61.png)
+Use the `alter user` command to administer most things related to user accounts (except security) including:
+- change and expire passowrds
+- lock or unlock accounts
+- add/modify/remove tablespace quotas
+- modify tablespace assignments
+- assign profiles
 
+change the password of the robert account
+```sql
+alter user robert identified by new_password;
+```
+![](images/image176.png)
+
+
+
+add an unlimited tablespace quota to the users tablespace to the robert account
+```sql
+alter user robert quota unlimited on users
+```
+
+unlock the robert account
+```sql
+alter user robert account unlock;
+```
+
+## Create dba user , connect and create table
+
+- create user
+
+```sql
+create user dba_one IDENTIFIED by password
+default TABLESPACE users;
+```
 ![](images/image71.png)
 
-create user dba_one IDENTIFIED by password
-
-default TABLESPACE users;
-
+- try to connect
+  
 ![](images/image194.png)
 
-Выдадим грант на создание сессии
+- Give grant to create session 
+  ```sql
+  grant CREATE SESSION TO dba_one
+  ```
 
 ![](images/image159.png)
 
-Теперь соединение проходит
+- Connect with created user
+- Try to create a table
 
-Попробуем создать таблицу
-
+```sql
+create table table_mine (id NUMBER)
+```
 ![](images/image111.png)
 
-Дадим пользователю роль dba , выдав грант
+- Give grant dba
 
+```sql
+grant dba to dba_one
+```
 ![](images/image212.png)
 
-Как выяснилось и этого недостаточно. Нужно еще дать права на tablespace
+- give rights to access tablespace
 
+```sql
 alter user data_owner quota unlimited on users;
+```
 
-И потом уже можно создать таблицу
+- create table
+```sql
+create table table_mine (id NUMBER)
+select owner, table_name fro all_tables where table_name='MY_TABLE'
+```
 
 ![](images/image136.png)
 
 ![](images/image55.png)
 
-Полезные гранты
+## Userul grants
 
-grantcreatetabletodata_owner;
+- `grantcreatetabletodata_owner`
+- `grantcreateview`
+- `createprocedure` 
+- `createsequencetodata_owner`
 
-grantcreateview, createprocedure, createsequencetodata_owner;
-
-Поменять пароль
-
-![](images/image176.png)
-
-Удаляем пользователя
-
-![](images/image28.png)
-
-Словарь данных
+# Oracle data dictionary
 
 ![](images/image89.png)
 
