@@ -40,10 +40,18 @@
     - [Database Location](#database-location)
     - [How to know ORACLE\_SID](#how-to-know-oracle_sid)
     - [Important files](#important-files)
-- [Установка Oracle](#установка-oracle)
-    - [Удаление Oracle](#удаление-oracle)
-    - [Создание базы данных Oracle](#создание-базы-данных-oracle)
-      - [Планирование мощностей](#планирование-мощностей)
+- [Oracle instalation](#oracle-instalation)
+  - [Installation Features](#installation-features)
+  - [Environment variables](#environment-variables)
+  - [Installer](#installer)
+- [Uninstall Oracle](#uninstall-oracle)
+- [OFA Oracle Flexible Architecture](#ofa-oracle-flexible-architecture)
+- [Resource planning](#resource-planning)
+  - [DBCA (Oracle Database Configuration Assistant)](#dbca-oracle-database-configuration-assistant)
+  - [Capasity Planning](#capasity-planning)
+  - [OLTP or OLAP and RAC](#oltp-or-olap-and-rac)
+  - [Physical Storage Requirements](#physical-storage-requirements)
+  - [Database Memory requirements](#database-memory-requirements)
       - [Создание базы данных через DBCA](#создание-базы-данных-через-dbca)
       - [Администрирования control files и redo logs](#администрирования-control-files-и-redo-logs)
       - [Redo logs](#redo-logs)
@@ -488,89 +496,137 @@ All SIDs have a file ending with cdb. It is managed by oracle, but it can be ope
   - **SPFILE** - Automatically maintained by Oracle
   - **init.ora** - Manually managed parameter file. For example, the size of SGA.
 
-# Установка Oracle
+# Oracle instalation
 
-При выделении оперативной памяти, больше внимание уделяют памяти для базы данных, но для памяти процессов Oracle, что может существенно влиять на его работу
+## Installation Features
 
-При выделение процессорного времени большую часть уделяют работы процессов Oracle, но забывают оставить запас для клиентских процессов
+- When allocating RAM, more attention is paid to memory for the database (SGA), but not for the memory of Oracle processes (PGA), which can significantly affect its operation.
+- When allocating processor time, they devote most of the work to Oracle processes, but forget to leave a margin for client processes
+- It is recommended that you allocate at least 4 times the amount of disk space plus 25 percent after determining future needs. 3 for the three versions of Oracle that can be shipped. 1 for a large patch, because the patch often takes the same as the oracle distribution and 25 percent for the logs of small patches
+- It is not recommended to install Oracle on the root filesystem. There must be a separate partition and you cannot add oracle files to the root system, so that in any case the server does not crash. If Oracle fills up all the memory.
 
-Рекомендуется после определения будущих потребностей закладывать минимум в 4 раза больше плюс 25 процентов. 3 для трех версий Oracle , которые можно будет поставить. 1 для большого патча, т.к патч часто занимает также как и дистрибутив оракла и 25 процентов на логи маленькие патчи
+## Environment variables
 
-Не рекомендуется ставить Oracle в root файловую систему. Должна быть отдельная партиция и нельзя добавлять файлы оракла в рутовую систему, чтобы в любом случае сервер не крашнулся. Если оракл забъет всю память.
-
-ORACLE_BASE \- каталог куда остановлен весь софт от oracle
+- `ORACLE_BASE` directory where all software from oracle is installed. For example `/u01/app/oracle`
 
 ![](images/image142.png)
 
-ORACLE\_HOME - каталог куда ставится Oracle Database. По стандарту OMF располагается внутри ORACLE\_BASE
+- `ORACLE_HOME` - directory where Oracle Database is installed. According to the OMF standard, it is located inside `ORACLE_BASE`
+For example `$ORACLE_BASE/product/12.1.0.2`  `$ORACLE_BASE/product/11.2.0.3`
 
 ![](images/image57.png)
 
-![](images/image128.png)
+## Installer
 
-После загрузки файла нужно разорхивировать архивы в единую папку под пользователем root
+- After downloading the file, you need to unzip the archives into a single folder under the root user
 
 ![](images/image25.png)
 
-Увидим runInstaller
-
-Дадим права на доступ пользователю oracle
+- See `runInstaller` script
+- Give access rights for oracle user 
 
 ![](images/image13.png)
 
-Далее запустим runinstaller
+- Launch `runinstaller`
 
-### Удаление Oracle
+# Uninstall Oracle
 
-В папке &ORACLE_HOME/deinstall есть файл deinstall
+В папке `$ORACLE_HOME/deinstall` есть файл `deinstall`
 
 ![](images/image64.png)
 
-### Создание базы данных Oracle
+# OFA Oracle Flexible Architecture
 
-#### Планирование мощностей
+For database file placement the DBCA will use the Oracle Flexible Architecture (OFA) standart by default. OFA provides a standart that allows you to:
+- Locate more than on set of Oracle Database software on a given server. Several databases.
+- Standardized placement of database related files on the database server
 
-![](images/image165.png)
+Base file systems:
+- `/u01` - Oracle software
+- `/u02` - Oracle Diagnostic files
+- `/u03` - Oracle files
+- `/u04` - Oracle files
 
-![](images/image37.png)
+# Resource planning
 
-![](images/image158.png)
+Tasks to accomplish before you start creating an Oracle database:
+- Understand the Oracle Database Configuration Assistant (DBCA) 
+- Perform capacity planning
+- Determine which databse options that will be required
+- Determine your physical storage requirements
+- Determine the database memory requirements
 
-![](images/image225.png)
+## DBCA (Oracle Database Configuration Assistant)
 
-![](images/image209.png)
+Database configuration assistance - a tool for creating a database. (not installation)
 
-![](images/image156.png)
+Most Oracle databases will be created using the DBCA. The DBCA will interview you asking questions about how you want to configure your database. It will then create the database for you. The DBCA will prompt you for information that we need to collect before we start creating the database. 
 
-![](images/image114.png)
+When using DBCA Oracle will create the directories and database files so that they adhere to OFA standards 
 
-Тип OLTP (online transaction processing) - нормализированная модель. База данных приложений.
+## Capasity Planning
 
-Тип OLAP (Data Warehouse) - online analytic processing. Обычно ненормализиованные данные. Слой над разными источниками, в том числи и OLAP. Используются для запуска аналитических отчетов.
+- Database capacity planning is the process of determining the production capacity needed by your database to meet both current and future demands for it's services
+- Design capacity is the maximum amount of work that a database can complete in a given period
 
-![](images/image39.png)
+Things that influence capacity planning:
+- CPU's
+  - Speed
+  - Quantity
+  - Type
+- Memory
+- Storage
+- Network
+- Location/power/colling/etc
+- Support/Spare avaliability
+- Refresh schedule
+- The application 
 
-RAC -, Real Application Clusters
+More things that influence capacity planning:
+- Concurrency
+- Growth/Change
+- Service Level Agreement (SLA) with respect to
+  - Performance
+  - Backup and revovery requirements
+  - High Availability requirements
 
-это особый случай, потому что на самом деле он требует установки некоторого дополнительного программного обеспечения, называемого кластерным ПО. Таким образом, при установке Oracle Database вы не будете устанавливать программное обеспечение RAC, но RAC - это вариант для обеспечения высокой доступности. Это позволяет вам иметь несколько серверов баз данных, которые все подключены к одной и той же базе данных. Таким образом, если один из серверов баз данных выходит из строя, другие серверы баз данных берут на себя работу отказавшего сервера баз данных.
+Considerations when you are capacity planning:
+- Number of databases you wish to run on the hardware
+- Database options you want to support (ie Parallel Query)
+- How representative of reality is the workload in your testing?
 
-Partitioning опция, которая поставляется с носителями Oracle Database и позволяет вам брать таблицы и разбивать их на логические и физические единицы.
+Additional capacity considerations:
+- Type of database (OLTP, Data Warehouse, hybrid)
+  - Nature of queries/transactions that will be run
+  - Distribution of query types
+  - Physical and logical database design requirements
+- Third party tools to be used
+- Security schema to be used
 
-![](images/image24.png)
+## OLTP or OLAP and RAC
 
-![](images/image191.png)
+- **OLTP** (online transaction processing) - normalized model. Application database.
+- **OLAP** (Data Warehouse) - online analytic processing. Usually unnormalized data. Layer over different sources, including OLAP. Used to run analytical reports.
+- **RAC**  Real Application Clusters. For high availablility
 
-Database configuration assistance - средство для создания базы данных. (не установки)
+## Physical Storage Requirements
+The database consists of different kinds of physical files:
+- Database files
+- Control files
+- Redo log files
+- Archived redo log files
 
-![](images/image118.png)
+The DBCA will ask you where you want to place these files and how big you want them
 
-![](images/image197.png)
+## Database Memory requirements
 
-![](images/image62.png)
+Memory areas you will need to plan for include
+- SGA
+  - Buffer Cache
+  - Shared Pool
+- PGA 
 
-![](images/image213.png)
-
-Рекомендация лектора. Если на сервере предполагается только 1 база данных, выделяем памяти под нее не более 60 процентов.
+ Если на сервере предполагается только 1 база данных, выделяем памяти под нее не более 60 процентов.
 
 PGA (Private Global Area). Каждая пользовательская сессия аллоцирует память в это области. Не только пользовательская, но и процессы Oracle. Размер памяти устанавливается в зависимости от ожидаемого количество пользовательских сессий у базы данных.
 
