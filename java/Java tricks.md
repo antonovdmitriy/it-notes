@@ -60,6 +60,15 @@
   - [Sort](#sort)
   - [Search](#search)
   - [Compare](#compare)
+  - [Mismatch](#mismatch)
+  - [Multidimensional Array](#multidimensional-array)
+- [Math APIs](#math-apis)
+  - [min max](#min-max)
+  - [round](#round)
+  - [Ceil and floor](#ceil-and-floor)
+  - [Pow](#pow)
+  - [random](#random)
+- [Working with Dates and Times](#working-with-dates-and-times)
 - [Data races](#data-races)
 
 
@@ -1667,6 +1676,123 @@ rules:
 System.out.println(Arrays.compare(
    new int[] {1}, new String[] {"a"})); // DOES NOT COMPILE
 ```
+
+## Mismatch
+
+If the arrays are equal, `mismatch()` returns `-1`. Otherwise, it returns the first index where they differ. 
+
+```java
+System.out.println(Arrays.mismatch(new int[] {1}, new int[] {1})); // -1
+System.out.println(Arrays.mismatch(new String[] {"a"},             // 0
+   new String[] {"A"}));
+System.out.println(Arrays.mismatch(new int[] {1, 2}, new int[] {1})); // 1
+```
+
+## Multidimensional Array
+
+```java
+int[][] vars1;          // 2D array
+int vars2 [][];         // 2D array
+int[] vars3[];          // 2D array
+int[] vars4 [], space [][];  // a 2D AND a 3D array
+
+String [][] rectangle = new String[3][2];
+
+int[][] differentSizes = {{1, 4}, {3}, {9,8,7}};
+
+int [][] args = new int[4][];
+args[0] = new int[5];
+args[1] = new int[3];
+```
+
+```java
+var twoD = new int[3][2];
+for(int i = 0; i < twoD.length; i++) {
+   for(int j = 0; j < twoD[i].length; j++)
+      System.out.print(twoD[i][j] + " "); // print element
+   System.out.println();                  // time for a new row
+}
+
+for(int[] inner : twoD) {
+   for(int num : inner)
+      System.out.print(num + " ");
+   System.out.println();
+}
+```
+
+# Math APIs
+
+## min max
+
+```java
+public static double min(double a, double b)
+public static float min(float a, float b)
+public static int min(int a, int b)
+public static long min(long a, long b)
+```
+
+```java
+int first = Math.max(3, 7);   // 7
+int second = Math.min(7, -9); // -9
+```
+
+## round
+
+If the fractional part is .5 or higher, we round up.
+
+```java
+public static long round(double num)
+public static int round(float num)
+```
+
+```java
+long low = Math.round(123.45);       // 123
+long high = Math.round(123.50);      // 124
+int fromFloat = Math.round(123.45f); // 123
+```
+
+## Ceil and floor
+
+The `ceil()` method takes a `double` value. If it is a whole number, it returns the same value. If it has any fractional value, it rounds up to the **next** whole number. 
+
+By contrast, the `floor()` method discards any values after the decimal.
+
+```java
+public static double ceil(double num)
+public static double floor(double num)
+```
+
+```java
+double c = Math.ceil(3.14);  // 4.0
+double f = Math.floor(3.14); // 3.0 
+```
+
+## Pow
+
+```java
+public static double pow(double number, double exponent)
+```
+
+```java
+double squared = Math.pow(5, 2); // 25.0
+```
+
+## random
+
+```java
+public static double random()
+```
+
+```java
+double num = Math.random(); // greater than or equal to 0 and less than 1
+```
+
+# Working with Dates and Times
+
+New modern Java Time classes
+```java
+ import java.time.*;    // import time classes
+ ```
 
 
 
