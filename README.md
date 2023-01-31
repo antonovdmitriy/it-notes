@@ -15,4 +15,5 @@ Just notes, compilation from different courrses and own thoughts.
 - [Testing](/testing/Testing.md)
 - [Markdown](/markdown/Markdown.md)
 - [Python](/python/python.md)
+- [VS Code](/vs-code/vs-code.md)
 
