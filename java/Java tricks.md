@@ -69,6 +69,11 @@
   - [Pow](#pow)
   - [random](#random)
 - [Working with Dates and Times](#working-with-dates-and-times)
+  - [LocalDate](#localdate)
+  - [LocalTime](#localtime)
+  - [LocalDateTime](#localdatetime)
+  - [ZonedDateTime](#zoneddatetime)
+  - [Manipulating date and times](#manipulating-date-and-times)
 - [Data races](#data-races)
 
 
@@ -1794,7 +1799,103 @@ New modern Java Time classes
  import java.time.*;    // import time classes
  ```
 
+- `LocalDate` Contains just a date—no time and no time zone. A good example of LocalDate is your birthday this year. It is your birthday for a full day, regardless of what time it is
+- `LocalTime` Contains just a time—no date and no time zone. A good example of LocalTime is midnight. It is midnight at the same time every day.
+- `LocalDateTime` Contains both a date and time but no time zone. A good example of LocalDateTime is “the stroke of midnight on New Year's Eve.” Midnight on January 2 isn't nearly as special, making the date relatively unimportant, and clearly an hour after midnight isn't as special either.
+- `ZonedDateTime` Contains a date, time, and time zone. A good example of ZonedDateTime is “a conference call at 9:00 a.m. EST.” If you live in California, you'll have to get up really early since the call is at 6:00 a.m. local time!
 
+```java
+System.out.println(LocalDate.now());  // 2021–10–25
+System.out.println(LocalTime.now());   //09:13:07.768
+System.out.println(LocalDateTime.now());  //2021–10–25T09:13:07.768 devided by T
+System.out.println(ZonedDateTime.now());  //2021–10–25T09:13:07.769–05:00[America/New_York]
+```
+
+```java
+var d = new LocalDate(); // DOES NOT COMPILE Only static methods
+```
+
+```java
+var d = LocalDate.of(2022, Month.JANUARY, 32) // DateTimeException
+```
+
+## LocalDate
+
+```java
+public static LocalDate of(int year, int month, int dayOfMonth)
+public static LocalDate of(int year, Month month, int dayOfMonth)
+```
+
+```java
+var date1 = LocalDate.of(2022, Month.JANUARY, 20);
+var date2 = LocalDate.of(2022, 1, 20);
+```
+
+## LocalTime
+
+```java
+public static LocalTime of(int hour, int minute)
+public static LocalTime of(int hour, int minute, int second)
+public static LocalTime of(int hour, int minute, int second, int nanos)
+```
+
+```java
+var time1 = LocalTime.of(6, 15);              // hour and minute
+var time2 = LocalTime.of(6, 15, 30);          // + seconds
+var time3 = LocalTime.of(6, 15, 30, 200);     // + nanoseconds
+```
+
+## LocalDateTime
+
+```java
+public static LocalDateTime of(int year, int month, int dayOfMonth, int hour, int minute)
+public static LocalDateTime of(int year, int month, int dayOfMonth, int hour, int minute, int second)
+public static LocalDateTime of(int year, int month, int dayOfMonth, int hour, int minute, int second, int nanos)
+
+public static LocalDateTime of(int year, Month month, int dayOfMonth, int hour, int minute)
+public static LocalDateTime of(int year, Month month, int dayOfMonth, int hour, int minute, int second)
+public static LocalDateTime of(int year, Month month, int dayOfMonth, int hour, int minute, int second, int nanos)
+
+public static LocalDateTime of(LocalDate date, LocalTime time)
+```
+
+```java
+var dateTime1 = LocalDateTime.of(2022, Month.JANUARY, 20, 6, 15, 30);
+var dateTime2 = LocalDateTime.of(date1, time1);
+```
+
+## ZonedDateTime
+
+```java
+public static ZonedDateTime of(int year, int month, int dayOfMonth, int hour, int minute, int second, int nanos, ZoneId zone)
+public static ZonedDateTime of(LocalDate date, LocalTime time, ZoneId zone)
+public static ZonedDateTime of(LocalDateTime dateTime, ZoneId zone)
+```
+
+```java
+var zone = ZoneId.of("US/Eastern");
+var zoned1 = ZonedDateTime.of(2022, 1, 20,
+       6, 15, 30, 200, zone);
+var zoned2 = ZonedDateTime.of(date1, time1, zone);
+var zoned3 = ZonedDateTime.of(dateTime1, zone);
+```
+
+## Manipulating date and times
+
+> All date time api classes are immutable. So don't forget to assign the result of manipulation to a reference
+
+```java
+var date = LocalDate.of(2022, Month.JANUARY, 20);
+System.out.println(date);    // 2022–01–20
+date = date.plusDays(2);
+System.out.println(date);    // 2022–01–22
+date = date.plusWeeks(1);
+System.out.println(date);    // 2022–01–29
+date = date.plusMonths(1);
+System.out.println(date);    // 2022–02–28
+date = date.plusYears(5);
+System.out.println(date);    // 2027–02–28
+```
 
 # Data races
 

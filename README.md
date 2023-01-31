@@ -14,4 +14,5 @@ Just notes, compilation from different courrses and own thoughts.
 - [Go](/go/go.md)
 - [Testing](/testing/Testing.md)
 - [Markdown](/markdown/Markdown.md)
+- [Python](/python/python.md)
 
