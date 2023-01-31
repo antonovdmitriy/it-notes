@@ -1,62 +1,65 @@
-# Bash
 
-- [Bash](#bash)
-  - [History](#history)
-  - [Recommended sources to help](#recommended-sources-to-help)
-  - [Variables](#variables)
-    - [Дефолтные переменные](#дефолтные-переменные)
-  - [Bash options](#bash-options)
-    - [set](#set)
-    - [shopt](#shopt)
-  - [Коды завершения](#коды-завершения)
-  - [Производительность.](#производительность)
-  - [Начало скрипта](#начало-скрипта)
-  - [Кавычки](#кавычки)
-  - [Типы данных](#типы-данных)
-  - [Пользовательский ввод](#пользовательский-ввод)
-  - [Ссылки на файлы с переменными и функциями](#ссылки-на-файлы-с-переменными-и-функциями)
-  - [Аргументы скрипта](#аргументы-скрипта)
-    - [Positional arguments](#positional-arguments)
-    - [More complex arguments](#more-complex-arguments)
-  - [Оператор shift](#оператор-shift)
-  - [Command substitution](#command-substitution)
-  - [Parameter substitution](#parameter-substitution)
-  - [Here document](#here-document)
-  - [Function](#function)
-    - [Arguments](#arguments)
-    - [Variable scope](#variable-scope)
-  - [Simple script example](#simple-script-example)
-  - [Pattern matching](#pattern-matching)
-    - [почистить строку](#почистить-строку)
-    - [сделать замену в переменной](#сделать-замену-в-переменной)
-    - [Поменять регистр](#поменять-регистр)
-    - [примеры скриптов](#примеры-скриптов)
-  - [Примеры использования ext globing](#примеры-использования-ext-globing)
-  - [Численные вычисления](#численные-вычисления)
-    - [Операции с целыми числами](#операции-с-целыми-числами)
-    - [Операции с дробными числами](#операции-с-дробными-числами)
-      - [bc - утилита для дробных вычислений](#bc---утилита-для-дробных-вычислений)
-    - [Полезные утилиты для вычислений](#полезные-утилиты-для-вычислений)
-    - [Примеры скриптов](#примеры-скриптов-1)
-  - [Ветвление](#ветвление)
-    - [if](#if)
-    - [case](#case)
-  - [Циклы](#циклы)
-    - [for](#for)
-    - [while](#while)
-    - [until (oposite while)](#until-oposite-while)
-    - [break and contiunue](#break-and-contiunue)
-  - [Menu](#menu)
-  - [trap](#trap)
-  - [Arrays](#arrays)
-    - [Types of arrays:](#types-of-arrays)
-    - [Reference to arrya values](#reference-to-arrya-values)
-    - [Example script indexed array](#example-script-indexed-array)
-    - [Example of associative array](#example-of-associative-array)
+# Table of contents
+- [Table of contents](#table-of-contents)
+- [History](#history)
+- [Recommended sources to help](#recommended-sources-to-help)
+- [Variables](#variables)
+  - [Дефолтные переменные](#дефолтные-переменные)
+- [Bash options](#bash-options)
+  - [set](#set)
+  - [shopt](#shopt)
+- [Коды завершения](#коды-завершения)
+- [Производительность.](#производительность)
+- [Начало скрипта](#начало-скрипта)
+- [Кавычки](#кавычки)
+- [Типы данных](#типы-данных)
+- [Пользовательский ввод](#пользовательский-ввод)
+- [Ссылки на файлы с переменными и функциями](#ссылки-на-файлы-с-переменными-и-функциями)
+- [Аргументы скрипта](#аргументы-скрипта)
+  - [Positional arguments](#positional-arguments)
+  - [More complex arguments](#more-complex-arguments)
+- [Оператор shift](#оператор-shift)
+- [Command substitution](#command-substitution)
+- [Parameter substitution](#parameter-substitution)
+- [Here document](#here-document)
+- [Function](#function)
+  - [Arguments](#arguments)
+  - [Variable scope](#variable-scope)
+- [Simple script example](#simple-script-example)
+- [Pattern matching](#pattern-matching)
+  - [почистить строку](#почистить-строку)
+  - [сделать замену в переменной](#сделать-замену-в-переменной)
+  - [Поменять регистр](#поменять-регистр)
+  - [примеры скриптов](#примеры-скриптов)
+- [Примеры использования ext globing](#примеры-использования-ext-globing)
+- [Численные вычисления](#численные-вычисления)
+  - [Операции с целыми числами](#операции-с-целыми-числами)
+  - [Операции с дробными числами](#операции-с-дробными-числами)
+  - [bc - утилита для дробных вычислений](#bc---утилита-для-дробных-вычислений)
+  - [Полезные утилиты для вычислений](#полезные-утилиты-для-вычислений)
+  - [Примеры скриптов](#примеры-скриптов-1)
+- [Ветвление](#ветвление)
+  - [if](#if)
+  - [case](#case)
+- [Циклы](#циклы)
+  - [for](#for)
+  - [while](#while)
+  - [until (oposite while)](#until-oposite-while)
+  - [break and contiunue](#break-and-contiunue)
+- [Menu](#menu)
+- [trap](#trap)
+- [Arrays](#arrays)
+  - [Types of arrays:](#types-of-arrays)
+  - [Reference to arrya values](#reference-to-arrya-values)
+  - [Example script indexed array](#example-script-indexed-array)
+  - [Example of associative array](#example-of-associative-array)
   - [Reading output to an array](#reading-output-to-an-array)
+  - [Looping on array](#looping-on-array)
+  - [Lab about arrays](#lab-about-arrays)
+- [Best Practises](#best-practises)
 
 
-## History
+# History
 
 ![](images/2.png)
 
@@ -64,13 +67,13 @@
 
 Bash это Bourne again shell
 
-## Recommended sources to help
+# Recommended sources to help
 
 - `man bash`
 - [Text book for Beginner. Recomended by Sandar van Vagt](https://tldp.org/LDP/Bash-Beginners-Guide/html/)
 - [Text book for Advanced. Recomended by Sandar van Vugt](https://tldp.org/LDP/abs/html/)
 
-## Variables
+# Variables
 When you create new variable it can be seen only in current bash. Many commands invoke another bash. In that case you can use `export`
 
 ![](images/1.png)
@@ -98,7 +101,7 @@ unset variable
 - `${variable}` рекомендуемый способ
 - `echo "${variable}"`в некоторых случаех предпочтительно использовать ссылку внутри двойных кавычек
 
-### Дефолтные переменные
+## Дефолтные переменные
 
 `$RANDOM` - случайное число
 
@@ -114,7 +117,7 @@ unset variable
 
 `$BASH_ENV` `$BASH_OPT` - 
 
-## Bash options
+# Bash options
 
 посмотреть все опции bash
 ```
@@ -123,7 +126,7 @@ man bash
 
 ![](images/bash_options_2.png)
 
-### set
+## set
 Меняют поведение программ. Например `-x` меняеn работe команд, при старте команды будет выводиться в stdout сама команда и ее аргументы. Удобно для дебага скриптов.
 ```
 set -x
@@ -137,8 +140,11 @@ set +x
 - поставить в скрипты для пользователя или пользователей при старте
 - включать для действия в конкретном скрипте через `#!/bin/bash -x`
 
+- `-e` - exit the script when a command fail
+- `-i` - run script in interactive mode - line-by-line
+- `-v` - verbose mode. A bit less details then `-x`
 
-### shopt
+## shopt
 
 Некоторые опции ставятеся через команду `shopt` . Они также описаны в `man bash`
 
@@ -153,7 +159,7 @@ exit
 ![](images/bash_options_3.png)
 
 
-## Коды завершения
+# Коды завершения
 каждая команда заканчивается каким-то кодом
 
 посмотреть предыдущий код
@@ -169,7 +175,7 @@ echo $?
 exit n где n это код
 ``` 
 
-## Производительность.
+# Производительность.
 
 - Для лучшей производительности лучше не использовать утилиты, подгружаемые с диска, например `sed` и `awk`. 
 - По возможности использовать встроенными в баш командами. 
@@ -178,7 +184,7 @@ exit n где n это код
 - Командой `time` можно проверить время исполнения конкретной команды. 
 - Можно посмотреть от каких библиотек зависит команда, командой `ldd`. Детальнее смотри заметки по линуксу. 
 
-## Начало скрипта
+# Начало скрипта
 
 Для надежности стоит писать в самом начале скрипта
 ```bash
@@ -197,12 +203,12 @@ exit n где n это код
 echo $SHELL 
 ``` 
 
-## Кавычки
+# Кавычки
 `"` - двойные кавычки используются для указания того, что проблемы в подстроке относятся к одному аргументу. Все внедрения переменных через $ будут работать.
 
 `'` - одинарные кавычки используются для остановки внедрения переменных и скриптов. 
 
-## Типы данных
+# Типы данных
 В баше нет типов данных, но есть массивы. 
 Также есть ключевое слово `declare` , которое используюется для указания некоторых свойств переменных
 
@@ -221,7 +227,7 @@ declare -a MYARRAY
 declare -p VARIABLE
 ```
 
-## Пользовательский ввод
+# Пользовательский ввод
 
 самый простой способ
 ```bash
@@ -245,7 +251,7 @@ read firstname lastname city
 echo nice to meet you $firstname $lastname from $city
 ```
 
-## Ссылки на файлы с переменными и функциями
+# Ссылки на файлы с переменными и функциями
 Есть механизм подключения файлов в текущий bash это называется sourcing
 
 два способа, после начала скрипта написать:
@@ -257,9 +263,9 @@ source path_to_file_with_variables
 . path_to_file_with_variables
 ```
 
-## Аргументы скрипта
+# Аргументы скрипта
 
-### Positional arguments
+## Positional arguments
 Можно ссылать на аргументы скрипта через `$1` и до `$9` . Если аргументов больше тогда ссылки будут с использованием фигурных скобок `${10}`. 
 
 Переменная `$0` содержит имя текущего скрипта. 
@@ -309,7 +315,7 @@ done
 
 ![output](images/positional_arguments_2.png)
 
-### More complex arguments
+## More complex arguments
 
 
 ```bash
@@ -403,7 +409,7 @@ complex example
 ```
 
 
-## Оператор shift
+# Оператор shift
 
 Удаляет аргументы скрипта при использовании. 
 
@@ -424,7 +430,7 @@ echo print $1
 ```
 ![output](images/shift_operator_1.png)
 
-## Command substitution 
+# Command substitution 
 
 Можно использовать о скобки и тильду
 
@@ -452,7 +458,7 @@ fi
 sudo tar -cvf $(date +%d-%m-%y).bak $@
 ```
 
-## Parameter substitution
+# Parameter substitution
 
 можно ставить дефолтное значение в случае отсутствия значения, либо вызывать выражение, которое определит значение
 
@@ -494,7 +500,7 @@ echo ${var}
 echo ${myvar:?error_message}
 ```
 
-## Here document
+# Here document
 
 A here document is a special-purpose code block. It uses a form of I/O redirection to feed a command list to an interactive program or a command, such as ftp, cat, or the ex text editor.
 
@@ -517,7 +523,7 @@ echo "Downloading $FILEPATH to $CLIENT"
 EOF
 ```
 
-## Function
+# Function
 
 Two option to write function
 
@@ -535,7 +541,7 @@ function function {
 }
 ```
 
-### Arguments
+## Arguments
 
 > Function argument has local scope
 
@@ -549,7 +555,7 @@ hello bob
 
 > Arguments for all script are unavailable for function
 
-### Variable scope
+## Variable scope
 
 > No matter where try are defined, variables always have a global scope - even if defined in a fuction
 
@@ -574,7 +580,7 @@ echo "after running function: var1: $var1, var2: $var2, var3: $var3"
 
 ![Funciton variables scope](images/variable_func_scope_1.png)
 
-## Simple script example
+# Simple script example
 ```bash
 #!/bin/bash
 
@@ -600,7 +606,7 @@ sudo $PACKAGE_MANAGER install $PACKAGE -y
 
 ```
 
-## Pattern matching
+# Pattern matching
 
 Рекомендуется к использованию, а не `sed` т.к это нативный bash, ничего с диска не читается, sed - утилита на диске.
 
@@ -609,10 +615,10 @@ sudo $PACKAGE_MANAGER install $PACKAGE -y
 ${1#}
 ```
 
-### почистить строку 
+## почистить строку 
 
 - `${var#pattern}` удаляет самый короткий результат поиска слева направо
-- `${var##pattern}` удаляет самый длинный результат поиска слева направо 
+- `${var#pattern}` удаляет самый длинный результат поиска слева направо 
 - `${var%pattern}` удаляет самый короткий результат поиска справа налево
 - `${var%%pattern}` удаляет самый длинный результат поиска справа налево
 
@@ -622,8 +628,8 @@ ${1#}
 # ...
 # to test, use /usr/bin/blah
 
-filename=${1##*/}
-echo 'filename=${1##*/}'
+filename=${1#*/}
+echo 'filename=${1#*/}'
 echo "The name of the file is $filename"
 directoryname=${1%/*}
 echo 'directoryname=${1%/*}'
@@ -638,7 +644,7 @@ BLAH=rababarabarabarara
 clear
 
 echo BLAH=$BLAH
-echo 'the result of ##*ba is' ${BLAH##*ba} 
+echo 'the result of #*ba is' ${BLAH#*ba} 
 echo 'the result of #*ba is' ${BLAH#*ba} 
 echo 'the result of %%ba* is' ${BLAH%%ba*}
 echo 'the result of %ba* is' ${BLAH%ba*}
@@ -646,7 +652,7 @@ echo 'the result of %ba* is' ${BLAH%ba*}
 
  ![](images/pattern_matching_2.png)
 
-### сделать замену в переменной
+## сделать замену в переменной
 
 ```bash
 ${var/pattern/replacement}
@@ -679,7 +685,7 @@ VAR=${VAR/donkey/horse}
 echo $VAR
 ```
 
-### Поменять регистр
+## Поменять регистр
 
 - `${var^^}` переводит в верхний регистр
 - `${var,,}` переводит в нижний регистр
@@ -694,7 +700,7 @@ color=BLUE
 echo ${color,,}
 ```
 
-### примеры скриптов
+## примеры скриптов
 
 Заменить в текущей директории названия файлов с .txt  на название без расширения
 
@@ -708,7 +714,7 @@ done
 ```
 
 
-## Примеры использования ext globing 
+# Примеры использования ext globing 
 
 Итерируемся по файлам в текущей директории, пишем имя файла в переменную `i`. В случае если выполняется выражение, т.е файл не заканчивается на doc, txt, pdf выводится строка с именем файла, что это не документ, иначе выводится строка, что этот файл документ.
 ```bash
@@ -748,9 +754,9 @@ do
 done
 ```
 
-## Численные вычисления
+# Численные вычисления
 
-### Операции с целыми числами
+## Операции с целыми числами
 
 Несколько способов посчитать целочисленное выражение
 - `let expression` встроенное в баш
@@ -773,9 +779,9 @@ echo $(( 1 * 3))
 echo $(( $(sudo fdisk -l | grep '/dev/sda:' | awk '{ pring $5 }') / 1024 ))
 echo $(( $(sudo fdisk -l | grep '/dev/sda:' | awk '{ pring $5 }') / $(( 1024 * 1024 )) ))
 ```
-### Операции с дробными числами
+## Операции с дробными числами
 
-#### bc - утилита для дробных вычислений
+## bc - утилита для дробных вычислений
 
 К сожалению ее нету в gitbash
 Обычно используется в pipes 
@@ -794,7 +800,7 @@ echo "12/5" | bc -l
 echo "sqrt(1000)" | bc -l
 ```
 
-### Полезные утилиты для вычислений
+## Полезные утилиты для вычислений
 
 разложение на простые множители `factor`
 ```bash
@@ -802,7 +808,7 @@ factor 3444
 ```
 output: `3444: 2 2 3 7 41`
 
-### Примеры скриптов
+## Примеры скриптов
 
 Заметим что `COUNTER` в выражении понимается как переменная и не требует ссылки через `$`
 ```bash
@@ -819,10 +825,10 @@ do
 done
 ```
 
-## Ветвление
+# Ветвление
 
 
-### if
+## if
 
 внутри выражение обычно используются модификации команды `test`. О ней можно почитать в 
 ```
@@ -909,7 +915,7 @@ fi
 
 [[ $var = img* && ($var = *.png || $var = *.jpg) ]] && echo $var starts with img and ends wirh .jpg or .png
 ```
-### case
+## case
 
 Если ответ на вопрос yes или oui пишем nice, если ответ no пишем no, иначе пишем okay.
 ```bash
@@ -933,9 +939,9 @@ esac
 ```
 
 
-## Циклы
+# Циклы
 
-### for
+## for
 
 Итерируемся по массиву, либо по списку файлов.
 
@@ -987,7 +993,7 @@ done
 ```
 
 
-### while
+## while
 
 ```bash
 while true; do true; done
@@ -1027,7 +1033,7 @@ do
 done  
 ```
 
-### until (oposite while)
+## until (oposite while)
 
 ```bash
 until who | grep $1; do echo $1 in not logged in; done
@@ -1040,7 +1046,7 @@ do
  done
 ```
 
-### break and contiunue
+## break and contiunue
 
 ```bash
 #!/bin/bash
@@ -1092,7 +1098,7 @@ do
 done
 ```
 
-## Menu
+# Menu
 
 ```bash
 #!/bin/bash
@@ -1123,7 +1129,7 @@ do
 
 - Control C to interrupt.
 
-## trap
+# trap
 
 Use to catch information about signals (exeprt -9).
 
@@ -1148,7 +1154,7 @@ ls -l $tempfile
 trap "rm -f $tempfile" EXIT
 ```
 
-## Arrays
+# Arrays
 
 Let's compare. We want to copy list of files to directory. With simple string it will not work with names with spaces.
 
@@ -1160,7 +1166,7 @@ but with array it will work
 files=(*.txt); cp "${files[@]}" ~/backup
 ```
 
-### Types of arrays:
+## Types of arrays:
 - indexed array.
   - do not required using `declare`
   - `my_array=(one two three)` 
@@ -1171,7 +1177,7 @@ files=(*.txt); cp "${files[@]}" ~/backup
   - reference to one value of such array `${value[XYZ]}`
   - ordering is not guaranteed
 
-### Reference to arrya values
+## Reference to arrya values
 
 > always use quotes. 
 
@@ -1188,7 +1194,7 @@ files=(*.txt); cp "${files[@]}" ~/backup
   "${!myarray[@]}"
   ```
 
-### Example script indexed array
+## Example script indexed array
 
 ```bash
   #!/bin/bash
@@ -1235,7 +1241,7 @@ done
 
 ![](images/array_1.png)
 
-### Example of associative array
+## Example of associative array
 
 ```bash
 declare -A my_array
@@ -1344,3 +1350,101 @@ do
 
 done
 ```
+
+## Looping on array
+
+```bash
+#!/bin/bash
+# poem.sh: Pretty-prints one of the ABS Guide author's favorite poems.
+# credits: TLDP Advanced Bash Scripting Guide
+
+# Lines of the poem (single stanza).
+Line[1]="I do not know which to prefer,"
+Line[2]="The beauty of inflections"
+Line[3]="Or the beauty of innuendoes,"
+Line[4]="The blackbird whistling"
+Line[5]="Or just after."
+# Note that quoting permits embedding whitespace.
+
+# Attribution.
+Attrib[1]=" Wallace Stevens"
+Attrib[2]="\"Thirteen Ways of Looking at a Blackbird\""
+# This poem is in the Public Domain (copyright expired).
+
+echo
+
+tput bold   # Bold print.
+
+for index in 1 2 3 4 5    # Five lines.
+do
+  printf "     %s\n" "${Line[index]}"
+done
+
+for index in 1 2          # Two attribution lines.
+do
+  printf "          %s\n" "${Attrib[index]}"
+done
+
+tput sgr0   # Reset terminal.
+            # See 'tput' docs.
+
+echo
+
+exit 0
+```
+
+## Lab about arrays
+
+```bash
+#!/bin/bash
+
+# use readarray to create the associative names
+echo enter names for Janitors from Mon-Sun \(seven names required\)
+read name1 name2 name3 name4 name5 name6 name7
+
+declare -A roster
+roster[monday]=$name1
+roster[tuesday]=$name2
+roster[wednesday]=$name3
+roster[thursday]=$name4
+roster[friday]=$name5
+roster[saturday]=$name6
+roster[sunday]=$name7
+
+# print the names of responsible janitors for each day
+for i in "${!roaster[@]}"
+do
+	echo "$i" "${roster[$i]}"
+done
+```
+
+with order array
+```bash
+#!/bin/bash
+
+# use readarray to create the associative names
+echo enter names for Janitors from Mon-Sun \(seven names required\)
+read name1 name2 name3 name4 name5 name6 name7
+
+declare -A roster; declare -a order
+roster[monday]=$name1; order+=( "monday" )
+roster[tuesday]=$name2; order+=( "tuesday" )
+roster[wednesday]=$name3; order+=( "wednesday" )
+roster[thursday]=$name4; order+=( "thursday" )
+roster[friday]=$name5; order+=( "friday" )
+roster[saturday]=$name6; order+=( "saturday" )
+roster[sunday]=$name7; order+=( "sunday" )
+
+# print the names of responsible janitors for each day
+for i in "${order[@]}"
+do
+	echo "$i" "${roster[$i]}"
+done
+```
+
+# Best Practises
+
+- Starting with comments line
+- Write and test each part of the script separately
+- Use break lines
+- use `set -x` and `set +x` to debug section. It's useful to dot degug all parts of scripts.

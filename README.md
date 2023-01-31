@@ -11,6 +11,7 @@ Just notes, compilation from different courrses and own thoughts.
 - [Oracle](/oracle/oracle.md)
 - [Kubernates](kubernates/kubernates.md)
 - [Amazon](/aws/AWS.md)
+- [Go](/go/go.md)
 - [Testing](/testing/Testing.md)
 - [Markdown](/markdown/Markdown.md)
 
