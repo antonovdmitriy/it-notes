@@ -4,10 +4,10 @@
 - [History](#history)
 - [Recommended sources to help](#recommended-sources-to-help)
 - [Variables](#variables)
-  - [Дефолтные переменные](#дефолтные-переменные)
+	- [Дефолтные переменные](#дефолтные-переменные)
 - [Bash options](#bash-options)
-  - [set](#set)
-  - [shopt](#shopt)
+	- [set](#set)
+	- [shopt](#shopt)
 - [Коды завершения](#коды-завершения)
 - [Производительность.](#производительность)
 - [Начало скрипта](#начало-скрипта)
@@ -16,50 +16,52 @@
 - [Пользовательский ввод](#пользовательский-ввод)
 - [Ссылки на файлы с переменными и функциями](#ссылки-на-файлы-с-переменными-и-функциями)
 - [Аргументы скрипта](#аргументы-скрипта)
-  - [Positional arguments](#positional-arguments)
-  - [More complex arguments](#more-complex-arguments)
+	- [Positional arguments](#positional-arguments)
+	- [More complex arguments](#more-complex-arguments)
 - [Оператор shift](#оператор-shift)
 - [Command substitution](#command-substitution)
 - [Parameter substitution](#parameter-substitution)
 - [Here document](#here-document)
 - [Function](#function)
-  - [Arguments](#arguments)
-  - [Variable scope](#variable-scope)
+	- [Arguments](#arguments)
+	- [Variable scope](#variable-scope)
 - [Simple script example](#simple-script-example)
 - [Pattern matching](#pattern-matching)
-  - [почистить строку](#почистить-строку)
-  - [сделать замену в переменной](#сделать-замену-в-переменной)
-  - [Поменять регистр](#поменять-регистр)
-  - [примеры скриптов](#примеры-скриптов)
+	- [почистить строку](#почистить-строку)
+	- [сделать замену в переменной](#сделать-замену-в-переменной)
+	- [Поменять регистр](#поменять-регистр)
+	- [примеры скриптов](#примеры-скриптов)
 - [Примеры использования ext globing](#примеры-использования-ext-globing)
 - [Численные вычисления](#численные-вычисления)
-  - [Операции с целыми числами](#операции-с-целыми-числами)
-  - [Операции с дробными числами](#операции-с-дробными-числами)
-  - [bc - утилита для дробных вычислений](#bc---утилита-для-дробных-вычислений)
-  - [Полезные утилиты для вычислений](#полезные-утилиты-для-вычислений)
-  - [Примеры скриптов](#примеры-скриптов-1)
+	- [Операции с целыми числами](#операции-с-целыми-числами)
+	- [Операции с дробными числами](#операции-с-дробными-числами)
+	- [bc - утилита для дробных вычислений](#bc---утилита-для-дробных-вычислений)
+	- [Полезные утилиты для вычислений](#полезные-утилиты-для-вычислений)
+	- [Примеры скриптов](#примеры-скриптов-1)
 - [Ветвление](#ветвление)
-  - [if](#if)
-  - [case](#case)
+	- [if](#if)
+	- [case](#case)
 - [Циклы](#циклы)
-  - [for](#for)
-  - [while](#while)
-  - [until (oposite while)](#until-oposite-while)
-  - [break and contiunue](#break-and-contiunue)
+	- [for](#for)
+	- [while](#while)
+	- [until (oposite while)](#until-oposite-while)
+	- [break and contiunue](#break-and-contiunue)
 - [Menu](#menu)
 - [trap](#trap)
 - [Arrays](#arrays)
-  - [Types of arrays:](#types-of-arrays)
-  - [Reference to arrya values](#reference-to-arrya-values)
-  - [Example script indexed array](#example-script-indexed-array)
-  - [Example of associative array](#example-of-associative-array)
-  - [Reading output to an array](#reading-output-to-an-array)
-  - [Looping on array](#looping-on-array)
-  - [Lab about arrays](#lab-about-arrays)
+	- [Types of arrays:](#types-of-arrays)
+	- [Reference to arrya values](#reference-to-arrya-values)
+	- [Example script indexed array](#example-script-indexed-array)
+	- [Example of associative array](#example-of-associative-array)
+	- [Reading output to an array](#reading-output-to-an-array)
+	- [Looping on array](#looping-on-array)
+	- [Lab about arrays](#lab-about-arrays)
 - [Best Practises](#best-practises)
-  - [Using BASH\_XTRACEFD for debug](#using-bash_xtracefd-for-debug)
+	- [Using BASH\_XTRACEFD for debug](#using-bash_xtracefd-for-debug)
 - [Complex scripts](#complex-scripts)
-  - [cpu-hog](#cpu-hog)
+	- [trivial restart if service down](#trivial-restart-if-service-down)
+	- [check users are created](#check-users-are-created)
+	- [install kube cluster](#install-kube-cluster)
 
 
 # History
@@ -73,8 +75,8 @@ Bash это Bourne again shell
 # Recommended sources to help
 
 - `man bash`
-- [Text book for Beginner. Recomended by Sandar van Vagt](https://tldp.org/LDP/Bash-Beginners-Guide/html/)
-- [Text book for Advanced. Recomended by Sandar van Vugt](https://tldp.org/LDP/abs/html/)
+- [Text book for Beginner. Recommended by Sandar van Vagt](https://tldp.org/LDP/Bash-Beginners-Guide/html/)
+- [Text book for Advanced. Recommended by Sandar van Vugt](https://tldp.org/LDP/abs/html/)
 
 # Variables
 When you create new variable it can be seen only in current bash. Many commands invoke another bash. In that case you can use `export`
@@ -526,6 +528,21 @@ echo "Downloading $FILEPATH to $CLIENT"
 EOF
 ```
 
+```bash
+cat << REBOOT >> /root/completeme.sh
+touch /tmp/after-reboot
+rm -f /etc/profile
+mv /etc/profile.bak /etc/profile
+echo DONE
+REBOOT
+
+chmod +x /root/completeme.sh
+cp /etc/profile/ etc/profile.bak
+echo /etc/completeme.sh >> /etc/profile
+
+reboot
+```
+
 # Function
 
 Two option to write function
@@ -621,7 +638,7 @@ ${1#}
 ## почистить строку 
 
 - `${var#pattern}` удаляет самый короткий результат поиска слева направо
-- `${var#pattern}` удаляет самый длинный результат поиска слева направо 
+- `${var##pattern}` удаляет самый длинный результат поиска слева направо 
 - `${var%pattern}` удаляет самый короткий результат поиска справа налево
 - `${var%%pattern}` удаляет самый длинный результат поиска справа налево
 
@@ -715,7 +732,6 @@ do
     mv $i ${i%.*}
 done    
 ```
-
 
 # Примеры использования ext globing 
 
@@ -1485,43 +1501,147 @@ cat /tmp/bash-debug.log
 
 # Complex scripts
 
-## cpu-hog
+## trivial restart if service down
 
 ```bash
 #!/bin/bash
-# Script that monitors the top-active process. The script sends an email to the user root if
-# utilization of the top active process goed beyond 80%. Of course, this script can be tuned to 
-# do anything else in such a case.
 #
-# Start the script, and it will run forever.
-
-while true
+# Monitoring process
+#
+COUNTER=0
+while ps aux | grep $1 | grep -v grep | grep -v $0 > /dev/null
 do
-	# Check every 60 seconds if we have a process causing high CPU load
-	sleep 60
-	USAGE=`ps -eo pcpu,pid -o comm= | sort -k1 -n -r | head -1 | awk '{ print $1 } '`
-	USAGE=${USAGE%.*}
-	PID=`ps -eo pcpu,pid -o comm= | sort -k1 -n -r | head -1 | awk '{print $2 }'`
-	PNAME=`ps -eo pcpu,pid -o comm= | sort -k1 -n -r | head -1 | awk '{print $3 }'`
-
-	# Only if we have a high CPU load on one process, run a check within 7 seconds
-	# In this check, we should monitor if the process is still that active
-	# If that's the case, root gets a message
-	if [ $USAGE -gt 80 ] 
-	then
-		USAGE1=$USAGE
-		PID1=$PID
-		PNAME1=$PNAME
-		sleep 7
-		USAGE2=`ps -eo pcpu,pid -o comm= | sort -k1 -n -r | head -1 | awk '{ print $1 } '`
-		USAGE2=${USAGE2%.*}
-		PID2=`ps -eo pcpu,pid -o comm= | sort -k1 -n -r | head -1 | awk '{print $2 }'`
-		PNAME2=`ps -eo pcpu,pid -o comm= | sort -k1 -n -r | head -1 | awk '{print $3 }'
-		
-		# Now we have variables with the old process information and with the
-		# new information
-
-		[ $USAGE2 -gt 80 ] && [ $PID1 = $PID2 ] && mail -s "CPU load of $PNAME is above 80%" root@blah.com < .
-	fi
+	COUNTER=$((COUNTER+1))
+	sleep 1
+	echo COUNTER is $COUNTER
 done
+
+logger HTTPMONITOR: $1 stopped at `date`
+systemctl start $1
 ```
+
+## check users are created
+
+```bash
+#!/bin/bash
+
+# RHCSA labs grading script - SvV
+# version 0.1
+
+# verify password settings
+grep 'PASS_MIN_LEN      6' /etc/login.defs >/dev/null 2>&1 || echo you did not set minimal password length to 6
+grep 'PASS_MAX_DAYS     90' /etc/login.defs >/dev/null 2>&1 || echo max password validity is not set to 90 days
+
+# verify new users
+for i in anna audrey linda lisa
+do
+        grep $i /etc/passwd >/dev/null 2>&1 || echo user $i does not exist
+done
+
+#verify new file in user homedirs
+for i in anna audrey linda lisa
+do
+        ls /home/$i/newfile >/dev/null 2>&1 || echo no newfile in $i home directory
+done
+
+# verify user group membership
+id anna | grep profs >/dev/null 2>&1 || echo anna is not a member of group profs
+id audrey | grep profs >/dev/null 2>&1 || echo audrey is not a member of group profs
+id linda | grep sales >/dev/null 2>&1 || echo linda is not a member of group sales
+id lisa | grep sales >/dev/null 2>&1 || echo lisa is not a member of group sales
+
+# check that accounts linda and lisa are locked
+passwd -S linda | grep locked >/dev/null 2>&1|| echo user linda password is not locked
+passwd -S lisa | grep locked>/dev/null 2>&1 || echo user linda password is not locked
+
+# evaluate passwords for anna and audrey
+sshpass -p "password" ssh -o StrictHostKeyChecking=no anna@localhost exit >/dev/null 2>&1 || echo password for anna not set correctly
+sshpass -p "password" ssh -o StrictHostKeyChecking=no audrey@localhost exit >/dev/null 2>&1 || echo password for audrey not set correctly
+
+echo grading completed
+```
+
+## install kube cluster
+
+```java
+
+#!/bin/bash
+#
+# verified on Fedora 31, 33 and Ubuntu LTS 20.04
+
+echo this script works on Fedora 31, 33 and Ubuntu 20.04
+echo it does NOT currently work on Fedora 32
+echo it requires the machine where you run it to have 6GB of RAM or more
+echo press Enter to continue
+read
+
+##########
+echo ########################################
+echo WARNING
+echo ########################################
+echo Nov 2020 - currently this script is NOT supported on Mac OS Big Sur
+echo I will communicate here one Apple/VMware have provided updates that make it work again
+echo
+echo Check the Setup Guide provided in this repository for alternative installations
+echo
+echo press Enter to continue
+read
+
+# setting MYOS variable
+MYOS=$(hostnamectl | awk '/Operating/ { print $3 }')
+OSVERSION=$(hostnamectl | awk '/Operating/ { print $4 }')
+
+egrep '^flags.*(vmx|svm)' /proc/cpuinfo || (echo enable CPU virtualization support and try again && exit 9)
+
+# debug MYOS variable
+echo MYOS is set to $MYOS
+
+#### Fedora config
+if [ $MYOS = "Fedora" ]
+then
+	if [ $OSVERSION = 32 ]
+	then
+		echo Fedora 32 is not currently supported
+		exit 9
+	fi
+	
+	sudo dnf clean all
+	sudo dnf -y upgrade
+
+	# install KVM software
+	sudo dnf install @virtualization -y
+	sudo systemctl enable --now libvirtd
+	sudo usermod -aG libvirt `id -un`
+fi
+
+### Ubuntu config
+if [ $MYOS = "Ubuntu" ]
+then
+	sudo apt-get update -y 
+	sudo apt-get install -y apt-transport-https curl
+	sudo apt-get upgrade -y
+	sudo apt-get install -y qemu-kvm libvirt-daemon-system libvirt-clients bridge-utils
+
+	sudo adduser `id -un` libvirt
+	sudo adduser `id -un` kvm
+fi
+
+# install kubectl
+curl -LO https://storage.googleapis.com/kubernetes-release/release/`curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt`/bin/linux/amd64/kubectl
+chmod +x ./kubectl
+sudo mv ./kubectl /usr/local/bin/kubectl
+
+# install minikube
+echo downloading minikube, check version
+curl -Lo minikube https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+
+sudo chmod +x minikube
+sudo mv minikube /usr/local/bin
+
+# start minikube
+minikube start --memory 4096 --vm-driver=kvm2
+
+echo if this script ends with an error, restart the virtual machine
+echo and manually run minikube start --memory 4096 --vm-driver=kvm2
+```
+

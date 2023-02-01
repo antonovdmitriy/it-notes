@@ -18,8 +18,8 @@
 - [Eligibility for GC](#eligibility-for-gc)
 - [Operators](#operators)
   - [Order of operator precedence](#order-of-operator-precedence)
-  - [Some of uniry operator](#some-of-uniry-operator)
-      - [Logical complement\*\*	`!a`](#logical-complementa)
+  - [Some of unary operator](#some-of-unary-operator)
+      - [Logical complement	`!a`](#logical-complementa)
     - [Bitwise complement\*\*	`~b`](#bitwise-complementb)
     - [Negation operator](#negation-operator)
     - [Increment decrement operators](#increment-decrement-operators)
@@ -74,6 +74,11 @@
   - [LocalDateTime](#localdatetime)
   - [ZonedDateTime](#zoneddatetime)
   - [Manipulating date and times](#manipulating-date-and-times)
+  - [Period](#period)
+  - [Duration](#duration)
+  - [Period vs Duration](#period-vs-duration)
+  - [Instant](#instant)
+  - [Daylight saving](#daylight-saving)
 - [Data races](#data-races)
 
 
@@ -292,7 +297,7 @@ b = 5; // DOES NOT COMPILE
 
 final int c =5, d;
 d = 4;
-d = 5; // DOES NOT COMPLIE
+d = 5; // DOES NOT COMPILE
 ```
 
 ```java
@@ -360,7 +365,7 @@ public void breakingDeclaration() {
  }
 ```
 
-По идее при присвоении null можно было подставлять Object в var но дизайнеры языка решили не давать такое скомплировать, потому что скорее всего автор такого кода что-то не продумал.
+It can be possible to resolve Object type while assigning null to var. But not.. designers of the language decided do not compile this.
 ```java
 public void twoTypes() {
    int a, var b = 3;  // DOES NOT COMPILE
@@ -425,7 +430,7 @@ public class Var {
 | Assignment operators            | `= += -= *= /= %= &= ^= \|= <<= >>= >>>=`        | Right-to-left |
 | Arrow operator                  | `->`                                             | Right-to-left |
 
-## Some of uniry operator
+## Some of unary operator
 
 ```java
 int pelican = !5;         // DOES NOT COMPILE
@@ -433,7 +438,7 @@ boolean penguin = -true;  // DOES NOT COMPILE
 boolean peacock = !0;     // DOES NOT COMPILE
 ```
 
-#### Logical complement**	`!a`	
+#### Logical complement	`!a`	
 Inverts a boolean's logical value
 ```java
 boolean isAnimalAsleep = false;
@@ -444,7 +449,7 @@ System.out.print(isAnimalAsleep);  // true
 
 
 ### Bitwise complement**	`~b`	
-which flips all of the 0s and 1s in a number. It can only be applied to integer numeric types such as byte, short, char, int, and long. Let's try an example. For simplicity, we only show the last four bits (instead of all 32 bits).
+which flips all of the 0s and 1s in a number. It can only be applied to integer numeric types such as `byte`, `short`, `char`, `int`, and `long`. Let's try an example. For simplicity, we only show the last four bits (instead of all 32 bits).
 
 ```java
 int value = 3;                   // Stored as 0011
@@ -542,6 +547,12 @@ var z = x * y; // int (third rule)
 double x = 39.21;
 float y = 2.1; // doesn't compile
 var z = x + y;
+```
+
+```java
+char a = 'a' + 'c'; // compile because literals
+char b = 'b';
+char k = a + b; // doesn't compile because of int
 ```
 
 ```java 
@@ -1895,6 +1906,230 @@ date = date.plusMonths(1);
 System.out.println(date);    // 2022–02–28
 date = date.plusYears(5);
 System.out.println(date);    // 2027–02–28
+```
+
+```java
+var date = LocalDate.of(2024, Month.JANUARY, 20);
+var time = LocalTime.of(5, 15);
+var dateTime = LocalDateTime.of(date, time);
+System.out.println(dateTime);       // 2024–01–20T05:15
+dateTime = dateTime.minusDays(1);
+System.out.println(dateTime);       // 2024–01–19T05:15
+dateTime = dateTime.minusHours(10);
+System.out.println(dateTime);       // 2024–01–18T19:15
+dateTime = dateTime.minusSeconds(30);
+System.out.println(dateTime);       // 2024–01–18T19:14:30
+```
+
+or with chain
+```java
+var date = LocalDate.of(2024, Month.JANUARY, 20);
+var time = LocalTime.of(5, 15);
+var dateTime = LocalDateTime.of(date, time)
+       .minusDays(1).minusHours(10).minusSeconds(30);
+```       
+
+```java
+var date = LocalDate.of(2024, Month.JANUARY, 20);
+date.plusDays(10);
+System.out.println(date);  // January 20, 2024.
+```
+
+```java
+var date = LocalDate.of(2024, Month.JANUARY, 20);
+date = date.plusMinutes(1);       // DOES NOT COMPILE
+```
+
+## Period
+
+```java
+public static void main(String[] args) {
+   var start = LocalDate.of(2022, Month.JANUARY, 1);
+   var end = LocalDate.of(2022, Month.MARCH, 30);
+   performAnimalEnrichment(start, end);
+}
+private static void performAnimalEnrichment(LocalDate start, LocalDate end) {
+   var upTo = start;
+   while (upTo.isBefore(end)) { // check if still before end
+      System.out.println("give new toy: " + upTo);
+      upTo = upTo.plusMonths(1); // add a month
+} }
+```
+
+with `Period` is more reusable
+
+```java
+public static void main(String[] args) {
+   var start = LocalDate.of(2022, Month.JANUARY, 1);
+   var end = LocalDate.of(2022, Month.MARCH, 30);
+   performAnimalEnrichment(start, end);
+}
+private static void performAnimalEnrichment(LocalDate start, LocalDate end) {
+   var upTo = start;
+   while (upTo.isBefore(end)) { // check if still before end
+      System.out.println("give new toy: " + upTo);
+      upTo = upTo.plusMonths(1); // add a month
+} }
+```
+
+```java
+var annually = Period.ofYears(1);            // every 1 year
+var quarterly = Period.ofMonths(3);          // every 3 months
+var everyThreeWeeks = Period.ofWeeks(3);     // every 3 weeks
+var everyOtherDay = Period.ofDays(2);        // every 2 days
+var everyYearAndAWeek = Period.of(1, 0, 7);  // every year and 7 days
+```
+
+chain doesn't work because of static method
+
+```java
+var wrong = Period.ofYears(1).ofWeeks(1); // every week
+```
+
+```java
+var date = LocalDate.of(2022, 1, 20);
+var time = LocalTime.of(6, 15);
+var dateTime = LocalDateTime.of(date, time);
+var period = Period.ofMonths(1);
+System.out.println(date.plus(period));     // 2022–02–20
+System.out.println(dateTime.plus(period)); // 2022–02–20T06:15
+System.out.println(time.plus(period));     // Exception
+```
+
+## Duration
+
+```java
+var daily = Duration.ofDays(1);               // PT24H
+var hourly = Duration.ofHours(1);             // PT1H
+var everyMinute = Duration.ofMinutes(1);      // PT1M
+var everyTenSeconds = Duration.ofSeconds(10); // PT10S
+var everyMilli = Duration.ofMillis(1);        // PT0.001S
+var everyNano = Duration.ofNanos(1);          // PT0.000000001S
+```
+
+```java
+var daily = Duration.of(1, ChronoUnit.DAYS);
+var hourly = Duration.of(1, ChronoUnit.HOURS);
+var everyMinute = Duration.of(1, ChronoUnit.MINUTES);
+var everyTenSeconds = Duration.of(10, ChronoUnit.SECONDS);
+var everyMilli = Duration.of(1, ChronoUnit.MILLIS);
+var everyNano = Duration.of(1, ChronoUnit.NANOS);
+```
+
+how to calculate difference between temporal values
+```java
+var one = LocalTime.of(5, 15);
+var two = LocalTime.of(6, 30);
+var date = LocalDate.of(2016, 1, 20);
+System.out.println(ChronoUnit.HOURS.between(one, two));     // 1
+System.out.println(ChronoUnit.MINUTES.between(one, two));   // 75
+System.out.println(ChronoUnit.MINUTES.between(one, date));  // DateTimeException
+```
+
+```java
+LocalTime time = LocalTime.of(3,12,45);
+System.out.println(time);      // 03:12:45
+LocalTime truncated = time.truncatedTo(ChronoUnit.MINUTES);
+System.out.println(truncated); // 03:12
+```
+
+```java
+var date = LocalDate.of(2022, 1, 20);
+var time = LocalTime.of(6, 15);
+var dateTime = LocalDateTime.of(date, time);
+var duration = Duration.ofHours(6);
+System.out.println(dateTime.plus(duration));  // 2022–01–20T12:15
+System.out.println(time.plus(duration));      // 12:15
+System.out.println(
+   date.plus(duration));  // UnsupportedTemporalTypeException
+```
+
+```java
+var date = LocalDate.of(2022, 1, 20);
+var time = LocalTime.of(6, 15);
+var dateTime = LocalDateTime.of(date, time);
+var duration = Duration.ofHours(23);
+System.out.println(dateTime.plus(duration));  // 2022–01–21T05:15
+System.out.println(time.plus(duration));      // 05:15
+System.out.println(
+   date.plus(duration));  // UnsupportedTemporalTypeException
+```
+
+## Period vs Duration
+
+```java
+var date = LocalDate.of(2022, 5, 25);
+var period = Period.ofDays(1);
+var days = Duration.ofDays(1);
+ 
+System.out.println(date.plus(period));   // 2022–05–26
+System.out.println(date.plus(days));     // Unsupported unit: Seconds
+```
+
+## Instant
+
+The `Instant` class represents a specific moment in time in the GMT time zone.
+
+```java
+var now = Instant.now();
+// do something time consuming
+var later = Instant.now();
+ 
+var duration = Duration.between(now, later);
+System.out.println(duration.toMillis());  // Returns number milliseconds
+```
+
+you can convert `ZonedDateTime` to `Instant`
+
+```java
+var date = LocalDate.of(2022, 5, 25);
+var time = LocalTime.of(11, 55, 00);
+var zone = ZoneId.of("US/Eastern");
+var zonedDateTime = ZonedDateTime.of(date, time, zone);
+var instant = zonedDateTime.toInstant(); // 2022–05–25T15:55:00Z
+System.out.println(zonedDateTime); // 2022–05–25T11:55–04:00[US/Eastern]
+System.out.println(instant); // 202–05–25T15:55:00Z
+```
+
+## Daylight saving
+
+![Daylight saving](images/daylight-saving.png)
+
+```java
+var date = LocalDate.of(2022, Month.MARCH, 13);
+var time = LocalTime.of(1, 30);
+var zone = ZoneId.of("US/Eastern");
+var dateTime = ZonedDateTime.of(date, time, zone);
+System.out.println(dateTime);  // 2022–03-13T01:30-05:00[US/Eastern]
+System.out.println(dateTime.getHour()); // 1
+System.out.println(dateTime.getOffset()); // -05:00
+ 
+dateTime = dateTime.plusHours(1);
+System.out.println(dateTime);  // 2022–03-13T03:30-04:00[US/Eastern]
+System.out.println(dateTime.getHour()); // 3
+System.out.println(dateTime.getOffset()); // -04:00
+```
+
+```java
+var date = LocalDate.of(2022, Month.NOVEMBER, 6);
+var time = LocalTime.of(1, 30);
+var zone = ZoneId.of("US/Eastern");
+var dateTime = ZonedDateTime.of(date, time, zone);
+System.out.println(dateTime); // 2022-11-06T01:30-04:00[US/Eastern]
+ 
+dateTime = dateTime.plusHours(1);
+System.out.println(dateTime); // 2022-11-06T01:30-05:00[US/Eastern]
+ 
+dateTime = dateTime.plusHours(1);
+System.out.println(dateTime); // 2022-11-06T02:30-05:00[US/Eastern]
+```
+
+```java
+var date = LocalDate.of(2022, Month.MARCH, 13);
+var time = LocalTime.of(2, 30);
+var zone = ZoneId.of("US/Eastern");
+var dateTime = ZonedDateTime.of(date, time, zone);
+System.out.println(dateTime);    // 2022–03–13T03:30–04:00[US/Eastern]
 ```
 
 # Data races

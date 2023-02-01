@@ -3,6 +3,7 @@
 - [Table of contents](#table-of-contents)
 - [Multiple cursors](#multiple-cursors)
 - [Move/copy rows](#movecopy-rows)
+- [Preview](#preview)
 
 # Multiple cursors
 
@@ -14,3 +15,6 @@
 
 - `Alt + up or down` -  move row up or down 
 - `Shift + Alt + up or down` - copy row and paste above or below
+
+# Preview
+- `Ctrl K + V` - open preview on the right side of the window
