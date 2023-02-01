@@ -1563,7 +1563,7 @@ echo grading completed
 
 ## install kube cluster
 
-```java
+```bash
 
 #!/bin/bash
 #
