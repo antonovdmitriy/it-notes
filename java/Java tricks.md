@@ -761,7 +761,7 @@ System.out.print(sleep + "," + sheep + "," + zzz);  // 1,1,2
 
 # Pattern matching 
 
-Для избежания проверки на тип, а потом приведения к типу с Java 16 появилось это. Переменная data относится к так называемым *pattern variable*.
+For escaping type checking and casting in Java 16 there are pattern matching. Variable `data` is so called *pattern variable*.
 ```java
 void compareIntegers(Number number) {
    if(number instanceof Integer data) {
@@ -770,7 +770,7 @@ void compareIntegers(Number number) {
 }
 ```
 
-pattern variable можно переприсвоить, если не обьявлено final
+if pattern variable is not final it can be reassigned
 ```java
 if(number instanceof Integer data) {
    data = 10;
@@ -783,14 +783,16 @@ if(number instanceof final Integer data) {
 }
 ```
 
-pattern variable переменную можно использовать дальше в выражениях в том же выражении
+pattern variable can be possible to use in the same equations further
+
 ```java
 void printIntegersGreaterThan5(Number number) {
    if(number instanceof Integer data && data.compareTo(5)>0)
       System.out.print(data);
 }
 ```
-важное ограничение, pattern varialble должно быть подтипом в отличие от традиционного instanceof
+
+Pattern variable must by sub type. In comparison an usual instanceof
 ```java
 Integer value = 123;
 if(value instanceof Integer) {}
@@ -927,7 +929,7 @@ public void printDayOfWeek(int day) {
 }
 ```
 
-тут нет присвоения к переменной. 
+тут нет присвоения к переменноqй, поэтому не нужно обязательное default при типе int. 
 ```java
 public void printSeason(int month) {
    switch(month) {
@@ -1619,6 +1621,7 @@ int numAnimals5 [];
 int[] ids, types; 
   ```
 
+
 ```java
 String[] strings = { "stringValue" };
 Object[] objects = strings;
@@ -1719,6 +1722,12 @@ int[][] differentSizes = {{1, 4}, {3}, {9,8,7}};
 int [][] args = new int[4][];
 args[0] = new int[5];
 args[1] = new int[3];
+```
+
+```java
+int[][] java = new int[][]; // DOES NOT COMPILE
+int[][] types = new int[];  // DOES NOT COMPILE
+Object[][][] cubbies = new Object[3][0][5]; // correct
 ```
 
 ```java
