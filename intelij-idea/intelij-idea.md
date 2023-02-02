@@ -3,11 +3,16 @@
 # Mark
 
 - `Ctrl + Shift + Left / Right`  Mark before the end of the word
-
+- `Ctrl + W`    Mark word, then method, then class
+- `Ctrl + Shift + W` Decrease level of the selection (see `ctrl + w`)
+ 
 # Search
 
-- `Ctrl + N`    Search class
-- `Ctrl + Shift + N` Search file
+- `Ctrl + N`    Search a class
+- `Ctrl + Shift + N` Search a file
+- `Ctrl + Shift + F`  Search across the project
+- `Double Shift`    generic search
+
 
 # Suggestions
 - `Ctrl + Space`, `Alt + Enter`  get advice
@@ -19,28 +24,20 @@
 
 # Navigation
 
-- Ctrl + F4		         Закрыть окно
-- WIndow -> Editor Tabs -> Close Unmodifible   Удобная штука, закрываются всех окна, в которых не было изменений
-- 
-- Ctrl + Tab                             Вызвать окно переключения между окнами
-- Ctrl+Shift+F12.                 Закрыть все окна вспомогательные
-- Ctrl + Shift + Arrow Keys   Изменять ширину высоту окон
-- 
-- F4 или Ctrl + B                    Провалиться в класс или метод к исходникам
-- Ctrl + Alt + B                        Показать список реализаций абстрактного метода или класса или интерфейса
-- Ctrl + H 		            Показать окно иерархии текущего класса
-- 
-- Ctrl + W                                Выделить слово, далее метод, весь метод, класс
-- Ctrl + Shift + W                     Снизить уровень выделения, см. выше
-- Ctrl + Shift + F                      Поиск по проекту
-- Двойной Shift                       Поиск где -угодно чего угодно
-- Ctrl +   Ctrl -                          Сворачивать раскрывать секции кода
-- 
-- Escape                                  Вернуться в редактор 
-- F12 			           Вернуться из редактора в последнее используемое окно
-- Alt + 1                                   	Перейти к окну проекта
-- Alt + 7                                     Перейти к окну структуры
-- Alt + 8                                      Окно иерархии
+- `Escape`  Return to the editor
+- `F12`  Return from the editor to the latest window
+- `Alt + 1` Project window
+- `Alt + 7` Structure window
+- `Ctrl + F4` Close tab
+- `WIndow -> Editor Tabs -> Close Unmodifiable` Close tabs where there are no changes
+- `Ctrl + Tab`  Open window to switch between tabs
+- `Ctrl+Shift+F12`  Close/Open all windows except the editor
+- `Ctrl + Shift + Alt + Arrow Keys` Change size of the current window
+- `F4` or `Ctrl + B`  Go to source of the selected class or method. Go deep.
+- `Ctrl + Alt + B`  Show list of implementation current selected interface, abstract class or method
+- `Ctrl + H` Show window hierarchy of the current class or interface
+- `Ctrl +` and `Ctrl -` Expand / collapse blocks of code
+
 - Ctrl + F12 		            Открыть всплывающее окно структуры. Удобно в   
 - Distraction Mode. В нем можно искать сразу. Очень удобно
 - 

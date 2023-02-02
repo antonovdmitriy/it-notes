@@ -2091,6 +2091,10 @@ System.out.println(zonedDateTime); // 2022–05–25T11:55–04:00[US/Eastern]
 System.out.println(instant); // 202–05–25T15:55:00Z
 ```
 
+```java
+Instant ins = new Instant()
+```
+
 ## Daylight saving
 
 ![Daylight saving](images/daylight-saving.png)

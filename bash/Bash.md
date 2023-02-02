@@ -75,8 +75,8 @@ Bash это Bourne again shell
 # Recommended sources to help
 
 - `man bash`
-- [Text book for Beginner. Recommended by Sandar van Vagt](https://tldp.org/LDP/Bash-Beginners-Guide/html/)
-- [Text book for Advanced. Recommended by Sandar van Vugt](https://tldp.org/LDP/abs/html/)
+- [Text book for Beginner. Recommended by Sander van Vugt](https://tldp.org/LDP/Bash-Beginners-Guide/html/)
+- [Text book for Advanced. Recommended by Sander van Vugt](https://tldp.org/LDP/abs/html/)
 
 # Variables
 When you create new variable it can be seen only in current bash. Many commands invoke another bash. In that case you can use `export`
@@ -88,15 +88,14 @@ we can create variable and at the same place export to all child bashes
 export KEY=VALUE
 ```
 
-> Variables is caseinsensitive
+> Variables is case-insensitive
 
-> Обычно переменные окружения пишутся с заглавных букв. Локальные переменные пишет кто как, автор курса пишет с большой буквы, но не все люди с этим согласны, аргумент, что происходит путанница.
-
-чтобы обнулить значение переменной
+to make variable null again
 ```bash
 variable=
 ```
-удалить саму переменную
+
+delete variable
 ```bash
 unset variable
 ```
@@ -437,17 +436,20 @@ echo print $1
 
 # Command substitution 
 
-Можно использовать о скобки и тильду
+Two cases
 
+- one 
 ```bash
 today=$(date +%d-%m-%y)
 mykernel=$(uname -r)
 ```
+
+- two
 ```bash
 today=`date +%d-%m-%y`
 mykernel=`uname -r`
 ```
-для читаемости лучше использовать `$()`
+for readablitiy use this `$()`
 
 ```bash
 #!/bin/bash
