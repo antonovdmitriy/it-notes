@@ -79,6 +79,10 @@
   - [Period vs Duration](#period-vs-duration)
   - [Instant](#instant)
   - [Daylight saving](#daylight-saving)
+- [Methods](#methods)
+  - [Sugnature](#sugnature)
+  - [Access modifiers](#access-modifiers)
+  - [return for void](#return-for-void)
 - [Data races](#data-races)
 
 
@@ -2143,6 +2147,39 @@ var time = LocalTime.of(2, 30);
 var zone = ZoneId.of("US/Eastern");
 var dateTime = ZonedDateTime.of(date, time, zone);
 System.out.println(dateTime);    // 2022–03–13T03:30–04:00[US/Eastern]
+```
+
+# Methods
+
+## Sugnature
+
+the method name and parameter list—are called the method signature. The method signature provides instructions for how callers can reference this method. The method signature does not include the return type and access modifiers, which control where the method can be referenced.
+
+```java
+public class Trip {
+   public void visitZoo(String name, int waitTime) {}
+   public void visitZoo(int rainFall, String attraction) {}
+}
+```
+
+## Access modifiers
+
+- **private** The private modifier means the method can be called only from within the same class.
+- **Package Access** With package access, the method can be called only from a class in the same package. This one is tricky because there is no keyword. You simply omit the access modifier. Package access is sometimes referred to as package-private or default access (even within this book!).
+- **protected** The protected modifier means the method can be called **only from a class in the same package or a subclass**.
+- **public** The public modifier means the method can be called from anywhere.
+
+
+## return for void
+
+```java
+public void swim(int distance) {
+   if(distance <= 0) {
+      // Exit early, nothing to do!
+      return;
+   }
+   System.out.print("Fish is swimming " + distance + " meters");
+}
 ```
 
 # Data races

@@ -412,6 +412,76 @@ complex example
 	passwd $1
 ```
 
+manual argument processing
+
+```bash
+
+#!/usr/bin/env bash
+
+# File name
+readonly PROGNAME=$(basename $0)
+# File name, without the extension
+readonly PROGBASENAME=${PROGNAME%.*}
+# File directory
+readonly PROGDIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+# Arguments
+readonly ARGS="$@"
+# Arguments number
+readonly ARGNUM="$#"
+
+usage() {
+	echo "Script description"
+	echo
+	echo "Usage: $PROGNAME -i <file> -o <file> [options]..."
+	echo
+	echo "Options:"
+	echo
+	echo "  -h, --help"
+	echo "      This help text."
+	echo
+	echo "  -i <file>, --input <file>"
+	echo "      Input file. If \"-\", stdin will be used instead."
+	echo
+	echo "  -o <file>, --output <file>"
+	echo "      Output file."
+	echo
+	echo "  --"
+	echo "      Do not interpret any more arguments as options."
+	echo
+}
+
+while [ "$#" -gt 0 ]
+do
+	case "$1" in
+	-h|--help)
+		usage
+		exit 0
+		;;
+	-i|--input)
+		input="$2"
+
+		# Jump over <file>, in case "-" is a valid input file 
+		# (keyword to standard input). Jumping here prevents reaching
+		# "-*)" case when parsing <file>
+		shift
+		;;
+	-o|--output)
+		output="$2"
+		;;
+	--)
+		break
+		;;
+	-*)
+		echo "Invalid option '$1'. Use --help to see the valid options" >&2
+		exit 1
+		;;
+	# an option argument, continue
+	*)	;;
+	esac
+	shift
+done
+```
+
 
 # Оператор shift
 
