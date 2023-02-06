@@ -11,10 +11,10 @@ Just notes, compilation from different courrses and own thoughts.
 - [Oracle](/oracle/oracle.md)
 - [Kubernetes](kubernates/kubernates.md)
 - [Amazon](/aws/AWS.md)
+- [InteliJ IDEA](intelij-idea/intelij-idea.md)
+- [VS Code](/vs-code/vs-code.md)
+- [Maven](maven/maven.md)
 - [Go](/go/go.md)
 - [Testing](/testing/Testing.md)
 - [Markdown](/markdown/Markdown.md)
 - [Python](/python/python.md)
-- [InteliJ IDEA](intelij-idea/intelij-idea.md)
-- [VS Code](/vs-code/vs-code.md)
-
