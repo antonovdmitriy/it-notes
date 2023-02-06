@@ -18,3 +18,6 @@ Just notes, compilation from different courrses and own thoughts.
 - [Testing](/testing/Testing.md)
 - [Markdown](/markdown/Markdown.md)
 - [Python](/python/python.md)
+- [Html](html/html.md)
+- [Css](css/css.md)
+- [Javascript](javascript/javascript.md)
