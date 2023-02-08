@@ -8,6 +8,8 @@
 - [Main arguments trics](#main-arguments-trics)
 - [Import packages tricks](#import-packages-tricks)
 - [Initializing class](#initializing-class)
+  - [Constructor](#constructor)
+  - [this](#this)
 - [Numeric literals](#numeric-literals)
 - [Underscores](#underscores)
 - [Wrapper classes](#wrapper-classes)
@@ -83,6 +85,29 @@
   - [Sugnature](#sugnature)
   - [Access modifiers](#access-modifiers)
   - [return for void](#return-for-void)
+  - [Local variables](#local-variables)
+  - [Varargs](#varargs)
+- [Access modifiers](#access-modifiers-1)
+- [Static](#static)
+- [Static import](#static-import)
+- [Autoboxing](#autoboxing)
+- [Overloading](#overloading)
+  - [Rules](#rules)
+- [Inheritence](#inheritence)
+  - [hiding variables](#hiding-variables)
+  - [super](#super)
+  - [Constructor](#constructor-1)
+  - [Class initialization](#class-initialization)
+  - [Overridng](#overridng)
+    - [Rules](#rules-1)
+    - [Examples](#examples)
+  - [redeclaring private methods](#redeclaring-private-methods)
+  - [static method hiding](#static-method-hiding)
+  - [variable hiding](#variable-hiding)
+  - [final hiding and overrding](#final-hiding-and-overrding)
+- [Abstract classes](#abstract-classes)
+  - [Rules](#rules-2)
+  - [Constructor in abstract class](#constructor-in-abstract-class)
 - [Data races](#data-races)
 
 
@@ -188,11 +213,98 @@ import java.util.*;
 import java.sql.*;  // causes Date declaration to not compile
 ```
 
+
 # Initializing class
 
 > Sometimes code blocks are inside a method. These are run when the method is called. Other times, code blocks appear outside a method. These are called **instance initializers**
 
 > Class can have name started with lower case. 
+
+```java
+// Bear.java
+class Bird {}
+class Bear {}
+class Fish {}
+```
+
+```java
+// ClownFish.java
+protected class ClownFish{} // DOES NOT COMPILE
+ 
+// BlueTang.java
+private class BlueTang {} // DOES NOT COMPILE
+```
+
+## Constructor
+
+- A class can contain many overloaded constructors, provided the signature for each is distinct.
+- The compiler inserts a default no-argument constructor if no constructors are declared.
+- If a constructor calls this(), then it must be the first line of the constructor. Comments aren't considered statements and are allowed anywhere.
+- Java does not allow cyclic constructor calls.
+
+```java
+public class Bunny {
+   public bunny() {} // DOES NOT COMPILE
+   public void Bunny() {}
+}
+```
+
+```java
+public class Bonobo {
+   public Bonobo(var food) {  // DOES NOT COMPILE
+   }
+}
+```
+
+overloaded constructors
+```java
+public class Turtle {
+   private String name;
+   public Turtle() {
+      name = "John Doe";
+   }
+   public Turtle(int age) {}
+   public Turtle(long age) {}
+   public Turtle(String newName, String… favoriteFoods) {
+      name = newName;
+   }
+}
+```
+
+```java
+public Hamster(int weight) {
+   System.out.println("chew");
+   // Set weight and default color
+   this(weight, "brown");     // DOES NOT COMPILE
+}
+```
+
+```java
+public class Gopher {
+   public Gopher(int dugHoles) {
+      this(5);  // DOES NOT COMPILE
+   }
+}
+```
+
+```java
+public class Gopher {
+   public Gopher() {
+      this(5);  // DOES NOT COMPILE
+   }
+   public Gopher(int dugHoles) {
+      this();   // DOES NOT COMPILE
+   }
+}
+```
+
+## this
+
+>the `this` reference refers to the current instance of the class and can be used to access any member of the class, including inherited members. 
+
+> It can be used in any instance method, constructor, or instance initializer block. 
+
+> It cannot be used when there is no implicit instance of the class, such as in a static method or static initializer block.
 
 # Numeric literals
 
@@ -328,6 +440,8 @@ public void checkAnswer() {
 ```
 
 > Instance and class variables (static) do not require you to initialize them. As soon as you declare these variables, they are given a default value. The compiler doesn't know what value to use and so wants the simplest value it can give the type: null for an object, zero for the numeric types, and false for a boolean. You don't need to know the default value for char, but in case you are curious, it is '\u0000' (NUL).
+
+> The compiler does not apply a default value to final variables, though. A final instance or final static variable must receive a value when it is declared or as part of initialization.
 
 ## Var
 > local variable type inference. Let's take that apart. First comes **local** variable. This means just what it sounds like. You can only use this feature for local variables.
@@ -2181,6 +2295,987 @@ public void swim(int distance) {
    System.out.print("Fish is swimming " + distance + " meters");
 }
 ```
+
+## Local variables
+
+
+> While it might not seem obvious, marking a local variable final is often a good practice. For example, you may have a complex method in which a variable is referenced dozens of times. It would be really bad if someone came in and reassigned the variable in the middle of the method. Using the final attribute is like sending a message to other developers to leave the variable alone!
+
+> An **effectively final** local variable is one that is not modified after it is assigned. This means that the value of a variable doesn't change after it is set, regardless of whether it is explicitly marked as final. If you aren't sure whether a local variable is effectively final, just add the final keyword. If the code still compiles, the variable is effectively final.
+
+## Varargs
+
+- A method can have at most one varargs parameter.
+- If a method contains a varargs parameter, it must be the last parameter in the list.
+
+```java
+public void walk1(int… steps) {}
+
+// Pass an array
+int[] data = new int[] {1, 2, 3};
+walk1(data);
+ 
+// Pass a list of values
+walk1(1,2,3);
+
+walk1(); // legal. Empty array will be created
+```
+
+```java
+public void walk1(int… steps) {
+   int[] step2 = steps; // Not necessary, but shows steps is of type int[]
+   System.out.print(step2.length);
+}
+```
+
+```java
+public class DogWalker {
+   public static void walkDog(int start, int… steps) {
+      System.out.println(steps.length);
+   }
+   public static void main(String[] args) {
+      walkDog(1);                    // 0
+      walkDog(1, 2);                 // 1
+      walkDog(1, 2, 3);              // 2
+      walkDog(1, new int[] {4, 5});  // 2
+      walkDog(1, null); // Triggers NullPointerException in walkDog()
+   } }
+```
+
+# Access modifiers
+
+```java
+package pond.shore;
+
+public class Bird {
+    protected String text = "floating";
+    protected void floatInWater() {
+        System.out.print(text);
+    }
+}
+
+-- 
+package pond.swan;
+
+import pond.shore.Bird;
+
+public class Swan extends Bird {
+    public void swim() {
+        floatInWater();
+        System.out.print(text);
+    }
+
+    public void helpOtherSwanSwim() {
+        Swan other = new Swan();
+        other.floatInWater();
+        System.out.print(other.text);
+    }
+
+    public void helpOtherBirdSwim() {
+        Bird other = new Bird();
+        other.floatInWater();             // DOES NOT COMPILE
+        System.out.print(other.text);     // DOES NOT COMPILE
+    }
+}
+
+--
+package pond.other;
+
+import pond.swan.Swan;
+
+public class SwanWatcher {
+
+    public void watch() {
+        Swan swan = new Swan();
+        swan.floatInWater();              // DOES NOT COMPILE
+    }
+}
+```
+
+# Static
+```java
+public class Snake {
+   public static long hiss = 2;
+}
+
+Snake s = new Snake();
+System.out.println(s.hiss); 
+s = null;
+System.out.println(s.hiss);
+```
+
+# Static import
+
+```java
+import java.util.List;
+import static java.util.Arrays.asList;          // static import
+public class ZooParking {
+   public static void main(String[] args) {
+      List<String> list = asList("one", "two"); // No Arrays. prefix
+   }
+}
+```
+
+
+```java
+import static java.util.Arrays;       // DOES NOT COMPILE
+import static java.util.Arrays.asList;
+static import java.util.Arrays.*;     // DOES NOT COMPILE
+public class BadZooParking {
+   public static void main(String[] args) {
+      Arrays.asList("one");           // DOES NOT COMPILE
+   }
+}
+```
+
+```java
+import static zoo.A.TYPE;
+import static zoo.B.TYPE;     // DOES NOT COMPILE
+```
+
+# Autoboxing
+
+```java
+int quack = 5;
+Integer quackquack = quack;        // Autoboxing
+int quackquackquack = quackquack;  // Unboxing
+```
+
+```java
+Short tail = 8;                        // Autoboxing
+Character p = Character.valueOf('p');
+char paw = p;                          // Unboxing
+Boolean nose = true;                   // Autoboxing
+Integer e = Integer.valueOf(9);
+long ears = e;                         // Unboxing, then implicit casting
+Long badGorilla = 8; // DOES NOT COMPILE
+```
+
+> Java will cast or autobox the value automatically, but not both at the same time.
+
+```java
+public class Gorilla {
+   public void rest(Long x) {
+      System.out.print("long");
+   }
+   public static void main(String[] args) {
+      var g = new Gorilla();
+      g.rest(8); // DOES NOT COMPILE
+   }
+}
+```
+
+```java
+Character elephant = null;
+char badElephant = elephant;   // NullPointerException
+```
+
+```java
+Long aw = 12434L;
+long a = 34234;
+byte result;
+
+result = (byte)a;
+result = (byte)(long)aw;
+
+---
+
+Long aw = 12434L;
+long a = 34234;
+Byte result;
+
+result = (byte)a;
+result = (byte)(long)aw;
+
+---
+
+Byte aw = 124;
+byte a = 3;
+
+long result;
+result = a;
+result = aw;
+
+---
+
+Byte aw = 124;
+byte a = 3;
+
+Long result;
+result = (long) a;
+result = (long) aw;
+```
+
+# Overloading
+
+```java
+public class Falcon {
+   public void fly(int numMiles) {}
+   public void fly(short numFeet) {}
+   public boolean fly() { return false; }
+   void fly(int numMiles, short numFeet) {}
+   public void fly(short numFeet, int numMiles) throws Exception {}
+}
+```
+
+```java
+public class Eagle {
+   public void fly(int numMiles) {}
+   public int fly(int numMiles) { return 1; }     // DOES NOT COMPILE
+}
+```
+
+```java
+public class Pelican {
+   public void fly(String s) {
+      System.out.print("string");
+   }
+ 
+   public void fly(Object o) {
+      System.out.print("object");
+   }
+   public static void main(String[] args) {
+      var p = new Pelican();
+      p.fly("test");
+      System.out.print("-");
+      p.fly(56);            // string - object
+   }
+}
+```
+
+```java
+import java.time.*;
+import java.util.*;
+public class Parrot {
+   public static void print(List<Integer> i) {
+      System.out.print("I");
+   }
+   public static void print(CharSequence c) {
+      System.out.print("C");
+   }
+   public static void print(Object o) {
+      System.out.print("O");
+   }
+   public static void main(String[] args){
+      print("abc");
+      print(Arrays.asList(3));
+      print(LocalDate.of(2019, Month.JULY, 4)); // CIO
+   }
+}
+```
+
+```java
+public class Ostrich {
+   public void fly(int i) {
+      System.out.print("int");
+   }
+   public void fly(long l) {
+      System.out.print("long");
+   }
+   public static void main(String[] args) {
+      var p = new Ostrich();
+      p.fly(123);
+      System.out.print("-");
+      p.fly(123L); // int - long
+   }
+}
+```
+
+```java
+public class Kiwi {
+   public void fly(int numMiles) {}
+   public void fly(Integer numMiles) {}
+   // When the primitive int version isn't present, Java will autobox. However, when the primitive int version is provided, there is no reason for Java to do the extra work of autoboxing.
+}
+```
+
+without autobox
+```java
+public static void walk(int[] ints) {}
+public static void walk(Integer[] integers) {}
+```
+
+```java
+public class Toucan {
+   public void fly(int[] lengths) {}
+   public void fly(int… lengths) {} // DOES NOT COMPILE
+}
+
+fly(new int[] { 1, 2, 3 }); // Allowed to call either fly() method
+fly(1, 2, 3); // Allowed to call only the fly() method using varargs
+```
+
+## Rules 
+
+Example of what will be chosen for glide(1,2)
+- Exact match by type	`String glide(int i, int j)`
+- Larger primitive type	`String glide(long i, long j)`
+- Autoboxed type	`String glide(Integer i, Integer j)`
+- Varargs	`String glide(int… nums)`
+
+# Inheritence
+
+> When one class inherits from a parent class, all public and protected members are automatically available as part of the child class. 
+
+> If the two classes are in the same package, then package members are available to the child class
+
+```java
+public class Zoo { }
+public class Zoo extends java.lang.Object { }
+```
+
+## hiding variables
+
+```java
+// Reptile.java
+public class Reptile {
+   protected int speed = 10;
+}
+ 
+// Crocodile.java
+public class Crocodile extends Reptile {
+   protected int speed = 20;
+   public int getSpeed() {
+      return speed;
+   }
+   public static void main(String[] data) {
+      var croc = new Crocodile();
+      System.out.println(croc.getSpeed()); // 20
+   } }
+```
+
+## super
+
+```java
+class Insect {
+   protected int numberOfLegs = 4;
+   String label = "buggy";
+}
+
+public class Beetle extends Insect {
+   protected int numberOfLegs = 6;
+   short age = 3;
+   public void printData() {
+      System.out.println(this.label);
+      System.out.println(super.label);
+      System.out.println(this.age);
+      System.out.println(super.age); // DOES NOT COMPILE
+      System.out.println(numberOfLegs);
+   }
+   public static void main(String []n) {
+      new Beetle().printData();
+   }
+}
+```
+
+## Constructor
+
+- The first line of every constructor is a call to a parent constructor using super() or an overloaded constructor using this().
+- If the constructor does not contain a this() or super() reference, then the compiler automatically inserts super() with no arguments as the first line of the constructor.
+- If a constructor calls super(), then it must be the first line of the constructor.
+
+```java
+public class Animal {
+   private int age;
+   public Animal(int age) {
+      super(); // Refers to constructor in java.lang.Object
+      this.age = age;
+   }
+}
+ 
+public class Zebra extends Animal {
+   public Zebra(int age) {
+      super(age); // Refers to constructor in Animal
+   }
+   public Zebra() {
+      this(4); // Refers to constructor in Zebra with int argument
+   }
+}
+```
+
+```java
+public class Zoo {
+   public Zoo() {
+      System.out.println("Zoo created");
+      super();      // DOES NOT COMPILE
+   }
+}
+ 
+public class Zoo {
+   public Zoo() {
+      super();
+      System.out.println("Zoo created");
+      super();      // DOES NOT COMPILE
+   }
+}
+```
+
+```java
+public class Animal {
+   private int age;
+   private String name;
+   public Animal(int age, String name) {
+      super();
+      this.age = age;
+      this.name = name;
+   }
+   public Animal(int age) {
+      super();
+      this.age = age;
+      this.name = null;
+   }
+}
+ 
+public class Gorilla extends Animal {
+   public Gorilla(int age) {
+      super(age,"Gorilla");  // Calls the first Animal constructor
+   }
+   public Gorilla() {
+      super(5);              // Calls the second Animal constructor
+   }
+}
+```
+
+
+```java
+public class Donkey {}
+ 
+public class Donkey {
+   public Donkey() {}
+}
+ 
+public class Donkey {
+   public Donkey() {
+      super();
+   }
+}
+```
+
+```java
+public class Mammal {
+   public Mammal(int age) {}
+}
+ 
+public class Seal extends Mammal {}  // DOES NOT COMPILE
+ 
+public class Elephant extends Mammal {
+   public Elephant() {}             // DOES NOT COMPILE
+}
+```
+
+## Class initialization
+
+> the class containing the program entry point, aka the main() method, is loaded before the main() method is executed.
+
+>  by the time the constructor completes, all final instance variables must be assigned a value exactly once.
+
+- If there is a superclass Y of X, then initialize class Y first.
+- Process all static variable declarations in the order in which they appear in the class.
+- Process all static initializers in the order in which they appear in the class.
+
+- Initialize class X if it has not been previously initialized.
+- If there is a superclass Y of X, then initialize the instance of Y first.
+- Process all instance variable declarations in the order in which they appear in the class.
+- Process all instance initializers in the order in which they appear in the class.
+- Initialize the constructor, including any overloaded constructors referenced with this().
+
+```java
+public class Animal {
+   static { System.out.print("A"); }
+}
+ 
+public class Hippo extends Animal {
+   public static void main(String[] grass) {
+      System.out.print("C");
+      new Hippo();
+      new Hippo();
+      new Hippo();
+   }
+   static { System.out.print("B"); }   // ABC
+}
+```
+
+```java
+public class MouseHouse {
+   private final int volume;
+   private final String name;
+   public MouseHouse() {
+      this.name = "Empty House"; // Constructor assignment
+   }
+   
+   {
+      volume = 10; // Instance initializer assignment
+   }
+}
+```
+
+```java
+public class MouseHouse {
+   private final int volume;
+   private final String type;
+   {
+      this.volume = 10;
+   }
+   public MouseHouse(String type) {
+      this.type = type;
+   }
+   public MouseHouse() {  // DOES NOT COMPILE
+      this.volume = 2;    // DOES NOT COMPILE
+   }
+}
+```
+
+```java 
+public class ZooTickets {
+   private String name = "BestZoo";
+   { System.out.print(name + "-"); }
+   private static int COUNT = 0;
+   static { System.out.print(COUNT + "-"); }
+   static { COUNT += 10; System.out.print(COUNT + "-"); }
+
+   public ZooTickets() {
+      System.out.print("z-");
+   }
+
+   public static void main(String… patrons) {
+      new ZooTickets();
+   } }
+   // 0-10-BestZoo-z-
+```
+
+```java
+class Primate {
+   public Primate() {
+      System.out.print("Primate-");
+   } }
+ 
+class Ape extends Primate {
+   public Ape(int fur) {
+      System.out.print("Ape1-");
+   }
+   public Ape() {
+      System.out.print("Ape2-");
+   } }
+ 
+public class Chimpanzee extends Ape {
+   public Chimpanzee() {
+      super(2);
+      System.out.print("Chimpanzee-");
+   }
+   public static void main(String[] args) {
+      new Chimpanzee();
+   } }
+
+   // Primate-Ape1-Chimpanzee-
+```
+
+```java
+ public class Cuttlefish {
+    private String name = "swimmy";
+    { System.out.println(name); }
+    private static int COUNT = 0;
+    static { System.out.println(COUNT); }
+    { COUNT++; System.out.println(COUNT); }
+
+    public Cuttlefish() {
+       System.out.println("Constructor");
+    }
+
+    public static void main(String[] args) {
+       System.out.println("Ready");
+       new Cuttlefish();
+    } }
+    
+/*
+0
+Ready
+swimmy
+1
+Constructor
+*/
+```
+
+```java
+  class GiraffeFamily {
+     static { System.out.print("A"); }
+     { System.out.print("B"); }
+
+     public GiraffeFamily(String name) {
+        this(1);
+        System.out.print("C");
+     }
+
+    public GiraffeFamily() {
+       System.out.print("D");
+    }
+
+    public GiraffeFamily(int stripes) {
+       System.out.print("E");
+    }
+ }
+ public class Okapi extends GiraffeFamily {
+    static { System.out.print("F"); }
+
+    public Okapi(int stripes) {
+       super("sugar");
+       System.out.print("G");
+    }
+    { System.out.print("H"); }
+
+    public static void main(String[] grass) {
+       new Okapi(1);
+       System.out.println();
+       new Okapi(2);
+    }
+ }
+// AFBECHG
+// BECHG
+```
+
+## Overridng
+
+> In Java, overriding a method occurs when a subclass declares a new implementation for an inherited method with the same signature and compatible return type.
+
+```java
+public class Marsupial {
+   public double getAverageWeight() {
+      return 50;
+   }
+}
+public class Kangaroo extends Marsupial {
+   public double getAverageWeight() {
+      return super.getAverageWeight()+20;
+   }
+   public static void main(String[] args) {
+      System.out.println(new Marsupial().getAverageWeight());  // 50.0
+      System.out.println(new Kangaroo().getAverageWeight());   // 70.0
+   }
+}
+```
+
+### Rules
+
+- The method in the child class must have the same signature as the method in the parent class.
+- The method in the child class must be at least as accessible as the method in the parent class.
+- The method in the child class may not declare a checked exception that is new or broader than the class of any exception declared in the parent class method.
+- If the method returns a value, it must be the same or a subtype of the method in the parent class, known as covariant return types.
+
+### Examples
+
+```java
+public class Camel {
+   public int getNumberOfHumps() {
+      return 1;
+   } }
+ 
+public class BactrianCamel extends Camel {
+   private int getNumberOfHumps() { // DOES NOT COMPILE
+      return 2;
+   } }
+```
+
+```java
+public class Reptile {
+   protected void sleep() throws IOException {}
+ 
+   protected void hide() {}
+ 
+   protected void exitShell() throws FileNotFoundException {}
+}
+ 
+public class GalapagosTortoise extends Reptile {
+   public void sleep() throws FileNotFoundException {}
+ 
+   public void hide() throws FileNotFoundException {} // DOES NOT COMPILE
+ 
+ 
+   public void exitShell() throws IOException {} // DOES NOT COMPILE
+}
+```
+
+```java
+public class Rhino {
+   protected CharSequence getName() {
+      return "rhino";
+   }
+   protected String getColor() {
+      return "grey, black, or white";
+   } }
+ 
+public class JavanRhino extends Rhino {
+   public String getName() {
+      return "javan rhino";
+   }
+   public CharSequence getColor() { // DOES NOT COMPILE
+      return "grey";
+   } }
+```
+
+```java
+public class Fish {
+   public void swim() {};
+}
+public class Shark extends Fish {
+   @Override
+   public void swim(int speed) {}; // DOES NOT COMPILE
+}
+```
+
+## redeclaring private methods
+
+```java
+public class Beetle {
+   private String getSize() {
+      return "Undefined";
+   } }
+ 
+public class RhinocerosBeetle extends Beetle {
+   private int getSize() {
+      return 5;
+   } }
+```   
+
+## static method hiding
+
+The previous four rules for overriding a method must be followed when a method is hidden. In addition, a new fifth rule is added for hiding a method:
+
+> The method defined in the child class must be marked as static if it is marked as static in a parent class.
+
+Put simply, it is method hiding if the two methods are marked static and method overriding if they are not marked static. If one is marked static and the other is not, the class will not compile.
+
+```java
+public class Bear {
+   public static void eat() {
+      System.out.println("Bear is eating");
+   } }
+ 
+public class Panda extends Bear {
+   public static void eat() {
+      System.out.println("Panda is chewing");
+   }
+   public static void main(String[] args) {
+      eat();
+   } }
+```
+
+```java
+public class Bear {
+   public static void sneeze() {
+      System.out.println("Bear is sneezing");
+   }
+   public void hibernate() {
+      System.out.println("Bear is hibernating");
+   }
+   public static void laugh() {
+      System.out.println("Bear is laughing");
+   }
+}
+ 
+public class SunBear extends Bear {
+   public void sneeze() {             // DOES NOT COMPILE
+      System.out.println("Sun Bear sneezes quietly");
+   }
+   public static void hibernate() {   // DOES NOT COMPILE
+      System.out.println("Sun Bear is going to sleep");
+   }
+   protected static void laugh() {    // DOES NOT COMPILE
+      System.out.println("Sun Bear is laughing");
+   }
+}
+```
+
+## variable hiding
+
+A hidden variable occurs when a child class defines a variable with the same name as an inherited variable defined in the parent class. This creates two distinct copies of the variable within an instance of the child class: one instance defined in the parent class and one defined in the child class.
+
+```java
+class Carnivore {
+   protected boolean hasFur = false;
+}
+ 
+public class Meerkat extends Carnivore {
+   protected boolean hasFur = true;
+ 
+   public static void main(String[] args) {
+      Meerkat m = new Meerkat();
+      Carnivore c = m;
+      System.out.println(m.hasFur); // true
+      System.out.println(c.hasFur); // false
+   }
+}
+```
+
+## final hiding and overrding 
+
+```java
+public class Bird {
+   public final boolean hasFeathers() {
+      return true;
+   }
+   public final static void flyAway() {}
+}
+ 
+public class Penguin extends Bird {
+   public final boolean hasFeathers() {   // DOES NOT COMPILE
+      return false;
+   }
+   public final static void flyAway() {}  // DOES NOT COMPILE
+}
+```
+
+the private methods would be redeclared, not overridden or hidden.
+
+# Abstract classes
+
+ An abstract class is a class declared with the abstract modifier that cannot be instantiated directly and may contain abstract methods.
+
+ ```java
+ public abstract class Canine {}
+ 
+public class Wolf extends Canine {}
+ 
+public class Fox extends Canine {}
+ 
+public class Coyote extends Canine {}
+```
+
+An abstract method is a method declared with the abstract modifier that does not define a body. Put another way, an abstract method forces subclasses to override the method.
+
+```java
+public abstract class Canine {
+   public abstract String getSound();
+   public void bark() { System.out.println(getSound()); }
+}
+ 
+public class Wolf extends Canine {
+   public String getSound() {
+      return "Wooooooof!";
+   } }
+ 
+public class Fox extends Canine {
+   public String getSound() {
+      return "Squeak!";
+   } }
+ 
+ 
+public class Coyote extends Canine {
+   public String getSound() {
+      return "Roar!";
+   } }
+
+public static void main(String[] p) {
+   Canine w = new Fox();
+   w.bark(); // Squeak!
+}   
+```
+
+```java
+abstract class Alligator {
+   public static void main(String… food) {
+      var a = new Alligator(); // DOES NOT COMPILE
+   }
+}
+```
+
+```java
+public abstract class Llama {
+   public void chew() {}
+}
+```
+
+```java
+public class abstract Bear { // DOES NOT COMPILE
+   public int abstract howl(); // DOES NOT COMPILE
+}
+```
+
+```java
+public abstract class Animal {
+   public abstract String getName();
+}
+ 
+public class Walrus extends Animal {} // DOES NOT COMPILE
+```
+
+```java
+public abstract class Mammal {
+   abstract void showHorn();
+   abstract void eatLeaf();
+}
+ 
+public abstract class Rhino extends Mammal {
+   void showHorn() {}  // Inherited from Mammal
+}
+ 
+public class BlackRhino extends Rhino {
+   void eatLeaf() {}   // Inherited from Mammal
+}
+```
+
+```java
+public abstract class Animal {
+   abstract String getName();
+}
+ 
+public abstract class BigCat extends Animal {
+   protected abstract void roar();
+}
+ 
+public class Lion extends BigCat {
+   public String getName() {
+      return "Lion";
+   }
+   public void roar() {
+      System.out.println("The Lion lets out a loud ROAR!");
+   }
+}
+```
+
+```java
+public abstract class Whale {
+   private abstract void sing(); // DOES NOT COMPILE
+}
+ 
+public class HumpbackWhale extends Whale {
+   private void sing() {
+      System.out.println("Humpback whale is singing");
+   } }
+```   
+
+```java
+abstract class Hippopotamus {
+   abstract static void swim(); // DOES NOT COMPILE
+}
+```
+
+## Rules
+
+- Only instance methods can be marked abstract within a class, not variables, constructors, or static methods.
+- An abstract method can only be declared in an abstract class.
+- A non-abstract class that extends an abstract class must implement all inherited abstract methods.
+- Overriding an abstract method follows the existing rules for overriding methods
+
+> While it is not possible to declare a method abstract and private, it is possible (albeit redundant) to declare a method final and private.
+
+## Constructor in abstract class
+
+```java
+abstract class Mammal {
+   abstract CharSequence chew();
+   public Mammal() {
+      System.out.println(chew()); // Does this line compile?
+   }
+}
+ 
+public class Platypus extends Mammal {
+   String chew() { return "yummy!"; }
+   public static void main(String[] args) {
+      new Platypus();
+   }
+}
+```
+
+
 
 # Data races
 
