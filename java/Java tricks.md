@@ -108,6 +108,20 @@
 - [Abstract classes](#abstract-classes)
   - [Rules](#rules-2)
   - [Constructor in abstract class](#constructor-in-abstract-class)
+- [Imutable classes](#imutable-classes)
+  - [copy on read access method](#copy-on-read-access-method)
+  - [Performing a Defensive Copy](#performing-a-defensive-copy)
+- [Intefraces](#intefraces)
+  - [Inheriting Duplicate Abstract Methods](#inheriting-duplicate-abstract-methods)
+  - [default methods](#default-methods)
+  - [Declaring static Interface Methods](#declaring-static-interface-methods)
+  - [Private static and private methods](#private-static-and-private-methods)
+  - [Calling Abstract Methods](#calling-abstract-methods)
+- [Enum](#enum)
+- [Sealing Classes](#sealing-classes)
+  - [Omitting the permits Clause](#omitting-the-permits-clause)
+  - [Sealed interfaces](#sealed-interfaces)
+- [Records](#records)
 - [Data races](#data-races)
 
 
@@ -3274,6 +3288,458 @@ public class Platypus extends Mammal {
    }
 }
 ```
+
+# Imutable classes
+
+common strategy for making a class immutable:
+
++ Mark the class as final or make all of the constructors private.
++ Mark all the instance variables private and final.
++ Don't define any setter methods.
++ Don't allow referenced mutable objects to be modified.
++ Use a constructor to set all properties of the object, making a copy if needed.
+
+```java
+import java.util.*;
+public final class Animal { // An immutable object declaration
+   private final List<String> favoriteFoods;
+ 
+   public Animal() {
+      this.favoriteFoods = new ArrayList<String>();
+      this.favoriteFoods.add("Apples");
+   }
+ 
+   public int getFavoriteFoodsCount() {
+      return favoriteFoods.size();
+   }
+ 
+   public String getFavoriteFoodsItem(int index) {
+      return favoriteFoods.get(index);
+   } }
+```
+
+## copy on read access method
+
+changes in the copy won't be reflected in the original, but at least the original is protected from external changes. This can be an expensive operation if called frequently by the caller.
+
+```java
+   public ArrayList<String> getFavoriteFoods() {
+      return new ArrayList<String>(this.favoriteFoods);
+   }
+```   
+
+## Performing a Defensive Copy
+
+```java
+public Animal(List<String> favoriteFoods) {
+   if (favoriteFoods == null || favoriteFoods.size() == 0)
+      throw new RuntimeException("favoriteFoods is required");
+   this.favoriteFoods = new ArrayList<String>(favoriteFoods);
+}
+```   
+
+# Intefraces
+
+![](images/interface_1.png)
+
+> Unlike a class, which can extend only one class, an interface can extend multiple interfaces.
+
+- Interfaces are implicitly abstract.
+- Interface variables are implicitly public, static, and final.
+- Interface methods without a body are implicitly abstract.
+- Interface methods without the private modifier are implicitly public.
+
+Item	         | Membership type |	Required modifiers |	Implicit modifiers   |  Has value or body?
+------| ---             |  ------------------ | -------------------- | -------------------
+Constant variable	| Class	| — | 	public static final	| Yes
+abstract method |	Instance	| — | 	public abstract	| No
+default method	| Instance	| default | 	public | 	Yes
+static method	| Class	| static	| public	| Yes
+private method	| Instance	| private	| —	| Yes
+private static method	| Class	| private static	| —	| Yes
+
+> Alongside public methods, interfaces now support private methods. They do not support protected access, though, as a class cannot extend an interface. They also do not support package access, although more likely for syntax reasons and backward compatibility
+
+
+```java
+public interface Soar {
+   int MAX_HEIGHT = 10;
+   final static boolean UNDERWATER = true;
+   void fly(int speed);
+   abstract void takeoff();
+   public abstract double dive();
+}
+ 
+public abstract interface Soar {
+   public static final int MAX_HEIGHT = 10;
+   public final static boolean UNDERWATER = true;
+   public abstract void fly(int speed);
+   public abstract void takeoff();
+   public abstract double dive();
+}
+```
+
+```java
+public interface Nocturnal {
+   public int hunt();
+}
+ 
+public interface CanFly {
+   public void flap();
+}
+ 
+public interface HasBigEyes extends Nocturnal, CanFly {}
+ 
+public class Owl implements HasBigEyes {
+   public int hunt() { return 5; }
+   public void flap() { System.out.println("Flap!"); }
+}
+```
+
+
+## Inheriting Duplicate Abstract Methods
+
+By compatible, we mean a method can be written that properly overrides both inherited methods: for example, by using covariant return types
+
+```java
+public interface Herbivore { public void eatPlants(); }
+ 
+public interface Omnivore  { public void eatPlants(); }
+ 
+public class Bear implements Herbivore, Omnivore {
+   public void eatPlants() {
+      System.out.println("Eating plants");
+   } }
+```
+
+```java
+public interface Herbivore { public void eatPlants(); }
+ 
+public interface Omnivore  { public int eatPlants(); }
+ 
+public class Tiger implements Herbivore, Omnivore { // DOES NOT COMPILE
+   …
+}
+```
+
+## default methods
+
+A default method is a method defined in an interface with the default keyword and includes a method body. It may be optionally overridden by a class implementing the interface.
+
+One use of default methods is for backward compatibility. You can add a new default method to an interface without the need to modify all of the existing classes that implement the interface. The older classes will just use the default implementation of the method defined in the interface. 
+
+- A default method may be declared only within an interface.
+- A default method must be marked with the default keyword and include a method body.
+- A default method is implicitly public.
+- A default method cannot be marked abstract, final, or static.
+- A default method may be overridden by a class that implements the interface.
+If a class inherits two or more default methods with the same method signature, then the class must override the method.
+
+```java
+public interface IsColdBlooded {
+   boolean hasScales();
+   default double getTemperature() {
+      return 10.0;
+   } 
+}
+
+public class Snake implements IsColdBlooded {
+   public boolean hasScales() {       // Required override
+      return true;
+   }
+ 
+   public double getTemperature() {   // Optional override
+      return 12;
+   }
+}
+```
+
+```java
+public interface Walk {
+   public default int getSpeed() { return 5; }
+}
+ 
+public interface Run {
+   public default int getSpeed() { return 10; }
+}
+
+public class Cat implements Walk, Run {} // DOES NOT COMPILE
+```
+
+```java
+public class Cat implements Walk, Run {
+   public int getSpeed() { return 1; }
+}
+```
+
+```java
+public class Cat implements Walk, Run {
+   public int getSpeed() {
+      return 1;
+   }
+ 
+   public int getWalkSpeed() {
+      return Walk.super.getSpeed();
+   } 
+}
+```
+
+## Declaring static Interface Methods
+
+- A static method must be marked with the static keyword and include a method body.
+- A static method without an access modifier is implicitly public.
+- A static method cannot be marked abstract or final.
+- A static method is not inherited and cannot be accessed in a class implementing the interface without a reference to the interface name.
+
+```java
+public interface Hop {
+   static int getJumpHeight() {
+      return 8;
+   } }
+
+public class Skip {
+   public int skip() {
+      return Hop.getJumpHeight();
+   } 
+}   
+```   
+
+```java
+public class Bunny implements Hop {
+   public void printDetails() {
+      System.out.println(getJumpHeight()); // DOES NOT COMPILE
+   } }
+```
+
+## Private static and private methods
+
+- A private interface method must be marked with the private modifier and include a method body.
+- A private static interface method may be called by any method within the interface definition.
+- A private interface method may only be called by default and other private non-static methods within the interface definition.
+
+```java
+public interface Schedule {
+   default void wakeUp()           { checkTime(7);  }
+   private void haveBreakfast()    { checkTime(9);  }
+   static void workOut()           { checkTime(18); }
+   private static void checkTime(int hour) {
+      if (hour> 17) {
+         System.out.println("You're late!");
+      } else {
+         System.out.println("You have "+(17-hour)+" hours left "
+               + "to make the appointment");
+      } } }
+```      
+
+## Calling Abstract Methods
+
+```java
+public interface ZooRenovation {
+   public String projectName();
+   abstract String status();
+   default void printStatus() {
+      System.out.print("The " + projectName() + " project " + status());
+   } }
+```
+
+
+# Enum
+
+![](images/enum_1.png)
+
+All enum constructors are implicitly private, with the modifier being optional. This is reasonable since you can't extend an enum and the constructors can be called only within the enum itself. In fact, an enum constructor will not compile if it contains a public or protected modifier.
+
+
+```java
+var s = Season.SUMMER;
+System.out.println(Season.SUMMER);      // SUMMER
+System.out.println(s == Season.SUMMER); // true
+```
+
+```java
+public enum ExtendedSeason extends Season {} // DOES NOT COMPILE
+```
+
+```java
+for(var season: Season.values()) {
+   System.out.println(season.name() + " " + season.ordinal());
+}
+// WINTER 0
+// SPRING 1
+// SUMMER 2
+// FALL 3
+```
+
+```java
+Season s = Season.valueOf("SUMMER"); // SUMMER
+Season t = Season.valueOf("summer"); // IllegalArgumentException
+```
+
+```java
+public enum Season {
+   WINTER("Low"), SPRING("Medium"), SUMMER("High"), FALL("Medium");
+   private final String expectedVisitors;
+   private Season(String expectedVisitors) {
+      this.expectedVisitors = expectedVisitors;
+   }
+   public void printExpectedVisitors() {
+      System.out.println(expectedVisitors);
+   } }
+```
+
+```java
+public enum Season {
+   WINTER {
+      public String getHours() { return "10am-3pm"; }
+   },
+   SPRING {
+      public String getHours() { return "9am-5pm"; }
+   },
+   SUMMER {
+      public String getHours() { return "9am-7pm"; }
+   },
+   FALL {
+      public String getHours() { return "9am-5pm"; }
+   };
+   public abstract String getHours();
+}
+```
+
+```java
+public enum Season {
+   WINTER {
+      public String getHours() { return "10am-3pm"; }
+   },
+   SUMMER {
+      public String getHours() { return "9am-7pm"; }
+   },
+   SPRING, FALL;
+   public String getHours() { return "9am-5pm"; }
+}
+```
+
+```java
+public interface Weather { int getAverageTemperature(); }
+ 
+public enum Season implements Weather {
+   WINTER, SPRING, SUMMER, FALL;
+   public int getAverageTemperature() { return 30; }
+}
+```
+
+# Sealing Classes
+
+ A sealed class is a class that restricts which other classes may directly extend it. These are brand new to Java 17
+
+ ![](images/sealed_1.png)
+
+
+- **sealed**: Indicates that a class or interface may only be extended/implemented by named classes or interfaces
+- **permits**: Used with the sealed keyword to list the classes and interfaces allowed
+- **non-sealed**: Applied to a class or interface that extends a sealed class, indicating that it can be extended by unspecified classes
+
+- Sealed classes are declared with the sealed and permits modifiers.
+- Sealed classes must be declared in the same package or named module as their direct subclasses.
+- Direct subclasses of sealed classes must be marked final, sealed, or non-sealed.
+- The permits clause is optional if the sealed class and its direct subclasses are declared within the same file or the subclasses are nested within the sealed class.
+- Interfaces can be sealed to limit the classes that implement them or the interfaces that extend them.
+
+```java
+public class sealed Frog permits GlassFrog {} // DOES NOT COMPILE
+public final class GlassFrog extends Frog {}
+ 
+public abstract sealed class Wolf permits Timber {}
+public final class Timber extends Wolf {}
+public final class MyWolf extends Wolf {} // DOES NOT COMPILE
+```
+
+> Sealed classes are commonly declared with the abstract modifier, although this is certainly not required.
+
+```java
+// Penguin.java
+package zoo;
+public sealed class Penguin permits Emperor {} // DOES NOT COMPILE
+ 
+// Emperor.java
+package zoo;
+public final class Emperor {}
+```
+
+> Every class that directly extends a sealed class must specify exactly one of the following three modifiers: `final`, `sealed`, or `non-sealed`.
+
+```java
+public sealed class Antelope permits Gazelle {} 
+public final class Gazelle extends Antelope {}
+public class George extends Gazelle {} // DOES NOT COMPILE
+```
+
+```java
+public sealed class Mammal permits Equine {}
+public sealed class Equine extends Mammal permits Zebra {}
+public final class Zebra extends Equine {}
+```
+
+```java
+public sealed class Wolf permits Timber {}
+public non-sealed class Timber extends Wolf {}
+public class MyWolf extends Timber {}
+```
+
+## Omitting the permits Clause
+
+Imagine that you have a Snake.java file with two top-level classes defined inside it
+
+```java
+// Snake.java
+public sealed class Snake permits Cobra {}
+final class Cobra extends Snake {}
+```
+
+may be without `permits`
+```java
+// Snake.java
+public sealed class Snake {}
+final class Cobra extends Snake {}
+```
+
+for nested classes
+
+```java
+// Snake.java
+public sealed class Snake {
+   final class Cobra extends Snake {}
+}
+```
+
+```java
+public sealed class Snake permits Cobra { // DOES NOT COMPILE
+   final class Cobra extends Snake {}
+}
+```
+
+```java
+ public sealed class Snake permits Snake.Cobra {
+       final class Cobra extends Snake {}
+    }
+ ```   
+
+## Sealed interfaces
+
+- Interfaces that extend a sealed interface can only be marked sealed or non-sealed. They cannot be marked final.
+
+```java
+// Sealed interface
+public sealed interface Swims permits Duck, Swan, Floats {}
+ 
+// Classes permitted to implement sealed interface
+public final class Duck implements Swims {}
+public final class Swan implements Swims {}
+ 
+// Interface permitted to extend sealed interface
+public non-sealed interface Floats extends Swims {}
+```
+
+# Records
 
 
 
