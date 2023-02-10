@@ -2,10 +2,10 @@
 
 - [Table of contents](#table-of-contents)
 - [OCP preparation](#ocp-preparation)
-- [Main method trics](#main-method-trics)
+- [Main method tricks](#main-method-tricks)
 - [Compile and Run](#compile-and-run)
   - [Create Jar via CLI](#create-jar-via-cli)
-- [Main arguments trics](#main-arguments-trics)
+- [Main arguments tricks](#main-arguments-tricks)
 - [Import packages tricks](#import-packages-tricks)
 - [Initializing class](#initializing-class)
   - [Constructor](#constructor)
@@ -15,7 +15,7 @@
 - [Wrapper classes](#wrapper-classes)
 - [Text blocks](#text-blocks)
 - [Naming](#naming)
-- [Variables declaration and initizlization](#variables-declaration-and-initizlization)
+- [Variables declaration and initialization](#variables-declaration-and-initialization)
   - [Var](#var)
 - [Eligibility for GC](#eligibility-for-gc)
 - [Operators](#operators)
@@ -121,7 +121,14 @@
 - [Sealing Classes](#sealing-classes)
   - [Omitting the permits Clause](#omitting-the-permits-clause)
   - [Sealed interfaces](#sealed-interfaces)
+- [Encapsulation](#encapsulation)
 - [Records](#records)
+  - [Declaring Constructors](#declaring-constructors)
+    - [Long constuctor](#long-constuctor)
+    - [Compact constuctor](#compact-constuctor)
+    - [Overloaded Constructors](#overloaded-constructors)
+  - [Customized records](#customized-records)
+- [Nested classes](#nested-classes)
 - [Data races](#data-races)
 
 
@@ -131,7 +138,7 @@
 
 
 
-# Main method trics
+# Main method tricks
 
 Allowed final word in main main method and arguments
 ```java
@@ -197,7 +204,7 @@ with '-C' option to specify directory with classes
 jar -cvf myNewFile.jar -C dir .
 ```
 
-# Main arguments trics
+# Main arguments tricks
 ---
 use quates for arguments with spaces
 ```
@@ -398,7 +405,7 @@ The `Boolean` and `Character` wrapper classes include `booleanValue()` and `char
 - A single underscore `_` is not allowed as an identifier.
 - You cannot use the same name as a Java reserved word.
 
-# Variables declaration and initizlization
+# Variables declaration and initialization
 
 initialized only `i3`
 ```java
@@ -545,8 +552,8 @@ public class Var {
 
 | Operator                        | Symbols and examples                             | Evaluation    |
 | ------------------------------- | ------------------------------------------------ | ------------- |
-| Post-unary operators            | `exprestion++`, `expression--`                   | Left-to-right |
-| Pre-unary operators             | `++exprestion`, `--expression`                   | Left-to-right |
+| Post-unary operators            | `expression++`, `expression--`                   | Left-to-right |
+| Pre-unary operators             | `++expression`, `--expression`                   | Left-to-right |
 | Other unary operators           | `- ! ~ + (type)`                                 | Right-to-left |
 | Cast                            | `(Type)reference`                                | Right-to-left |
 | Multiplication/division/modulus | `* / %`                                          | Left-to-right |
@@ -931,7 +938,7 @@ if(value instanceof Integer) {}
 if(value instanceof Integer data) {}  // DOES NOT COMPILE
 ```
 
-следует различать ситуации, когда pattern variable может не обьявиться перед использонием. Компиллятор следит за эти не даст коду такому скомпилироваться.
+the variable should be exist before using
 
 ```java
 void printIntegersOrNumbersGreaterThan5(Number number) {
@@ -940,7 +947,7 @@ void printIntegersOrNumbersGreaterThan5(Number number) {
 }
 ```
 
-Скоуп видимости не ограничен ифом. Может вылезти дальше, если компилятор решит что переменная точно определена.
+Scope of variable is far beyond code block. Compilation will decide
 ```java
 void printOnlyIntegers(Number number) { 
    if (!(number instanceof Integer data))
@@ -1039,12 +1046,12 @@ void feedAnimals() {
 ## Switch expression. Новый switch, который может возвращать значения
 ![Switch](images/switch_2.png)
 
-- После оператора `->` идет НЕ лямбда. 
+- After operator `->` is NOT lambda. 
 - После значений через зяпутую идет оператор `->` а не двоеточие `:`
 - обязателен `;` если используется не блок кода а одно выражение.
 - Обязателен `;` после всего switch, так как есть присвоение к переменной результата switch
 - Не нужен `break` ветки исполняются только если case совпадает.
-- Если используется блок кода, после всего блока запрещено ставить `;` 
+- After code block `;` must no be used 
 ```java
 public void printDayOfWeek(int day) {
    var result = switch(day) {
@@ -3739,7 +3746,186 @@ public final class Swan implements Swims {}
 public non-sealed interface Floats extends Swims {}
 ```
 
+# Encapsulation
+
+Encapsulation is about protecting a class from unexpected use. It also allows us to modify the methods and behavior of the class later without someone already having direct access to an instance variable within the class. For example, we can change the data type of an instance variable but maintain the same method signatures. In this manner, we maintain full control over the internal workings of a class.
+
+To review, remember that data (an instance variable) is private and getters/setters are public for encapsulation. You don't even have to provide getters and setters. As long as the instance variables are private, you are good. For example, the following class is well encapsulated, although it is not terribly useful since it doesn't declare any non-private methods:
+
+```java
+public class Vet {
+   private String name = "Dr Rogers";
+   private int yearsExperience = 25;
+}
+```
+
 # Records
+
+![](images/record_1.png)
+
+analogous encapsulated and immutable class
+
+```java
+public final class Crane {
+   private final int numberEggs;
+   private final String name;
+   public Crane(int numberEggs, String name) {
+      this.numberEggs = numberEggs; 
+      this.name = name;
+   }
+   public int getNumberEggs() {    
+      return numberEggs;
+   }
+   public String getName() {
+      return name;
+   } 
+}
+```
+
+just in one row
+```java
+public record Crane(int numberEggs, String name) {}
+```
+
+legal but redundant
+```java
+public final record Crane(int numberEggs, String name) {}
+```
+
+As a bonus, the compiler inserts useful implementations of the Object methods `equals()`, `hashCode()`, and `toString()`
+
+```java
+var mommy = new Crane(4, "Cammy");
+System.out.println(mommy.numberEggs());   // 4
+System.out.println(mommy.name());         // Cammy
+```
+
+```java
+var father = new Crane(0, "Craig");
+System.out.println(father);               // Crane[numberEggs=0, name=Craig]
+ 
+var copy = new Crane(0, "Craig");
+System.out.println(copy);                 // Crane[numberEggs=0, name=Craig]
+System.out.println(father.equals(copy));  // true
+System.out.println(father.hashCode() + ", " + copy.hashCode()); // 1007, 1007
+```
+
+it's legal
+```java
+public record Crane() {}
+```
+
+```java
+public record BlueCrane() extends Crane {} // DOES NOT COMPILE
+```
+
+```java
+public interface Bird {}
+public record Crane(int numberEggs, String name) implements Bird {}
+```
+
+## Declaring Constructors
+
+### Long constuctor
+
+```java
+public record Crane(int numberEggs, String name) {
+   public Crane(int numberEggs, String name) {
+      if (numberEggs < 0) throw new IllegalArgumentException();
+      this.numberEggs = numberEggs;
+      this.name = name;
+   }
+}
+```
+
+```java
+public record Crane(int numberEggs, String name) {
+   public Crane(int numberEggs, String name) {} // DOES NOT COMPILE
+}
+```
+
+### Compact constuctor
+
+![](images/recotrds_compact_constructor_1.png)
+
+```java
+public record Crane(int numberEggs, String name) {
+   public Crane {
+      if (name == null || name.length() < 1)
+         throw new IllegalArgumentException();
+      name = name.substring(0,1).toUpperCase() 
+         + name.substring(1).toLowerCase();
+   }
+}
+```
+
+```java
+public record Crane(int numberEggs, String name) {
+   public Crane {
+      this.numberEggs = 10; // DOES NOT COMPILE
+   }
+}
+```
+
+### Overloaded Constructors
+
+```java
+public record Crane(int numberEggs, String name) {
+   public Crane(String firstName, String lastName) {
+      this(0, firstName + " " + lastName);
+   }
+}
+```
+
+```java
+public record Crane(int numberEggs, String name) {
+   public Crane(int numberEggs, String firstName, String lastName) {
+      this(numberEggs + 1, firstName + " " + lastName);
+      numberEggs = 10; // NO EFFECT (applies to parameter, not instance field)
+      this.numberEggs = 20; // DOES NOT COMPILE
+   }
+}
+```
+
+```java
+public record Crane(int numberEggs, String name) {
+   public Crane(String name) {
+      this(1);  // DOES NOT COMPILE
+   }
+   public Crane(int numberEggs) {
+      this("");  // DOES NOT COMPILE
+   }
+}
+```
+
+## Customized records
+
+members that records can include:
+
+- Overloaded and compact constructors
+- nstance methods including overriding any provided methods (accessors, equals(), hashCode(), toString())
+- Nested classes, interfaces, annotations, enum, and records
+
+```java
+public record Crane(int numberEggs, String name) {
+   @Override public int numberEggs() { return 10; }
+   @Override public String toString() { return name; }
+}
+```
+
+While you can add methods, static fields, and other data types, you cannot add instance fields outside the record declaration, even if they are private. 
+
+Records also do not support instance initializers. All initialization for the fields of a record must happen in a constructor.
+
+```java
+public record Crane(int numberEggs, String name) {
+   private static int type = 10;
+   public int size;              // DOES NOT COMPILE
+   private boolean friendly;     // DOES NOT COMPILE
+}
+```
+
+# Nested classes
 
 
 
