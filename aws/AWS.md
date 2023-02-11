@@ -4,7 +4,7 @@
 - [Advice for the Amazon exams](#advice-for-the-amazon-exams)
 - [Zones and Regions](#zones-and-regions)
 - [User management](#user-management)
-  - [Generate sectet key](#generate-sectet-key)
+  - [Generate secret key](#generate-secret-key)
   - [Billing](#billing)
 - [EC2 (Elastic compute cloud)](#ec2-elastic-compute-cloud)
   - [Create simple vm](#create-simple-vm)
@@ -16,6 +16,9 @@
 - [AWS ClI](#aws-cli)
   - [Installing](#installing)
   - [конфигурирование](#конфигурирование)
+  - [s3 cli](#s3-cli)
+- [AWS SAM CLI](#aws-sam-cli)
+  - [Installation](#installation)
 - [Networking](#networking)
 - [Load balancing](#load-balancing)
 - [Serverless](#serverless)
@@ -27,6 +30,7 @@
     - [Web API](#web-api)
     - [File processing](#file-processing)
   - [Other](#other)
+  - [First Java example (compile and deploy via SAM)](#first-java-example-compile-and-deploy-via-sam)
 
 # Advice for the Amazon exams
 
@@ -76,7 +80,7 @@ There is root user, who has full rights for all operations in aws. As well there
 
 ![Create an user](images/create_user_4.png)
 
-## Generate sectet key
+## Generate secret key
 
 ![Create security cred](images/security_cred.png)
 
@@ -271,7 +275,28 @@ aws configure
 ```
 указать Access Key ID , AWS Secret Access Key далее регион, обычно us-east-1 формат json
 
-посмотреть список бакетов s3 через api
+for checking
+
+```bash
+aws iam get-user
+```
+
+output like this
+```
+{
+  "User": {
+    "Path": "/",
+    "UserName": "book",
+    "UserId": "AIDA111111111111111111",
+    "Arn": "arn:aws:iam::181111111111:user/book",
+    "CreateDate": "2019-10-21T20:27:05Z"
+  }
+}
+```
+
+## s3 cli
+
+show list of s3 buckets
 ```bash
  aws s3api list-buckets
 ```
@@ -297,6 +322,19 @@ aws s3 ls
 aws s3 cp ./file.txt s3://tests355465646546/folder_3/
 ```
 ![cli S3](images/aws_cli_3.png)
+
+# AWS SAM CLI
+
+## Installation
+
+
+```bash
+curl "https://github.com/aws/aws-sam-cli/releases/latest/download/aws-sam-cli-linux-x86_64.zip" -o "aws-sam-cli.zip"
+unzip aws-sam-cli.zip -d sam-installation
+sudo ./aws/install
+sam --version
+```
+
 
 # Networking
 
@@ -368,3 +406,112 @@ S3 can be configured to invoke the Lambda platform when the file is uploaded, sp
  - We can build message-processing applications, using message buses like Simple Notification Service (SNS), Simple Queue Service (SQS), EventBridge, or Kinesis as the event source.
  - We can build email-processing applications, using Simple Email Service (SES) as the event source
  - We can build scheduled-task applications, similar to cron programs, using CloudWatch Scheduled Events as the trigger.
+
+## First Java example (compile and deploy via SAM)
+
+- this class in simple maven project
+
+```java
+package book;
+
+public class HelloWorld {
+    public String handler(String s) {
+        return "Hello, " + s;
+    }
+}
+```
+- `pom.xml`
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>my.groupId</groupId>
+  <artifactId>HelloWorldLambdaJava</artifactId>
+  <version>1.0-SNAPSHOT</version>
+
+  <properties>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>3.2.1</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <finalName>lambda</finalName>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+</project>
+```
+- `templates.yml` Aftifact to deploy in aws lambda
+```yml
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
+Description: HelloWorldLambdaJava
+
+Resources:
+
+  HelloWorldLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      Runtime: java8
+      MemorySize: 512
+      Handler: book.HelloWorld::handler
+      CodeUri: target/lambda.jar
+
+```
+
+- structure of project (just simple java maven project)
+![](images/lambda_java_example_1.png)
+
+- build project via simple `mvn clear package`
+- create s3 bucket to uploading jar file
+
+```bash
+aws s3 mb s3://some_unique_name
+```
+![](images/lambda_java_example_2.png)
+
+- change directory where `template.yml` file is inside 
+- upload via sam compiled jar
+  ```bash
+   sam deploy \
+  --s3-bucket tests465465465465 \
+  --stack-name HelloWorldLambdaJava \
+  --capabilities CAPABILITY_IAM
+  ```
+
+![](images/lambda_java_example_3.png)
+
+- then open AWS Lambda web interface
+![](images/lambda_java_example_4.png)
+
+![](images/lambda_java_example_5.png)
+
+![](images/lambda_java_example_6.png)
+
+![](images/lambda_java_example_7.png)
+
+- clear lambda 
+
+```bash
+aws cloudformation delete-stack --stack-name HelloWorldLambdaJava
+```
