@@ -23,7 +23,10 @@
   - [FaaS (Function as a service)](#faas-function-as-a-service)
   - [AWS Lambda](#aws-lambda)
   - [How lambda can be invoked](#how-lambda-can-be-invoked)
-  - [Web API](#web-api)
+  - [Examples](#examples)
+    - [Web API](#web-api)
+    - [File processing](#file-processing)
+  - [Other](#other)
 
 # Advice for the Amazon exams
 
@@ -344,8 +347,24 @@ If a particular data center/Availability Zone fails, then Lambda will automatica
 
 - Lambda function may be invoked asynchronously—named **Event** by AWS. This time the request from the upstream caller is responded to immediately by the Lambda platform, while the Lambda function proceeds with processing the request. No further response is returned to the caller in this scenario.
 
-## Web API
+## Examples
+
+### Web API
 
  While Lambda functions aren’t HTTP servers themselves, we can use another AWS component, API Gateway, to provide the HTTP protocol and routing logic
 
+PI Gateway will invoke the Lambda function synchronously and will wait for the function to evaluate the request and return a response.
+
  ![](images/lambda_web_api_1.png)
+
+ ### File processing
+
+S3 can be configured to invoke the Lambda platform when the file is uploaded, specifying the function to be called, and passing a path to the file. As with the previous example, the Lambda platform then instantiates the Lambda function and calls it with the request details passed this time by S3. The difference now, though, is that this is an asynchronous invocation (S3 specified the Event invocation type)—no value is returned to S3 nor does S3 wait for a return value.
+
+ ![](images/lambda_file_processing_1.png)
+
+ ## Other
+
+ - We can build message-processing applications, using message buses like Simple Notification Service (SNS), Simple Queue Service (SQS), EventBridge, or Kinesis as the event source.
+ - We can build email-processing applications, using Simple Email Service (SES) as the event source
+ - We can build scheduled-task applications, similar to cron programs, using CloudWatch Scheduled Events as the trigger.
