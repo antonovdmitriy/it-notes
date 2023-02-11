@@ -33,7 +33,7 @@
 - [Pattern matching](#pattern-matching)
 - [switch](#switch)
   - [switch statement](#switch-statement)
-  - [Switch expression. Новый switch, который может возвращать значения](#switch-expression-новый-switch-который-может-возвращать-значения)
+  - [Switch expression. New switch, which can return a value](#switch-expression-new-switch-which-can-return-a-value)
 - [Cycles](#cycles)
   - [do while](#do-while)
   - [for](#for)
@@ -129,6 +129,7 @@
     - [Overloaded Constructors](#overloaded-constructors)
   - [Customized records](#customized-records)
 - [Nested classes](#nested-classes)
+  - [Inner class](#inner-class)
 - [Data races](#data-races)
 
 
@@ -1043,14 +1044,14 @@ void feedAnimals() {
 
 
 
-## Switch expression. Новый switch, который может возвращать значения
+## Switch expression. New switch, which can return a value
 ![Switch](images/switch_2.png)
 
 - After operator `->` is NOT lambda. 
 - После значений через зяпутую идет оператор `->` а не двоеточие `:`
 - обязателен `;` если используется не блок кода а одно выражение.
 - Обязателен `;` после всего switch, так как есть присвоение к переменной результата switch
-- Не нужен `break` ветки исполняются только если case совпадает.
+- you don't need `break` branch is executed only if the expression matches.
 - After code block `;` must no be used 
 ```java
 public void printDayOfWeek(int day) {
@@ -1068,7 +1069,7 @@ public void printDayOfWeek(int day) {
 }
 ```
 
-тут нет присвоения к переменноqй, поэтому не нужно обязательное default при типе int. 
+here is no assignment to a variable, so you don't need a default branch 
 ```java
 public void printSeason(int month) {
    switch(month) {
@@ -3927,7 +3928,46 @@ public record Crane(int numberEggs, String name) {
 
 # Nested classes
 
+- **Inner class**: A non-static type defined at the member level of a class
+- **Static nested class**: A static type defined at the member level of a class
+- **Local class**: A class defined within a method body
+- **Anonymous class**: A special case of a local class that does not have a name
 
+> With the introduction of records in Java 16, the existing rule that prevented an inner class from having any static members (other than static constants) was removed. All four types of nested classes can now define static variables and methods!
+
+## Inner class
+
+- Can be declared public, protected, package, or private
+- Can extend a class and implement interfaces
+- Can be marked abstract or final
+- Can access members of the outer class, including private members
+
+```java
+ public class Home {
+   private String greeting = "Hi";   // Outer class instance variable
+
+   protected class Room {            // Inner class declaration
+      public int repeat = 3;
+      public void enter() {
+         for (int i = 0; i < repeat; i++) greet(greeting);
+      }
+
+      private static void greet(String message) {
+         System.out.println(message);
+      }
+    }
+
+    public void enterRoom() {         // Instance method in outer class
+       var room = new Room();         // Create the inner class instance
+       room.enter();
+    }
+
+    public static void main(String[] args) {
+       var home = new Home();         // Create the outer class instance
+       home.enterRoom();
+   } 
+ }
+```
 
 # Data races
 

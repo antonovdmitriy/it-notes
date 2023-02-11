@@ -2,13 +2,14 @@
 # Table of contents
 - [Table of contents](#table-of-contents)
 - [Advice for the Amazon exams](#advice-for-the-amazon-exams)
+- [Zones and Regions](#zones-and-regions)
 - [User management](#user-management)
   - [Generate sectet key](#generate-sectet-key)
   - [Billing](#billing)
 - [EC2 (Elastic compute cloud)](#ec2-elastic-compute-cloud)
   - [Create simple vm](#create-simple-vm)
   - [Simple network rules](#simple-network-rules)
-  - [Горизонтальное масштабирование путем создания образа инстанса](#горизонтальное-масштабирование-путем-создания-образа-инстанса)
+  - [Horizontal scalling via create another ec2 instance](#horizontal-scalling-via-create-another-ec2-instance)
 - [EBS Elastic block storage](#ebs-elastic-block-storage)
 - [EFS Elastic file system](#efs-elastic-file-system)
 - [S3 Simple storage service](#s3-simple-storage-service)
@@ -17,7 +18,12 @@
   - [конфигурирование](#конфигурирование)
 - [Networking](#networking)
 - [Load balancing](#load-balancing)
-
+- [Serverless](#serverless)
+  - [BaaS (Backend as a service)](#baas-backend-as-a-service)
+  - [FaaS (Function as a service)](#faas-function-as-a-service)
+  - [AWS Lambda](#aws-lambda)
+  - [How lambda can be invoked](#how-lambda-can-be-invoked)
+  - [Web API](#web-api)
 
 # Advice for the Amazon exams
 
@@ -25,6 +31,12 @@ You should have three times to solve every task. Starting from first to last.:
 1. We try to find easy questions and do it immediately. And mark others by categories.
 2. We solve complex tasks but which we understood but we need just more time for them
 3. Others which we don't know how to solve. We need to choose answers for each of the questions. Perhaps it will work
+
+# Zones and Regions
+
+AWS houses its computers in more than 60 data centers spread around the world as shown in Figure 1-2. In AWS terminology, each data center corresponds to an Availability Zone (AZ), and clusters of data centers in close proximity to each other are grouped into regions. AWS has more than 20 different regions, across 5 continents.
+
+A compelling aspect of Amazon’s region model is that each region is largely independent, logistically and from a software management point of view. That means that if a physical problem like a power outage, or a software problem like a deployment bug, happens in one region, the others will almost certainly be unaffected. 
 
 # User management
 
@@ -104,6 +116,8 @@ There is root user, who has full rights for all operations in aws. As well there
 
 # EC2 (Elastic compute cloud)
 
+EC2 was one of the first infrastructure-as-a-service **IaaS** products.
+
 ## Create simple vm
 
 ![Create EC2 instance](images/ec2_1.png)
@@ -151,7 +165,7 @@ sudo apt-get install apache2
 
 ![Add security rule to security group](images/security_group_3.png)
 
-## Горизонтальное масштабирование путем создания образа инстанса
+## Horizontal scalling via create another ec2 instance
 Идея простая. Настроили инстанс, потом можно создать его образ и раскатить еще один инстанс на основе этого образа.
 Создадим шаблон
 
@@ -286,4 +300,52 @@ aws s3 cp ./file.txt s3://tests355465646546/folder_3/
 # Load balancing
 ELB - Elastic load balancer
 
+# Serverless
 
+All three of these ideas—`IaaS` (EC2 + S3 and etc), `PaaS` (Heroku.. etc), and `CaaS` (EKS with Kubernates etc) —can be grouped as compute as a service; in other words, they are different types of generic environments that we can run our own specialized software in. 
+
+PaaS and CasS differ from IaaS by raising the level of abstraction further, allowing us to hand off more of our “heavy lifting” to others.
+
+Serverless is the next evolution of cloud computing and can be divided into two ideas: backend as a service and functions as a service.
+
+## BaaS (Backend as a service)
+Backend as a service (`BaaS`) allows us to replace server-side components that we code and/or manage ourselves with off-the-shelf services. It’s closer in concept to software as a service (SaaS) than it is to things like virtual instances and containers. SaaS is typically about outsourcing business processes, though—think HR or sales tools or, on the technical side, products like GitHub—whereas with BaaS, we’re breaking up our applications into smaller pieces and implementing some of those pieces entirely with externally hosted products.
+
+Example of BaaS:
+- AWS Cognito. For authentication and user management
+- Google Firebase. Database
+
+## FaaS (Function as a service)
+
+The other half of serverless is functions as a service (FaaS). FaaS, like IaaS, PaaS, and CaaS, is another form of compute as a service—a generic environment within which we can run our own software. Some people like to use the term serverless compute instead of FaaS.
+
+With FaaS we deploy our code as independent functions or operations, and we configure those functions to be called, or triggered, when a specific event or request occurs within the FaaS platform. The platform itself calls our functions by instantiating a dedicated environment for each event—this environment consists of an ephemeral, fully managed lightweight virtual machine, or container; the FaaS runtime; and our code.
+
+The functions are not constantly active in an application process,
+
+Once the function has finished executing, the FaaS platform is free to tear it down. Alternatively, as an optimization, it may keep the function around for a little while until there’s another event to be processed.
+
+
+## AWS Lambda
+
+AWS Lambda was launched in 2014
+
+Lambda implements the FaaS pattern by instantiating ephemeral, managed, Linux environments to host each of our function instances. Lambda guarantees that only one event is processed per environment at a time. 
+
+Lambda also requires that the function completes processing of the event within 15 minutes; otherwise, the execution is aborted.
+
+Since we are fully abstracted from the underlying host with Lambda, we can’t specify a number or type of underlying EC2 instances to use. Instead, we specify how much RAM our function requires (up to a maximum of 3GB), and other aspects of performance are tied to this too. 
+
+If a particular data center/Availability Zone fails, then Lambda will automatically start environments in a different AZ in the same region.
+
+## How lambda can be invoked
+
+- Lambda functions can be called synchronously—named **RequestResponse** by AWS. In this scenario, an upstream component calls the Lambda function and waits for whatever response the Lambda function generates.
+
+- Lambda function may be invoked asynchronously—named **Event** by AWS. This time the request from the upstream caller is responded to immediately by the Lambda platform, while the Lambda function proceeds with processing the request. No further response is returned to the caller in this scenario.
+
+## Web API
+
+ While Lambda functions aren’t HTTP servers themselves, we can use another AWS component, API Gateway, to provide the HTTP protocol and routing logic
+
+ ![](images/lambda_web_api_1.png)
