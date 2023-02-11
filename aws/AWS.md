@@ -461,7 +461,7 @@ public class HelloWorld {
 
 </project>
 ```
-- `templates.yml` Artifact to deploy in aws lambda
+- `template.yml` Artifact to deploy jar file in aws lambda
 ```yml
 AWSTemplateFormatVersion: 2010-09-09
 Transform: AWS::Serverless-2016-10-31
