@@ -101,6 +101,7 @@
   - [Overridng](#overridng)
     - [Rules](#rules-1)
     - [Examples](#examples)
+  - [Calling the parent version of an overriden method](#calling-the-parent-version-of-an-overriden-method)
   - [redeclaring private methods](#redeclaring-private-methods)
   - [static method hiding](#static-method-hiding)
   - [variable hiding](#variable-hiding)
@@ -135,6 +136,7 @@
   - [Local Class](#local-class)
   - [Anonymous classes](#anonymous-classes)
 - [Polymorphism discussion](#polymorphism-discussion)
+- [Lambdas and Functional Interfaces](#lambdas-and-functional-interfaces)
 - [Data races](#data-races)
 
 
@@ -1053,9 +1055,9 @@ void feedAnimals() {
 ![Switch](images/switch_2.png)
 
 - After operator `->` is NOT lambda. 
-- После значений через зяпутую идет оператор `->` а не двоеточие `:`
-- обязателен `;` если используется не блок кода а одно выражение.
-- Обязателен `;` после всего switch, так как есть присвоение к переменной результата switch
+- After comma separated values there is `->` but not `:`
+- Mandatory use `;` if you use not a block of code but one expression.
+- Mandatory use `;` after switch, since there is assignment result of switch to a local variable
 - you don't need `break` branch is executed only if the expression matches.
 - After code block `;` must no be used 
 ```java
@@ -1155,12 +1157,12 @@ String getWeather(Season value) {
 }
 ```
 
-- При использование энумов со switch рекомендуется рассмотреть использользование default ветку тоже, даже при том, что она необязательная. Если в энум добавить выражение, код не скомпилируется, если таких switch много потребуется много правок. 
+- When you use enums with switch it's useful to use a default branch as well, even if it's not mandatory. If you add a value to enum there will be mandatory fixes to all using this enum in switch since code does not compiled. 
 
 # Cycles
 
 ## do while
-Обязателено ставить `;` после условия do while цикла
+Mandatory use `;` after `while` in `do while` cycle
 ```java
 int lizard = 0;
 do {
@@ -3048,6 +3050,21 @@ public class Shark extends Fish {
 }
 ```
 
+## Calling the parent version of an overriden method
+
+```java
+public class EmperorPenguin extends Penguin {
+    public int getHeight() { return 8; }
+    public void printInfo() {
+       System.out.print(super.getHeight());
+    }
+    public static void main(String []fish) {
+       new EmperorPenguin().printInfo();  // 3
+    }
+ }
+```
+
+
 ## redeclaring private methods
 
 ```java
@@ -4187,6 +4204,21 @@ public class Fish {
 
 In this example, the classes Fish and Bird are not related through any class hierarchy that the compiler is aware of. While they both extend Object implicitly, they are considered unrelated types since one cannot be a subtype of the other.
 
+And for instanceof as well
+
+```java
+public class Bird {}
+ 
+public class Fish {
+   public static void main(String[] args) {
+      Fish fish = new Fish();
+      if (fish instanceof Bird b) { // DOES NOT COMPILE
+         // Do stuff
+      }
+   }
+}
+```
+
 
 While the compiler can enforce rules about casting to unrelated types for classes, it cannot always do the same for interfaces. Remember, instances support multiple inheritance, which limits what the compiler can reason about them. While a given class may not implement an interface, it's possible that some subclass may implement the interface. When holding a reference to a particular class, the compiler doesn't know which specific subtype it is holding.
 ```java
@@ -4202,6 +4234,12 @@ While the compiler can enforce rules about casting to unrelated types for classe
 ```
 
 This limitation aside, the compiler can enforce one rule around interface casting. The compiler does not allow a cast from an interface reference to an object reference if the object type cannot possibly implement the interface, such as if the class is marked final. For example, if the Wolf interface is marked final on line 3, then line 8 no longer compiles. The compiler recognizes that there are no possible subclasses of Wolf capable of implementing the Dog interface.
+
+# Lambdas and Functional Interfaces
+
+Lambdas allow you to specify code that will be run later in the program.
+
+
 
 # Data races
 
