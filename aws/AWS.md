@@ -31,6 +31,9 @@
     - [File processing](#file-processing)
   - [Other](#other)
   - [First Java example (compile and deploy via SAM)](#first-java-example-compile-and-deploy-via-sam)
+  - [Invoke lambda via AWS CLI](#invoke-lambda-via-aws-cli)
+  - [Example with async lambda invocatoin and writing to log](#example-with-async-lambda-invocatoin-and-writing-to-log)
+  - [The Lambda Execution Environment](#the-lambda-execution-environment)
 
 # Advice for the Amazon exams
 
@@ -515,3 +518,93 @@ aws s3 mb s3://some_unique_name
 ```bash
 aws cloudformation delete-stack --stack-name HelloWorldLambdaJava
 ```
+
+## Invoke lambda via AWS CLI
+
+- Edit an example above by adding `FunctionName`
+
+```yml
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
+Description: HelloWorldLambdaJava
+
+Resources:
+
+  HelloWorldLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: HelloWorldJava
+      Runtime: java8
+      MemorySize: 512
+      Handler: book.HelloWorld::handler
+      CodeUri: target/lambda.jar
+```      
+
+- deploy function 
+- invoke lambda via cli
+
+where `payload` is a Base64 String
+
+```bash
+ aws lambda invoke --invocation-type RequestResponse --function-name HelloWorldJava --payload IkhlbGxvIg== outputfile.txt
+```
+
+- result will be in `outputfile.txt`
+
+if we changed as ``--invocation-type Event ``  we will get 202 Status "Accepted".
+
+## Example with async lambda invocatoin and writing to log
+
+- change example above
+
+```java
+public class HelloWorld {
+        public void handler(String s) {
+
+            System.out.println("Hello, " + s);
+        }
+}
+```
+- deploy with `sam`
+
+  ```bash
+   sam deploy \
+  --s3-bucket tests465465465465 \
+  --stack-name HelloWorldLambdaJava \
+  --capabilities CAPABILITY_IAM
+  ```
+
+- invoke via cli
+
+```bash
+aws lambda invoke   --invocation-type Event --function-name HelloWorldJava   --payload IkhlbGxvIg== outputfile.txt
+```
+
+- open cloud watch logs
+
+![](images/lambda_example_cloud_watch_1.png)
+
+- open latest log stream
+
+![](images/lambda_example_cloud_watch_2.png)
+
+- find hello in logs
+
+![](images/lambda_example_cloud_watch_3.png)
+
+
+## The Lambda Execution Environment
+
+![](images/lambda_env_1.png)
+
+A lambda function is executed whenever the `invoke` command of the `AWS Lambda API` is called. 
+
+This happens at the following times:
+- When a function is triggered by an event source
+- When you use the test harness in the web console
+- When you call the Lambda API invoke command yourself, typically via the CLI or SDK, from your own code or scripts
+
+After that:
+- `Lambda service` will create a `host Linux environment`
+- Lambda will start a language runtime within it. In our case a JVM. The JVM is started with a set of environment flags that we can’t change
+- Starting `Lambda Java Runtime`, such as aws java application server. It is responsible for top-level error handling, logging, and more.
