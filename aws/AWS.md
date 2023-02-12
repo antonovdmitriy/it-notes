@@ -39,6 +39,11 @@
     - [Lists and Maps](#lists-and-maps)
     - [POJO in lambdas](#pojo-in-lambdas)
     - [Streams](#streams)
+    - [Context](#context)
+  - [Timeout](#timeout)
+  - [Memory and CPU](#memory-and-cpu)
+    - [Example pricing](#example-pricing)
+  - [Environment Variables](#environment-variables)
 
 # Advice for the Amazon exams
 
@@ -803,3 +808,206 @@ public class StreamLambda {
   }
 }
 ```
+
+### Context
+
+```com.amazonaws.services.lambda.runtime.Context```
+
+
+[Context documentation](https://docs.aws.amazon.com/lambda/latest/dg/java-context.html)
+
+```java
+package book;
+
+import com.amazonaws.services.lambda.runtime.Context;
+
+import java.util.HashMap;
+import java.util.Map;
+
+public class ContextLambda {
+  public Map<String,Object> handler (Object input, Context context) {
+    Map<String, Object> toReturn = new HashMap<>();
+    toReturn.put("getMemoryLimitInMB", context.getMemoryLimitInMB() + "");
+    toReturn.put("getFunctionName",context.getFunctionName());
+    toReturn.put("getFunctionVersion",context.getFunctionVersion());
+    toReturn.put("getInvokedFunctionArn",context.getInvokedFunctionArn());
+    toReturn.put("getAwsRequestId",context.getAwsRequestId());
+    toReturn.put("getLogStreamName",context.getLogStreamName());
+    toReturn.put("getLogGroupName",context.getLogGroupName());
+    toReturn.put("getClientContext",context.getClientContext());
+    toReturn.put("getIdentity",context.getIdentity());
+    toReturn.put("getRemainingTimeInMillis",
+                   context.getRemainingTimeInMillis() + "");
+    return toReturn;
+  }
+}
+```
+
+```xml
+<dependencies>
+  <dependency>
+    <groupId>com.amazonaws</groupId>
+    <artifactId>aws-lambda-java-core</artifactId>
+    <version>1.2.0</version>
+    <scope>provided</scope>
+  </dependency>
+</dependencies>
+```
+
+output 
+```json
+{
+  "getFunctionName": "ContextLambda",
+  "getLogStreamName": "2019/07/24/[$LATEST]0f1b1111111111111111111111111111",
+  "getInvokedFunctionArn":
+    "arn:aws:lambda:us-west-2:181111111111:function:ContextLambda",
+  "getIdentity": {
+    "identityId": "",
+    "identityPoolId": ""
+  },
+  "getRemainingTimeInMillis": "2967",
+  "getLogGroupName": "/aws/lambda/ContextLambda",
+  "getLogger": {},
+  "getFunctionVersion": "$LATEST",
+  "getMemoryLimitInMB": "512",
+  "getClientContext": null,
+  "getAwsRequestId": "2108d0a2-a271-11e8-8e33-cdbf63de49d2"
+}
+```
+
+## Timeout
+
+- You are able to specify this timeout when you create the function
+- you can update it later in the function’s configuration.
+- maximum timeout is 15 minutes. For a long time the maximum timeout was 5 minutes.
+- it defaults to 3 seconds
+- the timeout period is not started during the cold start of a function 
+
+```yml
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
+Description: HelloWorldLambdaJava
+
+Resources:
+
+  HelloWorldLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: TimeoutLambda
+      Timeout: 2 # 2s 
+      Runtime: java8
+      MemorySize: 512 # Mb
+      Handler: book.TimeoutLambda::handler 
+      CodeUri: target/lambda.jar
+```      
+
+```java
+package book;
+
+import com.amazonaws.services.lambda.runtime.Context;
+
+public class TimeoutLambda {
+  public void handler (Object input, Context context) throws InterruptedException {
+    while(true) {
+      Thread.sleep(100);
+      System.out.println("Context.getRemainingTimeInMillis() : " +
+        context.getRemainingTimeInMillis());
+    }
+  }
+}
+```
+
+![](images/lambda_timeout_1.png)
+
+```log
+2023-02-12T23:45:18.725+01:00	INIT_START Runtime Version: java:8.v14 Runtime Version ARN: arn:aws:lambda:eu-north-1::runtime:976f6b03f8ebcf9a902c3d59a05ba4b7c260b2841a5a10b307bb8bbd15e34a03
+2023-02-12T23:45:19.219+01:00	START RequestId: 2fee9e4c-4466-4b68-8f9d-e40bcd8b5015 Version: $LATEST
+2023-02-12T23:45:19.370+01:00	Context.getRemainingTimeInMillis() : 1849
+2023-02-12T23:45:19.470+01:00	Context.getRemainingTimeInMillis() : 1748
+2023-02-12T23:45:19.570+01:00	Context.getRemainingTimeInMillis() : 1648
+2023-02-12T23:45:19.670+01:00	Context.getRemainingTimeInMillis() : 1548
+2023-02-12T23:45:19.771+01:00	Context.getRemainingTimeInMillis() : 1448
+2023-02-12T23:45:19.871+01:00	Context.getRemainingTimeInMillis() : 1347
+2023-02-12T23:45:19.971+01:00	Context.getRemainingTimeInMillis() : 1247
+2023-02-12T23:45:20.071+01:00	Context.getRemainingTimeInMillis() : 1147
+2023-02-12T23:45:20.171+01:00	Context.getRemainingTimeInMillis() : 1047
+2023-02-12T23:45:20.272+01:00	Context.getRemainingTimeInMillis() : 947
+2023-02-12T23:45:20.372+01:00	Context.getRemainingTimeInMillis() : 846
+2023-02-12T23:45:20.472+01:00	Context.getRemainingTimeInMillis() : 746
+2023-02-12T23:45:20.572+01:00	Context.getRemainingTimeInMillis() : 646
+2023-02-12T23:45:20.672+01:00	Context.getRemainingTimeInMillis() : 546
+2023-02-12T23:45:20.773+01:00	Context.getRemainingTimeInMillis() : 445
+2023-02-12T23:45:20.873+01:00	Context.getRemainingTimeInMillis() : 345
+2023-02-12T23:45:20.973+01:00	Context.getRemainingTimeInMillis() : 245
+2023-02-12T23:45:21.073+01:00	Context.getRemainingTimeInMillis() : 145
+2023-02-12T23:45:21.174+01:00	Context.getRemainingTimeInMillis() : 45
+2023-02-12T23:45:21.224+01:00	2023-02-12T22:45:21.223Z 2fee9e4c-4466-4b68-8f9d-e40bcd8b5015 Task timed out after 2.00 seconds
+2023-02-12T23:45:21.224+01:00	END RequestId: 2fee9e4c-4466-4b68-8f9d-e40bcd8b5015
+2023-02-12T23:45:21.224+01:00	REPORT RequestId: 2fee9e4c-4466-4b68-8f9d-e40bcd8b5015 Duration: 2004.97 ms Billed Duration: 2000 ms Memory Size: 512 MB Max Memory Used: 72 MB Init Duration: 492.71 ms
+2023-02-12T23:45:21.317+01:00	INIT_START Runtime Version: java:8.v14 Runtime Version ARN: arn:aws:lambda:eu-north-1::runtime:976f6b03f8ebcf9a902c3d59a05ba4b7c260b2841a5a10b307bb8bbd15e34a03
+```
+
+## Memory and CPU
+
+`memory-size` can be as small as 64MB, although for Java Lambda functions you should probably use at least 256MB. memory-size must be a multiple of 64MB.
+
+A very important thing to know is that the memory-size setting is not just for how much RAM your function can use—it also specifies how much CPU power you get. In fact, a Lambda function’s CPU power scales linearly from 64MB up to 1792MB. Therefore a Lambda function configured with 1024MB of RAM has twice the CPU power of one with 512MB of RAM.
+
+AWS charges for Lambda functions by two primary factors:
+- How long a function runs, rounded up to the nearest 100 ms
+- How much memory a function is specified to use
+
+In other words, given the same execution duration, a Lambda function that has 2GB of RAM costs twice as much to execute as one with 1GB of RAM. Or, one with 512MB of RAM costs 17% of one with 3008MB. This, at scale, could be a big difference.
+
+### Example pricing
+
+First, let’s think back to the photo resizer  Let’s say that we set that function to use 1.5GB RAM, it takes on average 10 seconds to run, and it processes 10,000 photos per day. Lambda pricing consists of two parts—request pricing, which is $0.20 per million requests, and duration pricing, which is $0.0000166667 per gigabyte-second. Therefore we need to calculate both parts to estimate cost for our photo resizer:
+
+- The request cost is `$0.20 × .01 = $0.002/day`, or `$0.06/month`.
+- The duration cost is `10 (seconds/invocation) × 10,000 (invocations) × 1.5 (GB) × $0.0000166667 = $2.50/day`, or `$75/month`.
+
+Obviously the duration cost is the vast majority here.
+
+$75/month is about the same cost as a “m5.large” EC2 instance—which is $70/month. An m5.large EC2 instance is the smallest size VM in the m5 “general purpose” family; it has 8GB RAM and two CPUs, so it would likely be about right as an alternative to host our photo resizer. However, Lambda has significant benefits as a solution, even though the costs appear at first glance about the same:
+
+- Lambda doesn’t require the operations cost of managing an EC2 instance—there’s no need to think about operating system patches, user management, etc. Therefore our total cost of ownership (TCO) is lower for Lambda.
+- Lambda already manages the “event driven” nature of the application, so we don’t need to build that into the version we would run on a regular server.
+- Lambda will auto-scale without effort and so will handle, without concern, any spikes in traffic. A server-based solution may become overloaded or need to be built to include buffering. In fact, the more “spikey” your application’s load, the more cost effective Lambda is as a solution.
+- Lambda is already highly available across AZs—to guarantee that availability with a server-based solution, we would need to double or triple our costs for two or three zones of availability.
+
+Now let’s look back to our web API. Let’s say we set the web API Lambda functions to use 512MB RAM and each invocation takes no more than 100 ms to run. Let’s say the API processes on average 10 requests per second (864,000 requests/day) but can peak up to 100 requests per second.
+
+- The request cost is `$0.20 × 0.864 = $0.17/day`, or `$5.18/month`.
+- The duration cost is `0.1 × 864,000 × 0.5 × $0.0000166667 = $0.72/day`, or `$21.60/month`.
+
+In other words, we need to spend $27/month to handle 10 requests/second average, and this system could happily could peak to 10x that rate, without breaking a sweat (or increasing the costs).
+
+## Environment Variables
+
+```java
+package book;
+
+public class EnvVarLambda {
+  public void handler(Object event) {
+    String databaseUrl = System.getenv("DATABASE_URL");
+    if (databaseUrl == null || databaseUrl.isEmpty())
+      System.out.println("DATABASE_URL is not set");
+    else
+      System.out.println("DATABASE_URL is set to: " + databaseUrl);
+  }
+}
+```
+
+```yml
+HelloWorldLambda:
+  Type: AWS::Serverless::Function
+  Properties:
+    FunctionName: HelloWorldJava
+    Runtime: java8
+    MemorySize: 512
+    Handler: book.EnvVarLambda::handler
+    CodeUri: target/lambda.jar
+    Environment:
+      Variables:
+        DATABASE_URL: my-database-url
+```        
