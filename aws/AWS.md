@@ -38,6 +38,7 @@
     - [Example with basic types](#example-with-basic-types)
     - [Lists and Maps](#lists-and-maps)
     - [POJO in lambdas](#pojo-in-lambdas)
+    - [Streams](#streams)
 
 # Advice for the Amazon exams
 
@@ -780,5 +781,25 @@ One of the main uses for POJO input deserialization is when you tie your Lambda 
 ```java
 public void handler(S3Event input) {
   // …
+}
+```
+
+### Streams
+
+```java
+package book;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+public class StreamLambda {
+  public void handlerStream(InputStream inputStream, OutputStream outputStream) throws IOException {
+    int letter;
+    while((letter = inputStream.read()) != -1)
+    {
+      outputStream.write(Character.toUpperCase(letter));
+    }
+  }
 }
 ```
