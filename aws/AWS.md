@@ -34,6 +34,10 @@
   - [Invoke lambda via AWS CLI](#invoke-lambda-via-aws-cli)
   - [Example with async lambda invocatoin and writing to log](#example-with-async-lambda-invocatoin-and-writing-to-log)
   - [The Lambda Execution Environment](#the-lambda-execution-environment)
+  - [Lambda Function Method Signatures](#lambda-function-method-signatures)
+    - [Example with basic types](#example-with-basic-types)
+    - [Lists and Maps](#lists-and-maps)
+    - [POJO in lambdas](#pojo-in-lambdas)
 
 # Advice for the Amazon exams
 
@@ -477,9 +481,8 @@ Resources:
     Properties:
       Runtime: java8
       MemorySize: 512
-      Handler: book.HelloWorld::handler
-      CodeUri: target/lambda.jar
-
+      Handler: book.HelloWorld::handler # package class and method to invoke
+      CodeUri: target/lambda.jar        # path to jar file where class is
 ```
 
 - structure of project (just simple java maven project)
@@ -536,7 +539,7 @@ Resources:
       FunctionName: HelloWorldJava
       Runtime: java8
       MemorySize: 512
-      Handler: book.HelloWorld::handler
+      Handler: book.HelloWorld::handler 
       CodeUri: target/lambda.jar
 ```      
 
@@ -608,3 +611,174 @@ After that:
 - `Lambda service` will create a `host Linux environment`
 - Lambda will start a language runtime within it. In our case a JVM. The JVM is started with a set of environment flags that we can’t change
 - Starting `Lambda Java Runtime`, such as aws java application server. It is responsible for top-level error handling, logging, and more.
+
+## Lambda Function Method Signatures
+
+- `output-type handler-name(input-type input)`
+- `output-type handler-name(input-type input, Context context)`
+- `void handler-name(InputStream is, OutputStream os)`
+- `void handler-name(InputStream is, OutputStream os, Context context)`
+
+where:
+
+- `output-type` can be `void`, a Java primitive, or a JSON-serializable type.
+- `input-type` is a Java primitive, or a JSON-serializable type.
+- `Context` refers to `com.amazonaws.services.lambda.runtime.Context` 
+- `InputStream` and `OutputStream` refer to the types with those names in the `java.io` package.
+- `handler-name` can be any valid Java method name, and we refer to it in our application’s configuration.
+
+- Java Lambda methods can be either instance methods or static methods, but must be public.
+- A class containing a Lambda function cannot be abstract and must have a no-argument constructor—either the default constructor (i.e., no constructor specified)
+- You are not required to implement any interfaces or base classes, although you may do so if you desire. AWS provides a `RequestHandler` interface if you want to be very explicit about the type of your Lambda classes
+- You may have multiple Lambda functions defined in one class with different names, but we don’t usually recommend this style
+
+### Example with basic types
+
+- for `true`, `false`, `"true"`, or `"false"`
+- for `5` or `"5"`
+```java
+package book;
+
+public class StringIntegerBooleanLambda {
+  public void handlerString(String s) {
+    System.out.println("Hello, " + s);
+  }
+
+  public boolean handlerBoolean(boolean input) {
+    return !input;
+  }
+
+  public boolean handlerInt(int input) {
+    return input > 100;
+  }
+}
+```
+
+### Lists and Maps
+
+```java
+package book;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.IntStream;
+
+public class ListMapLambda {
+
+
+// [ 1, 2, 3 ]  output [ 101, 102, 103 ]
+
+  public List<Integer> handlerList(List<Integer> input) {
+    List<Integer> newList = new ArrayList<>();
+    input.forEach(x -> newList.add(100 + x));
+    return newList;
+  }
+
+  // { "a" : "x", "b" : "y"}  output { "New Map → a" : "x", "New Map → b" : "y" }
+
+  public Map<String,String> handlerMap(Map<String,String> input) {
+    Map<String, String> newMap = new HashMap<>();
+    input.forEach((k, v) -> newMap.put("New Map -> " + k, v));
+    return newMap;
+  }
+
+/*
+[
+  { "m" : 1, "n" : 2 },
+  { "x" : 8, "y" : 9 }
+]
+*/
+
+/* Output
+{
+  "Nested at position 0": { "m" : 1, "n" : 2},
+  "Nested at position 1": { "x": 8, "y" : 9}
+}
+*/
+  public Map<String,Map<String, Integer>> handlerNestedCollection(List<Map<String, Integer>> input) {
+    Map<String, Map<String, Integer>> newMap = new HashMap<>();
+    IntStream.range(0, input.size())
+          .forEach(i -> newMap.put("Nested at position " + i, input.get(i)));
+    return newMap;
+  }
+}
+```
+
+### POJO in lambdas
+
+- POJO input classes can be static nested classes or regular (outer) classes. 
+- they need to have an empty constructor and have field setters that follow the naming of the expected fields to be deserialized from the input JSON. 
+- If no JSON field is found with the same name as a setter, then the POJO field will be left null. 
+- Input POJO objects need to be mutable since the runtime will modify them after they’ve been instantiated
+
+- There are fewer limitations on POJO output classes—since they are not created or mutated by the Lambda runtime, you are free to construct them as you please and free to make them immutable.
+-  Like input classes, POJO output classes can be static nested classes or regular (outer) classes.
+
+```java
+package book;
+
+
+// { "a" : "Hello Lambda" }  output { "b" : "Input was Hello Lambda" }
+
+public class PojoLambda {
+  public PojoResponse handlerPojo(PojoInput input) {
+    return new PojoResponse("Input was " + input.getA());
+  }
+
+  public static class PojoInput {
+    private String a;
+
+    public String getA() {
+      return a;
+    }
+
+    public void setA(String a) {
+      this.a = a;
+    }
+  }
+
+  public static class PojoResponse {
+    private final String b;
+
+    PojoResponse(String b) {
+      this.b = b;
+    }
+
+    public String getB() {
+      return b;
+    }
+  }
+}
+```
+
+```java
+package book;
+
+public class PojoLambda {
+  public PojoResponse handlerPojo(PojoInput input) {
+    return new PojoResponse("Input was " + input.c);
+  }
+
+  public static class PojoInput {
+    public String c;
+  }
+
+  public static class PojoResponse {
+    public final String d;
+
+    PojoResponse(String d) {
+      this.d = d;
+    }
+  }
+}
+```
+
+One of the main uses for POJO input deserialization is when you tie your Lambda function to one of the AWS ecosystem Lambda event sources.
+
+```java
+public void handler(S3Event input) {
+  // …
+}
+```
