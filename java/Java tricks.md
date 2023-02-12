@@ -130,6 +130,11 @@
   - [Customized records](#customized-records)
 - [Nested classes](#nested-classes)
   - [Inner class](#inner-class)
+    - [Instantiating an Instance of an Inner Class](#instantiating-an-instance-of-an-inner-class)
+  - [static nested class](#static-nested-class)
+  - [Local Class](#local-class)
+  - [Anonymous classes](#anonymous-classes)
+- [Polymorphism discussion](#polymorphism-discussion)
 - [Data races](#data-races)
 
 
@@ -3942,6 +3947,7 @@ public record Crane(int numberEggs, String name) {
 - Can be marked abstract or final
 - Can access members of the outer class, including private members
 
+
 ```java
  public class Home {
    private String greeting = "Hi";   // Outer class instance variable
@@ -3968,6 +3974,234 @@ public record Crane(int numberEggs, String name) {
    } 
  }
 ```
+
+You should be expecting the `Home.class` file. For the inner class, the compiler creates `Home$Room.class`
+
+### Instantiating an Instance of an Inner Class
+
+```java
+public static void main(String[] args) {
+   var home = new Home();
+   Room room = home.new Room(); // Create the inner class instance
+   room.enter();
+
+   new Home().new Room().enter(); 
+}
+```
+
+
+```java
+public class A {
+   private int x = 10;
+   class B {
+      private int x = 20;
+      class C {
+         private int x = 30;
+         public void allTheX() {
+            System.out.println(x);        // 30
+            System.out.println(this.x);   // 30
+            System.out.println(B.this.x); // 20
+            System.out.println(A.this.x); // 10
+   } } }
+   public static void main(String[] args) {
+      A a = new A();
+      A.B b = a.new B();
+      A.B.C c = b.new C();
+      c.allTheX();
+}}
+```
+
+ We could have written B as the type because that is available at the member level of A. Java knows where to look for it. Then we instantiate a C. This time, the A.B.C type is necessary to specify. C is too deep for Java to know where to look
+
+## static nested class
+
+- A static nested class is a static type defined at the member level. Unlike an inner class, a static nested class can be instantiated without an instance of the enclosing class. 
+- it can't access instance variables or methods declared in the outer class.
+- The nesting creates a namespace because the enclosing class name must be used to refer to it.
+- It can additionally be marked private or protected.
+- The enclosing class can refer to the fields and methods of the static nested class.
+
+```java
+public class Park {
+   static class Ride {
+      private int price = 6;
+   }
+   public static void main(String[] args) {
+      var ride = new Ride();
+      System.out.println(ride.price);
+} }
+```
+
+## Local Class
+
+- A local class is a nested class defined within a method. 
+- Like local variables, a local class declaration does not exist until the method is invoked, and it goes out of scope when the method returns. You can create instances only from within the method. 
+- Those instances can still be returned from the method. This is just how local variables work
+- It can be declared inside constructors and initializers.
+- They do not have an access modifier.
+- They can be declared final or abstract.
+- They have access to all fields and methods of the enclosing class (when defined in an instance method).
+- They can access final and effectively final local variables.
+
+```java
+public class PrintNumbers {
+   private int length = 5;
+   public void calculate() {
+      final int width = 20;
+      class Calculator {
+         public void multiply() {
+            System.out.print(length * width);
+         }
+      }
+      var calculator = new Calculator();
+      calculator.multiply();
+   }
+   public static void main(String[] args) {
+      var printer = new PrintNumbers();
+      printer.calculate();  // 100
+   }
+}
+```
+
+```java
+public void processData() {
+   final int length = 5;
+   int width = 10;
+   int height = 2;
+   class VolumeCalculator {
+      public int multiply() {
+         return length * width * height; // DOES NOT COMPILE
+      }
+   }
+   width = 2;
+}
+```
+
+## Anonymous classes
+
+- An anonymous class is a specialized form of a local class that does not have a name. 
+- It is declared and instantiated all in one statement using the `new` keyword, a type name with parentheses, and a set of braces {}. 
+- Anonymous classes must extend an existing class or implement an existing interface. 
+- They are useful when you have a short implementation that will not be used anywhere else.
+
+```java
+public class ZooGiftShop {
+   abstract class SaleTodayOnly {
+      abstract int dollarsOff();
+   }
+   public int admission(int basePrice) {
+      SaleTodayOnly sale = new SaleTodayOnly() {
+         int dollarsOff() { return 3; }
+      }; // Don't forget the semicolon!
+      return basePrice - sale.dollarsOff();
+} }
+```
+
+```java
+public class ZooGiftShop {
+   interface SaleTodayOnly {
+      int dollarsOff();
+   }
+   public int admission(int basePrice) {
+      SaleTodayOnly sale = new SaleTodayOnly() {
+         public int dollarsOff() { return 3; }
+      };
+      return basePrice - sale.dollarsOff();
+} }
+```
+
+```java
+public class Gorilla {
+   interface Climb {}
+   Climb climbing = new Climb() {};
+}
+```
+
+But what if we want to both implement an interface and extend a class? You can't do so with an anonymous class unless the class to extend is java.lang.Object
+
+
+# Polymorphism discussion
+
+**polymorphism**, the property of an object to take on many different forms. 
+
+a Java object may be accessed using:
+
+- A reference with the same type as the object
+- A reference that is a superclass of the object
+- A reference that defines an interface the object implements or inherits
+
+The type of the object determines which properties exist within the object in memory.
+
+The type of the reference to the object determines which methods and variables are accessible to the Java program.
+
+```java
+public class Primate {
+   public boolean hasHair() {
+      return true;
+   }
+}
+ 
+public interface HasTail {
+   public abstract boolean isTailStriped();
+}
+ 
+public class Lemur extends Primate implements HasTail {
+   public boolean isTailStriped() {
+      return false;
+   }
+   public int age = 10;
+   public static void main(String[] args) {
+      Lemur lemur = new Lemur();
+      System.out.println(lemur.age);
+ 
+      HasTail hasTail = lemur;
+      System.out.println(hasTail.isTailStriped());
+ 
+      Primate primate = lemur;
+      System.out.println(primate.hasHair());
+   } }
+```
+
+```java
+Lemur lemur = new Lemur();
+Primate primate = lemur;       // Implicit Cast to supertype
+Lemur lemur2 = (Lemur)primate; // Explicit Cast to subtype
+Lemur lemur3 = primate;        // DOES NOT COMPILE (missing cast)
+```
+
+- Casting a reference from a subtype to a supertype doesn't require an **explicit cast**. There is **implicit cast**
+- Casting a reference from a supertype to a subtype requires an **explicit cast**.
+- At runtime, an invalid cast of a reference to an incompatible type results in a `ClassCastException` being thrown.
+- The compiler disallows casts to unrelated types.
+
+```java
+public class Bird {}
+ 
+public class Fish {
+   public static void main(String[] args) {
+      Fish fish = new Fish();
+      Bird bird = (Bird)fish;  // DOES NOT COMPILE
+   }
+}
+```
+
+In this example, the classes Fish and Bird are not related through any class hierarchy that the compiler is aware of. While they both extend Object implicitly, they are considered unrelated types since one cannot be a subtype of the other.
+
+
+While the compiler can enforce rules about casting to unrelated types for classes, it cannot always do the same for interfaces. Remember, instances support multiple inheritance, which limits what the compiler can reason about them. While a given class may not implement an interface, it's possible that some subclass may implement the interface. When holding a reference to a particular class, the compiler doesn't know which specific subtype it is holding.
+```java
+ interface Canine {}
+ interface Dog {}
+ class Wolf implements Canine {}
+
+ public class BadCasts {
+    public static void main(String[] args) {
+       Wolf wolfy = new Wolf();
+       Dog badWolf = (Dog)wolfy;
+    } }
+```
+
+This limitation aside, the compiler can enforce one rule around interface casting. The compiler does not allow a cast from an interface reference to an object reference if the object type cannot possibly implement the interface, such as if the class is marked final. For example, if the Wolf interface is marked final on line 3, then line 8 no longer compiles. The compiler recognizes that there are no possible subclasses of Wolf capable of implementing the Dog interface.
 
 # Data races
 
