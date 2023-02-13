@@ -161,6 +161,9 @@
     - [Comparing Lists](#comparing-lists)
     - [Create list via factory methods](#create-list-via-factory-methods)
     - [Create lists via constructors](#create-lists-via-constructors)
+    - [Lists methods](#lists-methods)
+    - [List to Array](#list-to-array)
+  - [Sets](#sets)
 - [Streams](#streams)
 - [Generics](#generics)
 - [Exceptions](#exceptions)
@@ -1143,7 +1146,7 @@ var name = switch(fish) {
    case 1 -> "Goldfish";
    case 2 -> {yield "Trout";}
    case 3 -> {
-      if(length > 10) yield "Blobfish";
+      if(length > 10) yield "Blowfish";
       else yield "Green";
    }
    default -> "Swordfish";
@@ -1157,7 +1160,7 @@ var name = switch(fish) {
    case 1 -> "Goldfish";
    case 2 -> {}  // DOES NOT COMPILE
    case 3 -> {
-      if(length > 10) yield "Blobfish";
+      if(length > 10) yield "Blowfish";
    }  // DOES NOT COMPILE
    default -> "Swordfish";
 };
@@ -1166,14 +1169,14 @@ var name = switch(fish) {
 3. A default branch is required unless all cases are covered or no value is returned.
 
 ```java
-String type = switch(canis) { // DOES NOT COMPILE
+String type = switch(animal) { // DOES NOT COMPILE
    case 1 -> "dog";
    case 2 -> "wolf";
    case 3 -> "coyote";
 };
 ```
-Есть два способа исправить:
-1. Добавить default ветку.
+Two ways how to fix:
+1. Add default branch.
 2. If the switch expression takes an enum value, add a case branch for every possible enum value.
 
 ```java
@@ -1212,7 +1215,7 @@ System.out.println(lizard);  // 1
 for( ; ; )
    System.out.println("Hello World");
 ```
-такое не скомпилируется `for( )`
+this does not compiled `for( )`
 
 
 variables scope
@@ -1237,7 +1240,7 @@ for(long y = 0, z = 4; x < 5 && y < 10; x++, y++) {
 System.out.print(x + " ");
 ```
 
-not corret
+not correct
 ```java
 int x = 0;
 for(long y = 0, int z = 4; x < 5; x++)  // DOES NOT COMPILE
@@ -1251,7 +1254,7 @@ for(int x = 4; x < 5; x++)   // DOES NOT COMPILE
 
 # Labels
 
-Labeles can be before `if`, `switch` and all cycles.
+Labels can be before `if`, `switch` and all cycles.
 
 ```java
 int[][] myComplexArray = {{5,2,1,3},{3,9,8,9},{5,7,12,7}};
@@ -1264,7 +1267,7 @@ OUTER_LOOP:  for(int[] mySimpleArray : myComplexArray) {
 }
 ```
 
-such lables can be before any block
+such labels can be before any block
 ```java
 int frog = 15;
 BAD_IDEA: if(frog>10)
@@ -1329,7 +1332,7 @@ public class CleaningSchedule {
 } } } }
 ```
 
-unrecheable code for break, continue, return
+unreachable code for break, continue, return
 ```java
 int checkDate = 0;
 while(checkDate<10) {
@@ -2191,7 +2194,7 @@ var daily = Duration.ofDays(1);               // PT24H
 var hourly = Duration.ofHours(1);             // PT1H
 var everyMinute = Duration.ofMinutes(1);      // PT1M
 var everyTenSeconds = Duration.ofSeconds(10); // PT10S
-var everyMilli = Duration.ofMillis(1);        // PT0.001S
+var everyMillis = Duration.ofMillis(1);        // PT0.001S
 var everyNano = Duration.ofNanos(1);          // PT0.000000001S
 ```
 
@@ -2200,7 +2203,7 @@ var daily = Duration.of(1, ChronoUnit.DAYS);
 var hourly = Duration.of(1, ChronoUnit.HOURS);
 var everyMinute = Duration.of(1, ChronoUnit.MINUTES);
 var everyTenSeconds = Duration.of(10, ChronoUnit.SECONDS);
-var everyMilli = Duration.of(1, ChronoUnit.MILLIS);
+var everyMillis = Duration.of(1, ChronoUnit.MILLIS);
 var everyNano = Duration.of(1, ChronoUnit.NANOS);
 ```
 
@@ -5015,6 +5018,58 @@ var list = new ArrayList<>();
 list.add("a");
 for (String s: list) { } // DOES NOT COMPILE
 ```
+
+### Lists methods
+
+- `public boolean add(E element)`	Adds element to end (available on all Collection APIs).
+- `public void add(int index, E element)`	Adds element at index and moves the rest toward the end.
+- `public E get(int index)`	Returns element at index.
+- `public E remove(int index)`	Removes element at index and moves the rest toward the front.
+- `public default void replaceAll(UnaryOperator<E> op)`	Replaces each element in list with result of operator.
+- `public E set(int index, E e)`	Replaces element at index and returns original. Throws `IndexOutOfBoundsException` if index is invalid.
+- `public default void sort(Comparator<? super E> c)`	Sorts list. We cover this later in the chapter in the “Sorting Data” section.
+
+```java
+List<String> list = new ArrayList<>();
+list.add("SD");                  // [SD]
+list.add(0, "NY");               // [NY,SD]
+list.set(1, "FL");               // [NY,FL]
+System.out.println(list.get(0)); // NY
+list.remove("NY");               // [FL]
+list.remove(0);                  // []
+list.set(0, "?");                // IndexOutOfBoundsException
+```
+
+```java
+var numbers = Arrays.asList(1, 2, 3);
+numbers.replaceAll(x -> x*2);
+System.out.println(numbers);   // [2, 4, 6]
+```
+
+```java
+var list = new LinkedList<Integer>();
+list.add(3);
+list.add(2);
+list.add(1);   // [3, 2, 1]
+list.remove(2);   // [3, 2]
+list.remove(Integer.valueOf(2)); // [3]
+System.out.println(list);  // [3]
+```
+
+### List to Array
+
+```java
+List<String> list = new ArrayList<>();
+list.add("hawk");
+list.add("robin");
+Object[] objectArray = list.toArray();
+String[] stringArray = list.toArray(new String[0]);
+list.clear(); // out list is empty now
+System.out.println(objectArray.length);     // 2
+System.out.println(stringArray.length);     // 2
+```
+
+## Sets
 
 # Streams
 
