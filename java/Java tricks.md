@@ -102,14 +102,14 @@
     - [Rules](#rules-1)
     - [Examples](#examples)
   - [Calling the parent version of an overridden method](#calling-the-parent-version-of-an-overridden-method)
-  - [redeclaring private methods](#redeclaring-private-methods)
+  - [Redeclaring private methods](#redeclaring-private-methods)
   - [static method hiding](#static-method-hiding)
   - [variable hiding](#variable-hiding)
   - [final hiding and overriding](#final-hiding-and-overriding)
 - [Abstract classes](#abstract-classes)
   - [Rules](#rules-2)
   - [Constructor in abstract class](#constructor-in-abstract-class)
-- [Imutable classes](#imutable-classes)
+- [Immutable classes](#immutable-classes)
   - [copy on read access method](#copy-on-read-access-method)
   - [Performing a Defensive Copy](#performing-a-defensive-copy)
 - [Interfaces](#interfaces)
@@ -155,6 +155,8 @@
     - [Convenience Methods on Functional Interfaces](#convenience-methods-on-functional-interfaces)
   - [Functional Interfaces for Primitives](#functional-interfaces-for-primitives)
 - [Collections Framework](#collections-framework)
+  - [Overview](#overview)
+  - [Common methods for Collections](#common-methods-for-collections)
 - [Streams](#streams)
 - [Generics](#generics)
 - [Exceptions](#exceptions)
@@ -3091,7 +3093,7 @@ public class EmperorPenguin extends Penguin {
 ```
 
 
-## redeclaring private methods
+## Redeclaring private methods
 
 ```java
 public class Beetle {
@@ -3193,7 +3195,7 @@ public class Penguin extends Bird {
 }
 ```
 
-the private methods would be redeclared, not overridden or hidden.
+the private methods would not be overridden or hidden.
 
 # Abstract classes
 
@@ -3345,7 +3347,7 @@ public class Platypus extends Mammal {
 }
 ```
 
-# Imutable classes
+# Immutable classes
 
 common strategy for making a class immutable:
 
@@ -4856,6 +4858,108 @@ ObjIntConsumer<T>        | void        | accept
 ObjLongConsumer<T>       | void        | accept
 
 # Collections Framework
+
+## Overview
+
+Interfaces - rectangles
+Classes - ovals
+
+![](images/collection_1.png)
+
+## Common methods for Collections
+
+```java
+public boolean add(E element)
+public boolean remove(Object object)
+public boolean removeIf(Predicate<? super E> filter)
+public boolean isEmpty()
+public int size()
+public void clear()
+public boolean contains(Object object)
+public void forEach(Consumer<? super T> action)
+boolean equals(Object object)
+```
+
+```java
+Collection<String> list = new ArrayList<>();
+System.out.println(list.add("Sparrow")); // true
+System.out.println(list.add("Sparrow")); // true
+
+Collection<String> set = new HashSet<>();
+System.out.println(set.add("Sparrow")); // true
+System.out.println(set.add("Sparrow")); // false
+```
+
+```java
+Collection<String> birds = new ArrayList<>();
+birds.add("hawk");                            // [hawk]
+birds.add("hawk");                            // [hawk, hawk]
+System.out.println(birds.remove("cardinal")); // false  // removes only one match.
+System.out.println(birds.remove("hawk"));     // true
+System.out.println(birds);                    // [hawk]
+```
+
+```java
+Collection<String> list = new ArrayList<>();
+list.add("Magician");
+list.add("Assistant");
+System.out.println(list);     // [Magician, Assistant]
+list.removeIf(s -> s.startsWith("A"));
+System.out.println(list);     // [Magician]
+```
+
+```java
+Collection<String> set = new HashSet<>();
+set.add("Wand");
+set.add("");
+set.removeIf(String::isEmpty); // s -> s.isEmpty()
+System.out.println(set);       // [Wand]
+```
+
+```java
+Collection<String> birds = new ArrayList<>();
+System.out.println(birds.isEmpty()); // true
+System.out.println(birds.size());    // 0
+birds.add("hawk");                   // [hawk]
+birds.add("hawk");                   // [hawk, hawk]
+System.out.println(birds.isEmpty()); // false
+System.out.println(birds.size());    // 2
+```
+
+```java
+Collection<String> birds = new ArrayList<>();
+birds.add("hawk");                   // [hawk]
+birds.add("hawk");                   // [hawk, hawk]
+System.out.println(birds.isEmpty()); // false
+System.out.println(birds.size());    // 2
+birds.clear();                       // []
+System.out.println(birds.isEmpty()); // true
+System.out.println(birds.size());    // 0
+```
+
+```java
+Collection<String> birds = new ArrayList<>();
+birds.add("hawk"); // [hawk]
+System.out.println(birds.contains("hawk"));  // true
+System.out.println(birds.contains("robin")); // false
+```
+
+```java
+Collection<String> cats = List.of("Annie", "Ripley");
+cats.forEach(System.out::println);
+cats.forEach(c -> System.out.println(c));
+```
+
+```java
+var list1 = List.of(1, 2);
+var list2 = List.of(2, 1);
+var set1 = Set.of(1, 2);
+var set2 = Set.of(2, 1);
+
+System.out.println(list1.equals(list2));  // false
+System.out.println(set1.equals(set2));    // true
+System.out.println(list1.equals(set1));   // false
+```
 
 # Streams
 
