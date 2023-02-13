@@ -157,6 +157,10 @@
 - [Collections Framework](#collections-framework)
   - [Overview](#overview)
   - [Common methods for Collections](#common-methods-for-collections)
+  - [Lists](#lists)
+    - [Comparing Lists](#comparing-lists)
+    - [Create list via factory methods](#create-list-via-factory-methods)
+    - [Create lists via constructors](#create-lists-via-constructors)
 - [Streams](#streams)
 - [Generics](#generics)
 - [Exceptions](#exceptions)
@@ -4959,6 +4963,57 @@ var set2 = Set.of(2, 1);
 System.out.println(list1.equals(list2));  // false
 System.out.println(set1.equals(set2));    // true
 System.out.println(list1.equals(set1));   // false
+```
+
+## Lists
+
+### Comparing Lists
+
+- The main benefit of an `ArrayList` is that you can look up any element in constant time. Adding or removing an element is slower than accessing an element. This makes an ArrayList a good choice when you are reading more often than (or the same amount as) writing to the ArrayList.
+- A `LinkedList` is special because it implements both `List` and `Deque`. It has all the methods of a List. It also has additional methods to facilitate adding or removing from the beginning and/or end of the list. The main benefits of a LinkedList are that you can access, add to, and remove from the beginning and end of the list in constant time. The trade-off is that dealing with an arbitrary index takes linear time
+
+### Create list via factory methods
+
+Method | Description | Can add elements? | Can replace elements? | Can delete elements? |
+-------|-------------|-------------------|-----------------------|----------------------|
+`Arrays.asList(varargs)` | Returns fixed size list backed by an array |	No | Yes | No |
+`List.of(varargs)` | Returns immutable list | No | No | No |
+`List.copyOf(collection)` | Returns immutable list with copy of original collection's values	| No | No |	No |
+
+```java
+String[] array = new String[] {"a", "b", "c"};
+List<String> asList = Arrays.asList(array); // [a, b, c]
+List<String> of = List.of(array);           // [a, b, c]
+List<String> copy = List.copyOf(asList);    // [a, b, c]
+array[0] = "z";
+System.out.println(asList);                 // [z, b, c]
+System.out.println(of);                     // [a, b, c]
+System.out.println(copy);                   // [a, b, c]
+asList.set(0, "x");
+System.out.println(Arrays.toString(array)); // [x, b, c]
+copy.add("y");            // UnsupportedOperationException
+```
+
+### Create lists via constructors
+
+```java
+var linked1 = new LinkedList<String>();
+var linked2 = new LinkedList<String>(linked1);
+
+var list1 = new ArrayList<String>();
+var list2 = new ArrayList<String>(list1);
+var list3 = new ArrayList<String>(10); // kind of size of the underlying array.
+```
+
+fun but valid
+```java
+var list = new ArrayList<>(); // ArrayList<Object>
+```
+
+```java
+var list = new ArrayList<>();
+list.add("a");
+for (String s: list) { } // DOES NOT COMPILE
 ```
 
 # Streams
