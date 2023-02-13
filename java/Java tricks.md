@@ -137,6 +137,8 @@
   - [Anonymous classes](#anonymous-classes)
 - [Polymorphism discussion](#polymorphism-discussion)
 - [Lambdas and Functional Interfaces](#lambdas-and-functional-interfaces)
+  - [Using Local Variables Inside a Lambda Body](#using-local-variables-inside-a-lambda-body)
+  - [Referencing Variables from the Lambda Body](#referencing-variables-from-the-lambda-body)
   - [Functional interface](#functional-interface)
   - [Method References](#method-references)
     - [Calling static Methods](#calling-static-methods)
@@ -4301,6 +4303,60 @@ x -> x.startsWith("test")
 
 ```java
 var invalid = (Animal a) -> a.canHop();  // DOES NOT COMPILE
+```
+
+```java
+Predicate<String> p = x -> true;
+Predicate<String> p = (var x) -> true;
+Predicate<String> p = (String x) -> true;
+```
+
+```java
+public void counts(List<Integer> list) {
+   list.sort((final var x, @Deprecated var y) -> x.compareTo(y));
+}
+```
+
+```java
+(var x, y) -> "Hello"                  // DOES NOT COMPILE
+(var x, Integer y) -> true             // DOES NOT COMPILE
+(String x, var y, Integer z) -> true   // DOES NOT COMPILE
+(Integer x, y) -> "goodbye"            // DOES NOT COMPILE
+```
+
+## Using Local Variables Inside a Lambda Body
+
+```java
+(a, b) -> { int c = 0; return 5; }
+```
+
+```java
+(a, b) -> { int a = 0; return 5; }     // DOES NOT COMPILE
+```
+
+```java
+public void variables(int a) {
+   int b = 1;
+   Predicate<Integer> p1 = a -> {  // DOES NOT COMPILE
+      int b = 0;                    // DOES NOT COMPILE
+      int c = 0;
+      return b == c; }              // DOES NOT COMPILE
+}
+```
+
+## Referencing Variables from the Lambda Body
+
+-  Instance variables (and class variables) are always allowed to reference
+-  lambdas cannot access are variables that are not final or effectively final
+
+```java
+public class Crow {
+   private String color;
+   public void caw(String name) {
+      String volume = "loudly";
+      Consumer<String> consumer = s -> System.out.println(name + " says " + volume + " that she is " + color);
+   }
+}
 ```
 
 ## Functional interface
