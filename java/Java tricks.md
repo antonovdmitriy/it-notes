@@ -138,13 +138,18 @@
 - [Polymorphism discussion](#polymorphism-discussion)
 - [Lambdas and Functional Interfaces](#lambdas-and-functional-interfaces)
   - [Functional interface](#functional-interface)
+  - [Method References](#method-references)
+    - [Calling static Methods](#calling-static-methods)
+    - [Calling Instance Methods on a Particular Object](#calling-instance-methods-on-a-particular-object)
+    - [Calling Instance Methods on a Parameter](#calling-instance-methods-on-a-parameter)
+    - [Calling Constructors](#calling-constructors)
   - [General functional intefraces](#general-functional-intefraces)
     - [Supplier](#supplier)
-- [Method References](#method-references)
-  - [Calling static Methods](#calling-static-methods)
-  - [Calling Instance Methods on a Particular Object](#calling-instance-methods-on-a-particular-object)
-  - [Calling Instance Methods on a Parameter](#calling-instance-methods-on-a-parameter)
-  - [Calling Constructors](#calling-constructors)
+    - [Consumer and BiConsumer](#consumer-and-biconsumer)
+    - [Predicate and BiPredicate](#predicate-and-bipredicate)
+    - [Function and BiFunction](#function-and-bifunction)
+    - [UnaryOperator and BinaryOperator](#unaryoperator-and-binaryoperator)
+    - [Convenience Methods on Functional Interfaces](#convenience-methods-on-functional-interfaces)
 - [Data races](#data-races)
 
 
@@ -4355,50 +4360,8 @@ public interface Dive {
 }
 ```
 
-## General functional intefraces
 
-
-Functional interface |  Return type	| Method name  | # of parameters
----------------------| -------------| -------------| ---------------
-`Supplier<T>`        | `T`	         | `get()`      |	0
-`Consumer<T>`        | `void`	      | `accept(T)`	| 1 (T)
-`BiConsumer<T, U>`	| `void`	      | `accept(T,U)`| 2 (T, U)
-`Predicate<T>`	      | `boolean`    | `test(T)`	   | 1 (T)
-`BiPredicate<T, U>`	| `boolean`	   | `test(T,U)`	| 2 (T, U)
-`Function<T, R>`	   | `R`	         | `apply(T)`	| 1 (T)
-`BiFunction<T, U, R>`| `R`	         | `apply(T,U)`	| 2 (T, U)
-`UnaryOperator<T>`	| `T`	         | `apply(T)`	| 1 (T)
-`BinaryOperator<T>`	| `T`	         | `apply(T,T)`	| 2 (T, T)
-
-### Supplier
-
-```java
-@FunctionalInterface
-public interface Supplier<T> {
-   T get();
-}
-```
-
-```java
-Supplier<LocalDate> s1 = LocalDate::now;
-Supplier<LocalDate> s2 = () -> LocalDate.now();
- 
-LocalDate d1 = s1.get();
-LocalDate d2 = s2.get();
- 
-System.out.println(d1);  // 2022-02-20
-System.out.println(d2);  // 2022-02-20
-```
-
-```java
-Supplier<StringBuilder> s1 = StringBuilder::new;
-Supplier<StringBuilder> s2 = () -> new StringBuilder();
- 
-System.out.println(s1.get()); // Empty string
-System.out.println(s2.get()); // Empty string
-```
-
-# Method References
+## Method References
 
 ```java
 public interface LearnToSpeak {
@@ -4432,7 +4395,7 @@ There are four formats for method references:
 - Instance methods on a parameter to be determined at runtime
 - Constructors
 
-## Calling static Methods
+### Calling static Methods
 
 ```java
 interface Converter { 
@@ -4445,7 +4408,7 @@ Converter lambda = x -> Math.round(x);
 System.out.println(methodRef.round(100.1));  // 100
 ```
 
-## Calling Instance Methods on a Particular Object
+### Calling Instance Methods on a Particular Object
 
 ```java
 interface StringStart {
@@ -4481,7 +4444,7 @@ StringChecker methodReference = str::startsWith;         // DOES NOT COMPILE
 StringChecker methodReference = str::startsWith("Zoo");  // DOES NOT COMPILE
 ```
 
-## Calling Instance Methods on a Parameter
+### Calling Instance Methods on a Parameter
 
 ```java
 interface StringParameterChecker {
@@ -4505,7 +4468,7 @@ StringTwoParameterChecker lambda = (s, p) -> s.startsWith(p);
 System.out.println(methodRef.check("Zoo", "A"));  // false
 ```
 
-## Calling Constructors
+### Calling Constructors
 
 ```java
 interface EmptyStringCreator {
@@ -4530,6 +4493,203 @@ StringCopier lambda = x -> new String(x);
 var myString = methodRef.copy("Zebra");
 System.out.println(myString.equals("Zebra"));  // true
 ```
+
+
+## General functional intefraces
+
+
+Functional interface |  Return type	| Method name  | # of parameters
+---------------------| -------------| -------------| ---------------
+`Supplier<T>`        | `T`	         | `get()`      |	0
+`Consumer<T>`        | `void`	      | `accept(T)`	| 1 (T)
+`BiConsumer<T, U>`	| `void`	      | `accept(T,U)`| 2 (T, U)
+`Predicate<T>`	      | `boolean`    | `test(T)`	   | 1 (T)
+`BiPredicate<T, U>`	| `boolean`	   | `test(T,U)`	| 2 (T, U)
+`Function<T, R>`	   | `R`	         | `apply(T)`	| 1 (T)
+`BiFunction<T, U, R>`| `R`	         | `apply(T,U)`	| 2 (T, U)
+`UnaryOperator<T>`	| `T`	         | `apply(T)`	| 1 (T)
+`BinaryOperator<T>`	| `T`	         | `apply(T,T)`	| 2 (T, T)
+
+### Supplier
+
+A Supplier is used when you want to generate or supply values without taking any input.
+
+```java
+@FunctionalInterface
+public interface Supplier<T> {
+   T get();
+}
+```
+
+```java
+Supplier<LocalDate> s1 = LocalDate::now;
+Supplier<LocalDate> s2 = () -> LocalDate.now();
+ 
+LocalDate d1 = s1.get();
+LocalDate d2 = s2.get();
+ 
+System.out.println(d1);  // 2022-02-20
+System.out.println(d2);  // 2022-02-20
+```
+
+```java
+Supplier<StringBuilder> s1 = StringBuilder::new;
+Supplier<StringBuilder> s2 = () -> new StringBuilder();
+ 
+System.out.println(s1.get()); // Empty string
+System.out.println(s2.get()); // Empty string
+```
+
+```java
+Supplier<ArrayList<String>> s3 = ArrayList::new;
+ArrayList<String> a1 = s3.get();
+System.out.println(a1);  // []
+```
+
+### Consumer and BiConsumer
+
+You use a Consumer when you want to do something with a parameter but not return anything. 
+
+```java
+@FunctionalInterface
+public interface Consumer<T> {
+   void accept(T t);
+   // omitted default method
+}
+ 
+@FunctionalInterface
+public interface BiConsumer<T, U> {
+   void accept(T t, U u);
+   // omitted default method
+}
+```
+
+```java
+Consumer<String> c1 = System.out::println;
+Consumer<String> c2 = x -> System.out.println(x);
+ 
+c1.accept("Annie"); // Annie
+c2.accept("Annie"); // Annie
+```
+
+```java
+var map = new HashMap<String, Integer>();
+BiConsumer<String, Integer> b1 = map::put;
+BiConsumer<String, Integer> b2 = (k, v) -> map.put(k, v);
+ 
+b1.accept("chicken", 7);
+b2.accept("chick", 1);
+ 
+System.out.println(map);  // {chicken=7, chick=1}
+```
+
+### Predicate and BiPredicate
+
+Predicate is often used when filtering or matching. Both are common operations
+
+```java
+@FunctionalInterface
+public interface Predicate<T> {
+   boolean test(T t);
+   // omitted default and static methods
+}
+ 
+@FunctionalInterface
+public interface BiPredicate<T, U> {
+   boolean test(T t, U u);
+   // omitted default methods
+}
+```
+
+```java
+Predicate<String> p1 = String::isEmpty;
+Predicate<String> p2 = x -> x.isEmpty();
+ 
+System.out.println(p1.test("")); // true
+System.out.println(p2.test("")); // true
+```
+
+```java
+BiPredicate<String, String> b1 = String::startsWith;
+BiPredicate<String, String> b2 =
+   (string, prefix) -> string.startsWith(prefix);
+ 
+System.out.println(b1.test("chicken", "chick")); // true
+System.out.println(b2.test("chicken", "chick")); // true
+```
+
+### Function and BiFunction
+
+- A `Function` is responsible for turning one parameter into a value of a potentially different type and returning it. 
+- A `BiFunction` is responsible for turning two parameters into a value and returning it.
+
+```java
+@FunctionalInterface
+public interface Function<T, R> {
+   R apply(T t);
+   // omitted default and static methods
+}
+ 
+@FunctionalInterface
+public interface BiFunction<T, U, R> {
+   R apply(T t, U u);
+   // omitted default method
+}
+```
+
+```java
+Function<String, Integer> f1 = String::length;
+Function<String, Integer> f2 = x -> x.length();
+ 
+System.out.println(f1.apply("cluck")); // 5
+System.out.println(f2.apply("cluck")); // 5
+```
+
+```java
+BiFunction<String, String, String> b1 = String::concat;
+BiFunction<String, String, String> b2 =
+   (string, toAdd) -> string.concat(toAdd);
+ 
+System.out.println(b1.apply("baby ", "chick")); // baby chick
+System.out.println(b2.apply("baby ", "chick")); // baby chick
+```
+
+### UnaryOperator and BinaryOperator
+
+`UnaryOperator` and `BinaryOperator` are special cases of a `Function`. They require all type parameters to be the same type. 
+
+```java
+@FunctionalInterface
+public interface UnaryOperator<T> extends Function<T, T> { 
+   // omitted static method
+}
+ 
+@FunctionalInterface
+public interface BinaryOperator<T> extends BiFunction<T, T, T> {
+   // omitted static methods 
+}
+```
+
+```java
+UnaryOperator<String> u1 = String::toUpperCase;
+UnaryOperator<String> u2 = x -> x.toUpperCase();
+ 
+System.out.println(u1.apply("chirp")); // CHIRP
+System.out.println(u2.apply("chirp")); // CHIRP
+```
+
+```java
+BinaryOperator<String> b1 = String::concat;
+BinaryOperator<String> b2 = (string, toAdd) -> string.concat(toAdd);
+ 
+System.out.println(b1.apply("baby ", "chick")); // baby chick
+System.out.println(b2.apply("baby ", "chick")); // baby chick
+```
+
+### Convenience Methods on Functional Interfaces
+
+
+
 
 # Data races
 
