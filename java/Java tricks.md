@@ -164,6 +164,12 @@
     - [Lists methods](#lists-methods)
     - [List to Array](#list-to-array)
   - [Sets](#sets)
+    - [Comparing sets](#comparing-sets)
+      - [HashSet](#hashset)
+      - [TreeSet](#treeset)
+  - [Creating via factory methods](#creating-via-factory-methods)
+    - [Sets methods](#sets-methods)
+  - [Queue and Deque Interfaces](#queue-and-deque-interfaces)
 - [Streams](#streams)
 - [Generics](#generics)
 - [Exceptions](#exceptions)
@@ -1046,7 +1052,7 @@ switch(animal) {
    case 3:   System.out.print("Tiger");
 }
 ```
-ранее нужно было писать так
+in the past we need to write like this
 
 ```java
 switch(animal) {
@@ -1067,7 +1073,7 @@ public void printSeason(int month) {
 }
 ```
 
-В case можно писать только константы и значения, которые известны в момент компиляции. 
+In case we can write only constants and values which known in compile time
 ```java
 final int getCookies() { return 4; }
 void feedAnimals() {
@@ -5070,6 +5076,50 @@ System.out.println(stringArray.length);     // 2
 ```
 
 ## Sets
+
+### Comparing sets
+
+#### HashSet
+
+- `HashSet` stores its elements in a hash table, which means the keys are a hash and the values are an `Object`. This means that the `HashSet` uses the `hashCode()` method of the objects to retrieve them more efficiently. 
+- The main benefit is that adding elements and checking whether an element is in the set both have constant time
+- The trade-off is that you lose the order in which you inserted the elements.
+
+#### TreeSet
+- `TreeSet` stores its elements in a sorted tree structure.
+- The main benefit is that the set is always in sorted order.
+- The trade-off is that adding and checking whether an element exists takes longer than with a HashSet, especially as the tree grows larger.
+
+## Creating via factory methods
+
+```java
+Set<Character> letters = Set.of('z', 'o', 'o'); // immutable Set
+Set<Character> copy = Set.copyOf(letters);      // just mutable copy
+```
+
+### Sets methods
+
+```java
+Set<Integer> set = new HashSet<>();
+boolean b1 = set.add(66);     // true
+boolean b2 = set.add(10);     // true
+boolean b3 = set.add(66);     // false
+boolean b4 = set.add(8);      // true
+set.forEach(System.out::println);  // 66 8 10
+```
+
+```java
+Set<Integer> set = new TreeSet<>();
+boolean b1 = set.add(66);   // true
+boolean b2 = set.add(10);   // true
+boolean b3 = set.add(66);   // false
+boolean b4 = set.add(8);    // true
+set.forEach(System.out::println);  // 8 10 66
+```
+
+## Queue and Deque Interfaces
+
+
 
 # Streams
 
