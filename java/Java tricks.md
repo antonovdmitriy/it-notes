@@ -39,7 +39,7 @@
   - [for](#for)
 - [Labels](#labels)
 - [Strings](#strings)
-  - [String concatination](#string-concatination)
+  - [String concatenation](#string-concatenation)
   - [important methods for OCP exam](#important-methods-for-ocp-exam)
   - [substring](#substring)
   - [equals](#equals)
@@ -82,7 +82,7 @@
   - [Instant](#instant)
   - [Daylight saving](#daylight-saving)
 - [Methods](#methods)
-  - [Sugnature](#sugnature)
+  - [Signature](#signature)
   - [Access modifiers](#access-modifiers)
   - [return for void](#return-for-void)
   - [Local variables](#local-variables)
@@ -93,26 +93,26 @@
 - [Autoboxing](#autoboxing)
 - [Overloading](#overloading)
   - [Rules](#rules)
-- [Inheritence](#inheritence)
+- [Inheritance](#inheritance)
   - [hiding variables](#hiding-variables)
   - [super](#super)
   - [Constructor](#constructor-1)
   - [Class initialization](#class-initialization)
-  - [Overridng](#overridng)
+  - [Overriding](#overriding)
     - [Rules](#rules-1)
     - [Examples](#examples)
-  - [Calling the parent version of an overriden method](#calling-the-parent-version-of-an-overriden-method)
+  - [Calling the parent version of an overridden method](#calling-the-parent-version-of-an-overridden-method)
   - [redeclaring private methods](#redeclaring-private-methods)
   - [static method hiding](#static-method-hiding)
   - [variable hiding](#variable-hiding)
-  - [final hiding and overrding](#final-hiding-and-overrding)
+  - [final hiding and overriding](#final-hiding-and-overriding)
 - [Abstract classes](#abstract-classes)
   - [Rules](#rules-2)
   - [Constructor in abstract class](#constructor-in-abstract-class)
 - [Imutable classes](#imutable-classes)
   - [copy on read access method](#copy-on-read-access-method)
   - [Performing a Defensive Copy](#performing-a-defensive-copy)
-- [Intefraces](#intefraces)
+- [Interfaces](#interfaces)
   - [Inheriting Duplicate Abstract Methods](#inheriting-duplicate-abstract-methods)
   - [default methods](#default-methods)
   - [Declaring static Interface Methods](#declaring-static-interface-methods)
@@ -125,8 +125,8 @@
 - [Encapsulation](#encapsulation)
 - [Records](#records)
   - [Declaring Constructors](#declaring-constructors)
-    - [Long constuctor](#long-constuctor)
-    - [Compact constuctor](#compact-constuctor)
+    - [Long constructor](#long-constructor)
+    - [Compact constructor](#compact-constructor)
     - [Overloaded Constructors](#overloaded-constructors)
   - [Customized records](#customized-records)
 - [Nested classes](#nested-classes)
@@ -146,7 +146,7 @@
     - [Calling Instance Methods on a Particular Object](#calling-instance-methods-on-a-particular-object)
     - [Calling Instance Methods on a Parameter](#calling-instance-methods-on-a-parameter)
     - [Calling Constructors](#calling-constructors)
-  - [General functional intefraces](#general-functional-intefraces)
+  - [General functional interfaces](#general-functional-interfaces)
     - [Supplier](#supplier)
     - [Consumer and BiConsumer](#consumer-and-biconsumer)
     - [Predicate and BiPredicate](#predicate-and-bipredicate)
@@ -154,7 +154,16 @@
     - [UnaryOperator and BinaryOperator](#unaryoperator-and-binaryoperator)
     - [Convenience Methods on Functional Interfaces](#convenience-methods-on-functional-interfaces)
   - [Functional Interfaces for Primitives](#functional-interfaces-for-primitives)
-- [Data races](#data-races)
+- [Collections Framework](#collections-framework)
+- [Streams](#streams)
+- [Generics](#generics)
+- [Exceptions](#exceptions)
+- [Internalization](#internalization)
+- [Modules](#modules)
+- [Concurrency](#concurrency)
+  - [Data races](#data-races)
+- [I/O](#io)
+- [JDBC](#jdbc)
 
 
 # OCP preparation
@@ -777,7 +786,7 @@ short boots = 2 + hat;  // DOES NOT COMPILE
 byte gloves = 7 * 100;  // DOES NOT COMPILE
 ```
 
-Compaund operates can handle casting
+Compound operates can handle casting
 ```java
 long goat = 10;
 int sheep = 5;
@@ -1190,9 +1199,9 @@ System.out.println(lizard);  // 1
 
 ## for
 
-Блоки могут быть составными, тогда нужно писать через запятую внутри них.
+- Blocks can be compound. In such cases you need to use comma between them
+- Expression in blocks are optional. This is infinite cycle. Mandatory `;` between blocks
 
-Блоки опциональны. Вот это бесконечный цикл. Обязательны `;` между блоками
 ```java
 for( ; ; )
    System.out.println("Hello World");
@@ -1200,7 +1209,7 @@ for( ; ; )
 такое не скомпилируется `for( )`
 
 
-видимость переменных
+variables scope
 ```java
 for(int i=0; i < 10; i++)
    System.out.println("Value is: "+i);
@@ -1236,7 +1245,7 @@ for(int x = 4; x < 5; x++)   // DOES NOT COMPILE
 
 # Labels
 
-Метки могут помещены перед `if`, `switch` и всеми циклами.
+Labeles can be before `if`, `switch` and all cycles.
 
 ```java
 int[][] myComplexArray = {{5,2,1,3},{3,9,8,9},{5,7,12,7}};
@@ -1249,7 +1258,7 @@ OUTER_LOOP:  for(int[] mySimpleArray : myComplexArray) {
 }
 ```
 
-также метки могут быть перед любым блоком
+such lables can be before any block
 ```java
 int frog = 15;
 BAD_IDEA: if(frog>10)
@@ -1341,7 +1350,7 @@ switch(hour) {
 ```
 # Strings
 
-## String concatination
+## String concatenation
 
 Rules:
 - If both operands are numeric, + means numeric addition.
@@ -1579,7 +1588,7 @@ var str = "Food: %d tons".formatted(2.0); // IllegalFormatConversionException
 
 ### Important methods
 
-> <mark> StringBuild does not have overriden `equals` </mark>
+> <mark> StringBuild does not have overridden `equals` </mark>
 
 ```java
 
@@ -1991,7 +2000,7 @@ New modern Java Time classes
 ```java
 System.out.println(LocalDate.now());  // 2021–10–25
 System.out.println(LocalTime.now());   //09:13:07.768
-System.out.println(LocalDateTime.now());  //2021–10–25T09:13:07.768 devided by T
+System.out.println(LocalDateTime.now());  //2021–10–25T09:13:07.768 divided by T
 System.out.println(ZonedDateTime.now());  //2021–10–25T09:13:07.769–05:00[America/New_York]
 ```
 
@@ -2311,7 +2320,7 @@ System.out.println(dateTime);    // 2022–03–13T03:30–04:00[US/Eastern]
 
 # Methods
 
-## Sugnature
+## Signature
 
 the method name and parameter list—are called the method signature. The method signature provides instructions for how callers can reference this method. The method signature does not include the return type and access modifiers, which control where the method can be referenced.
 
@@ -2659,7 +2668,7 @@ Example of what will be chosen for glide(1,2)
 - Autoboxed type	`String glide(Integer i, Integer j)`
 - Varargs	`String glide(int… nums)`
 
-# Inheritence
+# Inheritance
 
 > When one class inherits from a parent class, all public and protected members are automatically available as part of the child class. 
 
@@ -2978,7 +2987,7 @@ Constructor
 // BECHG
 ```
 
-## Overridng
+## Overriding
 
 > In Java, overriding a method occurs when a subclass declares a new implementation for an inherited method with the same signature and compatible return type.
 
@@ -3067,7 +3076,7 @@ public class Shark extends Fish {
 }
 ```
 
-## Calling the parent version of an overriden method
+## Calling the parent version of an overridden method
 
 ```java
 public class EmperorPenguin extends Penguin {
@@ -3166,7 +3175,7 @@ public class Meerkat extends Carnivore {
 }
 ```
 
-## final hiding and overrding 
+## final hiding and overriding  
 
 ```java
 public class Bird {
@@ -3385,7 +3394,7 @@ public Animal(List<String> favoriteFoods) {
 }
 ```   
 
-# Intefraces
+# Interfaces
 
 ![](images/interface_1.png)
 
@@ -3866,7 +3875,7 @@ public record Crane(int numberEggs, String name) implements Bird {}
 
 ## Declaring Constructors
 
-### Long constuctor
+### Long constructor
 
 ```java
 public record Crane(int numberEggs, String name) {
@@ -3884,7 +3893,7 @@ public record Crane(int numberEggs, String name) {
 }
 ```
 
-### Compact constuctor
+### Compact constructor
 
 ![](images/recotrds_compact_constructor_1.png)
 
@@ -3943,7 +3952,7 @@ public record Crane(int numberEggs, String name) {
 members that records can include:
 
 - Overloaded and compact constructors
-- nstance methods including overriding any provided methods (accessors, equals(), hashCode(), toString())
+- instance methods including overriding any provided methods (accessors, equals(), hashCode(), toString())
 - Nested classes, interfaces, annotations, enum, and records
 
 ```java
@@ -4555,7 +4564,7 @@ System.out.println(myString.equals("Zebra"));  // true
 ```
 
 
-## General functional intefraces
+## General functional interfaces
 
 
 Functional interface |  Return type	| Method name  | # of parameters
@@ -4839,15 +4848,28 @@ DoubleToLongFunction     | long        | applyAsLong
 IntToDoubleFunction      | double      | applyAsDouble
 IntToLongFunction        | long        | applyAsLong
 -------------------------|-------------|------------------------|
-LongToDoubleFunction     | double      | appplyAsDouble
-LongToIntFunction	       | int         | appplyAsInt
+LongToDoubleFunction     | double      | applyAsDouble
+LongToIntFunction	       | int         | applyAsInt
 -------------------------|-------------|------------------------|
 ObjDoubleConsumer<T>     | void        | accept
 ObjIntConsumer<T>        | void        | accept
 ObjLongConsumer<T>       | void        | accept
 
+# Collections Framework
 
-# Data races
+# Streams
+
+# Generics
+
+# Exceptions
+
+# Internalization
+
+# Modules
+
+# Concurrency
+
+## Data races
 
 example from String class:
 
@@ -4860,7 +4882,6 @@ that we can ever only write to one of these two fields for a given
 String instance, and that the computation is idempotent and derived
 from immutable state
 
-хорошая задачка попросить проанализировать корректную синхронизацию и возможность гонок.
 ```java
 
 public final class String
@@ -4887,3 +4908,8 @@ public int hashCode() {
 
 }
 ```
+
+# I/O
+
+# JDBC
+
