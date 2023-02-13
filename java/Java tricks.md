@@ -4304,8 +4304,6 @@ public interface Dance {  // DOES NOT COMPILE
 ```
 
 ```java
-
-```java
 @FunctionalInterface
 public interface Sprint {
    public void sprint(int speed);
