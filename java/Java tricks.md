@@ -150,6 +150,7 @@
     - [Function and BiFunction](#function-and-bifunction)
     - [UnaryOperator and BinaryOperator](#unaryoperator-and-binaryoperator)
     - [Convenience Methods on Functional Interfaces](#convenience-methods-on-functional-interfaces)
+  - [Functional Interfaces for Primitives](#functional-interfaces-for-primitives)
 - [Data races](#data-races)
 
 
@@ -4688,7 +4689,103 @@ System.out.println(b2.apply("baby ", "chick")); // baby chick
 
 ### Convenience Methods on Functional Interfaces
 
+Interface instance   |	Method return type   |	Method name |	Method parameters
+---------------------|-----------------------|--------------|-------------------
+Consumer             | Consumer	            | `andThen()`  |	Consumer
+Function	            | Function	            | `andThen()`  |	Function
+Function	            | Function	            | `compose()`  |	Function
+Predicate         	| Predicate	            | `and()`	   | Predicate
+Predicate         	| Predicate	            | `negate()`   | —
+Predicate         	| Predicate	            | `or()`	      | Predicate
 
+```java
+Predicate<String> egg = s -> s.contains("egg");
+Predicate<String> brown = s -> s.contains("brown");
+
+Predicate<String> brownEggs = egg.and(brown);
+Predicate<String> otherEggs = egg.and(brown.negate());
+```
+
+```java
+Consumer<String> c1 = x -> System.out.print("1: " + x);
+Consumer<String> c2 = x -> System.out.print(",2: " + x);
+ 
+Consumer<String> combined = c1.andThen(c2);
+combined.accept("Annie");  // 1: Annie,2: Annie
+```
+
+```java
+Function<Integer, Integer> before = x -> x + 1;
+Function<Integer, Integer> after = x -> x * 2;
+ 
+Function<Integer, Integer> combined = after.compose(before);
+System.out.println(combined.apply(3));   // 8
+```
+
+## Functional Interfaces for Primitives
+
+```java
+@FunctionalInterface
+public interface BooleanSupplier {
+   boolean getAsBoolean();
+}
+```
+
+```java
+BooleanSupplier b1 = () -> true;
+BooleanSupplier b2 = () -> Math.random()> .5;
+System.out.println(b1.getAsBoolean()); // true
+System.out.println(b2.getAsBoolean()); // false
+```
+
+Functional interfaces | Return type | Single abstract method | 
+----------------------|-------------|------------------------|
+DoubleSupplier        | double      | getAsDouble
+IntSupplier           | int         | getAsInt
+LongSupplier          | long	      | getAsLong     
+----------------------|-------------|------------------------|
+DoubleConsumer        | void        | accept
+IntConsumer           | void        | accept
+LongConsumer          | void        | accept
+----------------------|-------------|------------------------|
+DoublePredicate       | boolean     | test
+IntPredicate          | boolean     | test
+LongPredicate	       | boolean     | test
+----------------------|-------------|------------------------|
+DoubleFunction<R>     | R           | apply
+IntFunction<R>        | R           | apply
+LongFunction<R>       | R           | apply
+----------------------|-------------|------------------------|
+DoubleUnaryOperator   | double      | applyAsDouble
+IntUnaryOperator      | int         | applyAsInt
+LongUnaryOperator	    | long        | applyAsLong
+----------------------|-------------|------------------------|
+DoubleBinaryOperator  | double      | applyAsDouble
+IntBinaryOperator     | int         | applyAsInt
+LongBinaryOperator	 | long        | applyAsLong
+
+Functional interfaces    | Return type | Single abstract method | 
+-------------------------|-------------|------------------------|
+ToDoubleFunction<T>      | double      | applyAsDouble
+ToIntFunction<T>         | int         | applyAsInt
+ToLongFunction<T>	       | long        | applyAsLong
+-------------------------|-------------|------------------------|
+ToDoubleBiFunction<T, U> | double      | applyAsDouble
+ToIntBiFunction<T, U>    | int         | applyAsInt
+ToLongBiFunction<T, U>	 | long        | applyAsLong
+-------------------------|-------------|------------------------|
+DoubleToIntFunction      | int         | applyAsInt
+DoubleToLongFunction     | long        | applyAsLong
+-------------------------|-------------|------------------------|
+IntToDoubleFunction      | double      | applyAsDouble
+IntToLongFunction        | long        | applyAsLong
+-------------------------|-------------|------------------------|
+LongToDoubleFunction     | double      | appplyAsDouble
+LongToIntFunction	       | int         | appplyAsInt
+-------------------------|-------------|------------------------|
+ObjDoubleConsumer<T>     | void        | accept
+ObjIntConsumer<T>        | void        | accept
+ObjLongConsumer<T>       | void        | accept
 
 
 # Data races
