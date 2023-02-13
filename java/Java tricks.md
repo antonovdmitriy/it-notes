@@ -138,7 +138,13 @@
 - [Polymorphism discussion](#polymorphism-discussion)
 - [Lambdas and Functional Interfaces](#lambdas-and-functional-interfaces)
   - [Functional interface](#functional-interface)
+  - [General functional intefraces](#general-functional-intefraces)
+    - [Supplier](#supplier)
 - [Method References](#method-references)
+  - [Calling static Methods](#calling-static-methods)
+  - [Calling Instance Methods on a Particular Object](#calling-instance-methods-on-a-particular-object)
+  - [Calling Instance Methods on a Parameter](#calling-instance-methods-on-a-parameter)
+  - [Calling Constructors](#calling-constructors)
 - [Data races](#data-races)
 
 
@@ -4349,6 +4355,49 @@ public interface Dive {
 }
 ```
 
+## General functional intefraces
+
+
+Functional interface |  Return type	| Method name  | # of parameters
+---------------------| -------------| -------------| ---------------
+`Supplier<T>`        | `T`	         | `get()`      |	0
+`Consumer<T>`        | `void`	      | `accept(T)`	| 1 (T)
+`BiConsumer<T, U>`	| `void`	      | `accept(T,U)`| 2 (T, U)
+`Predicate<T>`	      | `boolean`    | `test(T)`	   | 1 (T)
+`BiPredicate<T, U>`	| `boolean`	   | `test(T,U)`	| 2 (T, U)
+`Function<T, R>`	   | `R`	         | `apply(T)`	| 1 (T)
+`BiFunction<T, U, R>`| `R`	         | `apply(T,U)`	| 2 (T, U)
+`UnaryOperator<T>`	| `T`	         | `apply(T)`	| 1 (T)
+`BinaryOperator<T>`	| `T`	         | `apply(T,T)`	| 2 (T, T)
+
+### Supplier
+
+```java
+@FunctionalInterface
+public interface Supplier<T> {
+   T get();
+}
+```
+
+```java
+Supplier<LocalDate> s1 = LocalDate::now;
+Supplier<LocalDate> s2 = () -> LocalDate.now();
+ 
+LocalDate d1 = s1.get();
+LocalDate d2 = s2.get();
+ 
+System.out.println(d1);  // 2022-02-20
+System.out.println(d2);  // 2022-02-20
+```
+
+```java
+Supplier<StringBuilder> s1 = StringBuilder::new;
+Supplier<StringBuilder> s2 = () -> new StringBuilder();
+ 
+System.out.println(s1.get()); // Empty string
+System.out.println(s2.get()); // Empty string
+```
+
 # Method References
 
 ```java
@@ -4383,7 +4432,104 @@ There are four formats for method references:
 - Instance methods on a parameter to be determined at runtime
 - Constructors
 
+## Calling static Methods
 
+```java
+interface Converter { 
+   long round(double num);
+}
+
+Converter methodRef = Math::round;
+Converter lambda = x -> Math.round(x);
+
+System.out.println(methodRef.round(100.1));  // 100
+```
+
+## Calling Instance Methods on a Particular Object
+
+```java
+interface StringStart {
+   boolean beginningCheck(String prefix);
+}
+
+var str = "Zoo";
+StringStart methodRef = str::startsWith;
+StringStart lambda = s -> str.startsWith(s);
+
+System.out.println(methodRef.beginningCheck("A"));  // false
+```
+
+```java
+interface StringChecker {
+   boolean check();
+}
+
+var str = "";
+StringChecker methodRef = str::isEmpty;
+StringChecker lambda = () -> str.isEmpty();
+
+System.out.print(methodRef.check());  // true
+```
+
+While all method references can be turned into lambdas, the opposite is not always true.
+
+```java
+var str = "";
+StringChecker lambda = () -> str.startsWith("Zoo");
+
+StringChecker methodReference = str::startsWith;         // DOES NOT COMPILE
+StringChecker methodReference = str::startsWith("Zoo");  // DOES NOT COMPILE
+```
+
+## Calling Instance Methods on a Parameter
+
+```java
+interface StringParameterChecker {
+   boolean check(String text);
+}
+
+StringParameterChecker methodRef = String::isEmpty;
+StringParameterChecker lambda = s -> s.isEmpty();
+
+System.out.println(methodRef.check("Zoo"));  // false
+```
+
+```java
+interface StringTwoParameterChecker {
+   boolean check(String text, String prefix);
+}
+
+StringTwoParameterChecker methodRef = String::startsWith;
+StringTwoParameterChecker lambda = (s, p) -> s.startsWith(p);
+
+System.out.println(methodRef.check("Zoo", "A"));  // false
+```
+
+## Calling Constructors
+
+```java
+interface EmptyStringCreator {
+   String create();
+}
+
+EmptyStringCreator methodRef = String::new;
+EmptyStringCreator lambda = () -> new String();
+
+var myString = methodRef.create();
+System.out.println(myString.equals("Snake"));  // false
+```
+
+```java
+interface StringCopier {
+   String copy(String value);
+}
+
+StringCopier methodRef = String::new;
+StringCopier lambda = x -> new String(x);
+
+var myString = methodRef.copy("Zebra");
+System.out.println(myString.equals("Zebra"));  // true
+```
 
 # Data races
 
