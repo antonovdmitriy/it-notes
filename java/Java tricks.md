@@ -137,6 +137,8 @@
   - [Anonymous classes](#anonymous-classes)
 - [Polymorphism discussion](#polymorphism-discussion)
 - [Lambdas and Functional Interfaces](#lambdas-and-functional-interfaces)
+  - [Functional interface](#functional-interface)
+- [Method References](#method-references)
 - [Data races](#data-races)
 
 
@@ -4238,6 +4240,150 @@ This limitation aside, the compiler can enforce one rule around interface castin
 # Lambdas and Functional Interfaces
 
 Lambdas allow you to specify code that will be run later in the program.
+
+```java
+public record Animal(String species, boolean canHop, boolean canSwim) { }
+
+public interface CheckTrait {
+   boolean test(Animal a);
+}
+```
+
+```java
+a -> a.canHop()
+```
+
+- A single parameter specified with the name a
+- The arrow operator (->) to separate the parameter and body
+- A body that calls a single method and returns the result of that method
+
+```java
+(Animal a) -> { return a.canHop(); }
+```
+- A single parameter specified with the name a and stating that the type is Animal
+- The arrow operator (->) to separate the parameter and body
+- A body that has one or more lines of code, including a semicolon and a return statement
+
+valid
+```java
+a -> { return a.canHop(); }
+(Animal a) -> a.canHop()
+```
+
+The parentheses around the lambda parameters can be omitted only if there is a single parameter and its type is not explicitly stated
+
+fun but valid
+```java
+ s -> {}
+```
+
+valid lambdas examples
+```java
+() -> true
+x -> x.startsWith("test")
+(String x) -> x.startsWith("test")
+(x, y) -> { return x.startsWith("test"); }
+(String x, String y) -> x.startsWith("test")
+```
+
+
+```java
+var invalid = (Animal a) -> a.canHop();  // DOES NOT COMPILE
+```
+
+## Functional interface
+
+A functional interface is an interface that contains a single abstract method
+
+```java
+@FunctionalInterface
+public interface Dance {  // DOES NOT COMPILE
+   void move();
+   void rest();
+}
+```
+
+```java
+
+```java
+@FunctionalInterface
+public interface Sprint {
+   public void sprint(int speed);
+}
+ 
+public class Tiger implements Sprint {
+   public void sprint(int speed) {
+      System.out.println("Animal is sprinting fast! " + speed);
+   }
+}
+
+
+public interface Dash extends Sprint {}  // Functional interface
+ 
+public interface Skip extends Sprint {  // Not Functional interface
+   void skip();
+}
+ 
+public interface Sleep {            // Not Functional interface
+   private void snore() {}
+   default int getZzz() { return 1; }
+}
+ 
+public interface Climb {         // Functional interface
+   void reach();
+   default void fall() {}
+   static int getBackUp() { return 100; }
+   private static boolean checkHeight() { return true; }
+}
+```
+
+If a functional interface includes an abstract method with the same signature as a public method found in Object, those methods do not count toward the single abstract method test
+
+Since Java assumes all classes extend from Object, you also cannot declare an interface method that is incompatible with Object. For example, declaring an abstract method `int toString()` in an interface would not compile since Object's version of the method returns a String.
+
+```java
+@FunctionalInterface
+public interface Dive {
+   String toString();
+   public boolean equals(Object o);
+   public abstract int hashCode();
+   public void dive();
+}
+```
+
+# Method References
+
+```java
+public interface LearnToSpeak {
+   void speak(String sound);
+}
+
+public class DuckHelper {
+   public static void teacher(String name, LearnToSpeak trainer) {
+      // Exercise patience (omitted)
+      trainer.speak(name);
+   }
+}
+
+public class Duckling {
+   public static void makeSound(String sound) {
+      LearnToSpeak learner = s -> System.out.println(s);
+      DuckHelper.teacher(sound, learner);
+   }
+}
+```
+
+or
+```java
+LearnToSpeak learner = System.out::println;
+```
+
+There are four formats for method references:
+
+- static methods
+- Instance methods on a particular object
+- Instance methods on a parameter to be determined at runtime
+- Constructors
 
 
 
