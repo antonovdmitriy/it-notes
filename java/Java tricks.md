@@ -137,6 +137,7 @@
   - [Anonymous classes](#anonymous-classes)
 - [Polymorphism discussion](#polymorphism-discussion)
 - [Lambdas and Functional Interfaces](#lambdas-and-functional-interfaces)
+  - [Lambda syntax](#lambda-syntax)
   - [Using Local Variables Inside a Lambda Body](#using-local-variables-inside-a-lambda-body)
   - [Referencing Variables from the Lambda Body](#referencing-variables-from-the-lambda-body)
   - [Functional interface](#functional-interface)
@@ -4252,6 +4253,8 @@ While the compiler can enforce rules about casting to unrelated types for classe
 This limitation aside, the compiler can enforce one rule around interface casting. The compiler does not allow a cast from an interface reference to an object reference if the object type cannot possibly implement the interface, such as if the class is marked final. For example, if the Wolf interface is marked final on line 3, then line 8 no longer compiles. The compiler recognizes that there are no possible subclasses of Wolf capable of implementing the Dog interface.
 
 # Lambdas and Functional Interfaces
+
+## Lambda syntax
 
 Lambdas allow you to specify code that will be run later in the program.
 
