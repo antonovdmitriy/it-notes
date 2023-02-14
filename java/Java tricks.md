@@ -182,6 +182,14 @@
     - [Maps methods](#maps-methods)
 - [Sorting data](#sorting-data)
   - [Comparable Class](#comparable-class)
+    - [Keeping compareTo() and equals() Consistent](#keeping-compareto-and-equals-consistent)
+  - [Comparator](#comparator)
+  - [Comparing Comparable and Comparator](#comparing-comparable-and-comparator)
+  - [Helper methods to compare multiple fields](#helper-methods-to-compare-multiple-fields)
+    - [Helper static methods for building a Comparator](#helper-static-methods-for-building-a-comparator)
+    - [Helper default methods for building a Comparator to chain methods](#helper-default-methods-for-building-a-comparator-to-chain-methods)
+  - [Sorting and Searching](#sorting-and-searching)
+  - [Sorting a List](#sorting-a-list)
 - [Streams](#streams)
 - [Generics](#generics)
 - [Exceptions](#exceptions)
@@ -5230,6 +5238,26 @@ Map.ofEntries(
 - The main benefit is that the keys are always in sorted order. 
 - the trade-off is that adding and checking whether a key is present takes longer as the tree grows larger.
 
+
+```java
+ public class UseTreeSet {
+    static class Rabbit{ int id; }
+    public static void main(String[] args) {
+       Set<Duck> ducks = new TreeSet<>();
+       ducks.add(new Duck("Puddles"));
+       Set<Rabbit> rabbits = new TreeSet<>();
+       rabbits.add(new Rabbit());  // ClassCastException
+ } }
+```
+
+> Exception in thread "main" java.lang.ClassCastException:
+   class Rabbit cannot be cast to class java.lang.Comparable
+
+```java
+Set<Rabbit> rabbits = new TreeSet<>((r1, r2) -> r1.id - r2.id);
+rabbits.add(new Rabbit());
+```
+
 ### Maps methods
 
 ```java
@@ -5445,6 +5473,183 @@ public class MissingDuck implements Comparable<MissingDuck> {
       else return name.compareTo(quack.name);
    }
 }
+```
+
+### Keeping compareTo() and equals() Consistent
+
+- If you write a class that implements `Comparable`, you introduce new business logic for determining equality. 
+- The `compareTo()` method returns `0` if two objects are equal, while your `equals()` method returns `true` if two objects are equal. 
+- A natural ordering that uses `compareTo()` is said to be consistent with equals if, and only if, `x.equals(y)` is `true` whenever `x.compareTo(y)` equals `0`.
+- `x.equals(y)` must be `false` whenever `x.compareTo(y)` is not `0`. 
+- You are strongly encouraged to make your `Comparable` classes consistent with `equals` because not all collection classes behave predictably if the `compareTo()` and `equals()` methods are not consistent.
+
+## Comparator
+
+- Sometimes you want to sort an object that did not implement `Comparable`, or you want to sort objects in different ways at different times. 
+- Comparable can be used without an import statement
+
+
+```java
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+
+public class Duck implements Comparable<Duck> {
+   private String name;
+   private int weight;
+
+     // Assume getters/setters/constructors provided
+
+   public String toString() { return name; }
+
+   public int compareTo(Duck d) {
+       return name.compareTo(d.name);
+    
+
+   public static void main(String[] args) {
+     Comparator<Duck> byWeight = new Comparator<Duck>() {
+        public int compare(Duck d1, Duck d2) {
+           return d1.getWeight()-d2.getWeight();
+         }
+      };
+      
+      var ducks = new ArrayList<Duck>();
+      ducks.add(new Duck("Quack", 7));
+      ducks.add(new Duck("Puddles", 10));
+      Collections.sort(ducks);
+      System.out.println(ducks); // [Puddles, Quack]
+      Collections.sort(ducks, byWeight);
+      System.out.println(ducks); // [Quack, Puddles]
+   }
+ }
+```
+
+```java
+Comparator<Duck> byWeight = (d1, d2) -> d1.getWeight()-d2.getWeight();
+Comparator<Duck> byWeight = Comparator.comparing(Duck::getWeight);
+```      
+
+## Comparing Comparable and Comparator
+
+Difference | Comparable | Comparator |
+-----------| ---------- | -----------|
+Package name |	`java.lang`	| `java.util`
+Interface must be implemented by class comparing? | Yes | No
+Method name in interface | `compareTo()` | `compare()`
+Number of parameters | 1 |	2 |
+Common to declare using a lambda	| No | Yes
+
+```java
+var byWeight = new Comparator<Duck>() { // DOES NOT COMPILE
+   public int compareTo(Duck d1, Duck d2) {
+      return d1.getWeight()-d2.getWeight();
+   }
+};
+```
+
+## Helper methods to compare multiple fields
+
+```java
+public class Squirrel {
+   private int weight;
+   private String species;
+   // Assume getters/setters/constructors provided
+}
+
+public class MultiFieldComparator implements Comparator<Squirrel> {
+   public int compare(Squirrel s1, Squirrel s2) {
+      int result = s1.getSpecies().compareTo(s2.getSpecies());
+      if (result != 0) return result;
+      return s1.getWeight()-s2.getWeight();
+   }}
+``
+
+more shorter
+
+```java
+Comparator<Squirrel> c = Comparator.comparing(Squirrel::getSpecies)
+   .thenComparingInt(Squirrel::getWeight);
+```
+
+```java
+var c = Comparator.comparing(Squirrel::getSpecies).reversed();
+```
+
+### Helper static methods for building a Comparator 
+
+- `comparing(function)`	Compare by results of function that returns any Object (or primitive autoboxed into Object).
+- `comparingDouble(function)`	Compare by results of function that returns double.
+- `comparingInt(function)`	Compare by results of function that returns int.
+- `comparingLong(function)`	Compare by results of function that returns long.
+- `naturalOrder()`	Sort using order specified by the Comparable implementation on object itself.
+- `reverseOrder()`	Sort using reverse of order specified by Comparable implementation on object itself.
+
+### Helper default methods for building a Comparator to chain methods
+
+- `reversed()`	Reverse order of chained Comparator.
+- `thenComparing(function)`	If previous Comparator returns 0, use this comparator that returns Object or can be autoboxed into one.
+- `thenComparingDouble(function)`	If previous Comparator returns 0, use this comparator that returns double. Otherwise, return value from previous Comparator.
+- `thenComparingInt(function)`	If previous Comparator returns 0, use this comparator that returns int. Otherwise, return value from previous Comparator.
+- `thenComparingLong(function)`	If previous Comparator returns 0, use this comparator that returns long. Otherwise, return value from previous Comparator.
+
+## Sorting and Searching
+
+```java
+public class SortRabbits {
+   static record Rabbit(int id) {}
+   public static void main(String[] args) {
+      List<Rabbit> rabbits = new ArrayList<>();
+      rabbits.add(new Rabbit(3));
+      rabbits.add(new Rabbit(1));
+      Collections.sort(rabbits); // DOES NOT COMPILE
+   } }
+```
+
+```java
+Comparator<Rabbit> c = (r1, r2) -> r1.id - r2.id;
+Collections.sort(rabbits, c);
+System.out.println(rabbits); // [Rabbit[id=1], Rabbit[id=3]]
+```
+
+Suppose you want to sort the rabbits in descending order. You could change the Comparator to `r2.id - r1.id`. Alternatively, you could reverse the contents of the list afterward:
+
+```java
+Comparator<Rabbit> c = (r1, r2) -> r1.id - r2.id;
+Collections.sort(rabbits, c);
+Collections.reverse(rabbits);
+System.out.println(rabbits); // [Rabbit[id=3], Rabbit[id=1]]
+```
+
+The `sort()` and `binarySearch()` methods allow you to pass in a `Comparator` object when you don't want to use the natural order.
+
+```java
+List<Integer> list = Arrays.asList(6,9,1,8);
+Collections.sort(list); // [1, 6, 8, 9]
+System.out.println(Collections.binarySearch(list, 6)); // 1
+System.out.println(Collections.binarySearch(list, 3)); // -2
+```
+
+```java
+var names = Arrays.asList("Fluffy", "Hoppy");
+Comparator<String> c = Comparator.reverseOrder();
+var index = Collections.binarySearch(names, "Hoppy", c);
+System.out.println(index); // -1
+```
+
+ list `[Fluffy, Hoppy]`. This list happens to be sorted in ascending order. Then creates a `Comparator` that reverses the natural order. then requests a binary search in descending order. Since the list is not in that order, we don't meet the precondition for doing a search.
+
+## Sorting a List
+
+While you can call `Collections.sort(list)`, you can also sort directly on the list object
+
+```java
+List<String> bunnies = new ArrayList<>();
+bunnies.add("long ear");
+bunnies.add("floppy");
+bunnies.add("hoppy");
+System.out.println(bunnies);     // [long ear, floppy, hoppy]
+bunnies.sort((b1, b2) -> b1.compareTo(b2));
+System.out.println(bunnies);     // [floppy, hoppy, long ear]
 ```
 
 # Streams
