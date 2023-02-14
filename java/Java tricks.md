@@ -170,6 +170,16 @@
   - [Creating via factory methods](#creating-via-factory-methods)
     - [Sets methods](#sets-methods)
   - [Queue and Deque Interfaces](#queue-and-deque-interfaces)
+    - [Comparing Deque Implementations](#comparing-deque-implementations)
+    - [Methods Queue](#methods-queue)
+    - [Methods Deque](#methods-deque)
+  - [Maps](#maps)
+    - [Factory methods](#factory-methods)
+    - [Comparison maps](#comparison-maps)
+      - [HashMap](#hashmap)
+      - [LinkedHashMap](#linkedhashmap)
+      - [TreeMap](#treemap)
+    - [Maps methods](#maps-methods)
 - [Streams](#streams)
 - [Generics](#generics)
 - [Exceptions](#exceptions)
@@ -1011,7 +1021,7 @@ void printOnlyIntegers(Number number) {
 
 ![Switch](images/switch_1.png)
 
- - `default` может быть где угодно среди case. В том числе кейсов может и не быть, а default при этом будет работать. Более того может быть вообще ничего внутри скобок
+ - `default` can be everywhere among cases. В том числе кейсов может и не быть, а default при этом будет работать. Более того может быть вообще ничего внутри скобок
  - Если после значения идет `:` далее может идти как блок так и последовательность выражение разделенных `;`
 
 ```java
@@ -5119,7 +5129,237 @@ set.forEach(System.out::println);  // 8 10 66
 
 ## Queue and Deque Interfaces
 
+### Comparing Deque Implementations
 
+- `LinkedList` In addition to being a list, it is a `Deque`. The main benefit of a `LinkedList` is that it implements both the `List` and `Deque` interfaces. The trade-off is that it isn't as efficient as a “pure” queue. 
+- use the `ArrayDeque` class if you don't need the List methods.
+
+### Methods Queue
+
+```java
+// Add to back	(tail)
+public boolean add(E e)
+public boolean offer(E e)
+
+// Read from front (head)
+public E element ()
+public E peek()
+
+// Get and remove from front (head)
+public E remove()
+public E poll()
+```
+
+```java
+Queue<Integer> queue = new LinkedList<>();
+queue.add(10);
+queue.add(4);
+System.out.println(queue.remove());   // 10
+System.out.println(queue.peek());     // 4
+```
+
+### Methods Deque
+
+Since the `Deque` interface supports double-ended queues, it inherits all Queue methods and adds more
+
+```java
+// Add to front (head)
+public void addFirst(E e)
+public boolean offerFirst(E e)
+
+// Add to back (tail)	
+public void addLast(E e)
+public boolean offerLast(E e)
+
+// Read from front (head)	
+public E getFirst()
+public E peekFirst()
+
+// Read from back	(tail)
+public E getLast()
+public E peekLast()
+
+// Get and remove from front (head)
+public E removeFirst()
+public E pollFirst()
+
+// Get and remove from back	
+public E removeLast()
+public E pollLast()
+```
+
+Using `Deque` as a stack
+
+```java
+// Add to the front/top	
+public void push(E e)
+//Remove from the front/top
+public E pop()
+// Get first element
+public E peek()
+```
+
+## Maps
+
+### Factory methods
+
+```java
+Map.of("key1", "value1", "key2", "value2");
+```
+
+```java
+Map.ofEntries(
+   Map.entry("key1", "value1"),
+   Map.entry("key2", "value2"));
+```
+
+### Comparison maps
+
+#### HashMap
+- `HashMap` stores the keys in a hash table. This means that it uses the `hashCode()` method of the keys to retrieve their values more efficiently.
+- The main benefit is that adding elements and retrieving the element by key both have constant time. 
+- The trade-off is that you lose the order in which you inserted the elements. 
+  
+#### LinkedHashMap  
+- If you concerned an order in which you inserted the elements order in which you inserted the elements, you could use `LinkedHashMap`
+
+#### TreeMap
+- A `TreeMap` stores the keys in a sorted tree structure. 
+- The main benefit is that the keys are always in sorted order. 
+- the trade-off is that adding and checking whether a key is present takes longer as the tree grows larger.
+
+### Maps methods
+
+```java
+public void clear()	// Removes all keys and values from map.
+public boolean containsKey(Object key)	// Returns whether key is in map.
+public boolean containsValue(Object value)	// Returns whether value is in map.
+public Set<Map.Entry<K,V>> entrySet()	// Returns Set of key/value pairs.
+public void forEach(BiConsumer<K key, V value>)	// Loops through each key/value pair.
+public V get(Object key) //	Returns value mapped by key or null if none is mapped.
+public V getOrDefault(Object key, V defaultValue)	// Returns value mapped by key or default value if none is mapped.
+public boolean isEmpty()	// Returns whether map is empty.
+public Set<K> keySet()	// Returns set of all keys.
+public V merge(K key, V value, Function(<V, V, V> func))	// Sets value if key not set. Runs function if key is set, to determine new value. Removes if value is null.
+public V put(K key, V value)	// Adds or replaces key/value pair. Returns previous value or null.
+public V putIfAbsent(K key, V value)	// Adds value if key not present and returns null. Otherwise, returns existing value.
+public V remove(Object key)	// Removes and returns value mapped to key. Returns null if none.
+public V replace(K key, V value)	// Replaces value for given key if key is set. Returns original value or null if none.
+public void replaceAll(BiFunction<K, V, V> func)	// Replaces each value with results of function.
+public int size()	// Returns number of entries (key/value pairs) in map.
+public Collection<V> values()	// Returns Collection of all values.
+```
+
+```java
+Map<String, String> map = new HashMap<>();
+map.put("koala", "bamboo");
+map.put("lion", "meat");
+map.put("giraffe", "leaf");
+String food = map.get("koala"); // bamboo
+for (String key: map.keySet())
+   System.out.print(key + ","); // koala,giraffe,lion,
+```
+
+```java
+Map<String, String> map = new TreeMap<>();
+map.put("koala", "bamboo");
+map.put("lion", "meat");
+map.put("giraffe", "leaf");
+String food = map.get("koala"); // bamboo
+for (String key: map.keySet())
+   System.out.print(key + ","); // giraffe,koala,lion,
+```   
+
+```java
+System.out.println(map.contains("lion")); // DOES NOT COMPILE
+System.out.println(map.containsKey("lion")); // true
+System.out.println(map.containsValue("lion")); // false
+System.out.println(map.size()); // 3
+map.clear();
+System.out.println(map.size()); // 0
+System.out.println(map.isEmpty()); // true
+```
+
+```java
+Map<Integer, Character> map = new HashMap<>();
+map.put(1, 'a');
+map.put(2, 'b');
+map.put(3, 'c');
+map.forEach((k, v) -> System.out.println(v));
+map.values().forEach(System.out::println);
+map.entrySet().forEach(e ->
+   System.out.println(e.getKey() + " " + e.getValue()));
+```
+
+```java
+Map<Character, String> map = new HashMap<>();
+map.put('x', "spot");
+System.out.println("X marks the " + map.get('x'));
+System.out.println("X marks the " + map.getOrDefault('x', ""));
+System.out.println("Y marks the " + map.get('y'));
+System.out.println("Y marks the " + map.getOrDefault('y', ""));
+/*
+X marks the spot
+X marks the spot
+Y marks the null
+Y marks the
+*/
+```
+
+```java
+Map<Integer, Integer> map = new HashMap<>();
+map.put(1, 2);
+map.put(2, 4);
+Integer original = map.replace(2, 10); // 4
+System.out.println(map);    // {1=2, 2=10}
+map.replaceAll((k, v) -> k + v);
+System.out.println(map);    // {1=3, 2=12}
+```
+
+```java
+Map<String, String> favorites = new HashMap<>();
+favorites.put("Jenny", "Bus Tour");
+favorites.put("Tom", null);
+favorites.putIfAbsent("Jenny", "Tram");
+favorites.putIfAbsent("Sam", "Tram");
+favorites.putIfAbsent("Tom", "Tram");
+System.out.println(favorites); // {Tom=Tram, Jenny=Bus Tour, Sam=Tram}
+```
+
+```java
+BiFunction<String, String, String> mapper = (v1, v2) -> v1.length()> v2.length() ? v1: v2;
+Map<String, String> favorites = new HashMap<>();
+favorites.put("Jenny", "Bus Tour");
+favorites.put("Tom", "Tram");
+
+String jenny = favorites.merge("Jenny", "Skyride", mapper);
+String tom = favorites.merge("Tom", "Skyride", mapper);
+
+System.out.println(favorites); // {Tom=Skyride, Jenny=Bus Tour}
+System.out.println(jenny);     // Bus Tour
+System.out.println(tom);       // Skyride
+```
+
+```java
+BiFunction<String, String, String> mapper =
+   (v1, v2) -> v1.length()> v2.length() ? v1 : v2;
+Map<String, String> favorites = new HashMap<>();
+favorites.put("Sam", null);
+favorites.merge("Tom", "Skyride", mapper);
+favorites.merge("Sam", "Skyride", mapper);
+System.out.println(favorites);   // {Tom=Skyride, Sam=Skyride}
+```
+
+```java
+BiFunction<String, String, String> mapper = (v1, v2) -> null;
+Map<String, String> favorites = new HashMap<>();
+favorites.put("Jenny", "Bus Tour");
+favorites.put("Tom", "Bus Tour");
+ 
+favorites.merge("Jenny", "Skyride", mapper);
+favorites.merge("Sam", "Skyride", mapper);
+System.out.println(favorites);   // {Tom=Bus Tour, Sam=Skyride}
+```
 
 # Streams
 
