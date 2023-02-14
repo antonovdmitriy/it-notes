@@ -194,6 +194,8 @@
   - [Generic Classes](#generic-classes)
     - [Understanding Type Erasure](#understanding-type-erasure)
   - [Generic interfaces and their implementation](#generic-interfaces-and-their-implementation)
+  - [Generic limitations](#generic-limitations)
+  - [Generic Methods](#generic-methods)
   - [Naming conventions](#naming-conventions)
 - [Streams](#streams)
 - [Exceptions](#exceptions)
@@ -1035,8 +1037,8 @@ void printOnlyIntegers(Number number) {
 
 ![Switch](images/switch_1.png)
 
- - `default` can be everywhere among cases. It possible that there are no cases at all, and default will work in that case. Более того может быть вообще ничего внутри скобок
- - Если после значения идет `:` далее может идти как блок так и последовательность выражение разделенных `;`
+ - `default` can be everywhere among cases. It possible that there are no cases at all, and default will work in that case. Moreover there is nothing inside braces
+ - If after value followed by `:` then it could be block of code or sequence of expression divided by `;`
 
 ```java
 switch (random) {
@@ -1052,7 +1054,7 @@ switch (random) {
 }
 ```        
 
-- допускается пустой switch
+- legal empty switch
 ```java
 switch(month) {}
 ```
@@ -1069,7 +1071,7 @@ The following is a list of all data types supported by switch statements:
 
 Notice that `boolean`, `long`, `float`, and `double` are excluded from switch statements, as are their associated `Boolean`, `Long`, `Float`, and `Double` classes
 
-обратить внимание на использование нескольких значений в одном `case`. Появилось в Java 14
+several values in one `case`.  Added in Java 14
 ```java
 switch(animal) {
    case 1,2: System.out.print("Lion");
@@ -5422,7 +5424,7 @@ public class Duck implements Comparable<Duck> {
       return name;
    }
    public int compareTo(Duck d) {
-      return name.compareTo(d.name); // sorts ascendingly by name
+      return name.compareTo(d.name); // sorts ascending by name
    }
    public static void main(String[] args) {
       var ducks = new ArrayList<Duck>();
@@ -5778,7 +5780,59 @@ The `Monkey` class compiles because `ArrayList` is a subtype of `List`. The `pla
 
 ## Generic interfaces and their implementation
 
+```java
+public interface Shippable<T> {
+   void ship(T t);
+}
+```
 
+Three ways to implement generic interface:
+
+1. Specify the generic type in the class. The following concrete class says that it deals only with `Robot`
+
+   ```java
+   class ShippableRobotCrate implements Shippable<Robot> {
+      public void ship(Robot t) { }
+   }
+   ```
+2. create a generic class. The following concrete class allows the caller to specify the type of the generic
+
+   ```java
+   class ShippableAbstractCrate<U> implements Shippable<U> {
+      public void ship(U t) { }
+   }  
+   ```
+3. not use generics at all. It generates a compiler warning about `Shippable` being a raw type, but it does compile.
+   
+   ```java
+   class ShippableCrate implements Shippable {
+   public void ship(Object t) { }
+   }
+   ```
+
+## Generic limitations
+
+- Call a constructor: Writing `new T()` is not allowed because at runtime, it would be `new Object()`.
+- Create an array of that generic type: This one is the most annoying, but it makes sense because you'd be creating an array of `Object` values.
+- Call `instanceof`: This is not allowed because at runtime `List<Integer>` and `List<String>` look the same to Java, thanks to type erasure.
+- Use a primitive type as a generic type parameter: This isn't a big deal because you can use the wrapper class instead. If you want a type of `int`, just use `Integer`.
+- Create a static variable as a generic type parameter: This is not allowed because the type is linked to the instance of the class.
+
+## Generic Methods
+
+formal type parameters can be declared both static and non-static methods
+
+```java
+public class Handler {
+   public static <T> void prepare(T t) {
+      System.out.println("Preparing " + t);
+   }
+   public static <T> Crate<T> ship(T t) {
+      System.out.println("Shipping " + t);
+      return new Crate<T>();
+   }
+}
+```
 
 ## Naming conventions
 
