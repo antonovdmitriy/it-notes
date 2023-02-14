@@ -190,8 +190,10 @@
     - [Helper default methods for building a Comparator to chain methods](#helper-default-methods-for-building-a-comparator-to-chain-methods)
   - [Sorting and Searching](#sorting-and-searching)
   - [Sorting a List](#sorting-a-list)
-- [Streams](#streams)
 - [Generics](#generics)
+  - [Generic Classes](#generic-classes)
+  - [Naming conventions](#naming-conventions)
+- [Streams](#streams)
 - [Exceptions](#exceptions)
 - [Internalization](#internalization)
 - [Modules](#modules)
@@ -1031,7 +1033,7 @@ void printOnlyIntegers(Number number) {
 
 ![Switch](images/switch_1.png)
 
- - `default` can be everywhere among cases. В том числе кейсов может и не быть, а default при этом будет работать. Более того может быть вообще ничего внутри скобок
+ - `default` can be everywhere among cases. It possible that there are no cases at all, and default will work in that case. Более того может быть вообще ничего внутри скобок
  - Если после значения идет `:` далее может идти как блок так и последовательность выражение разделенных `;`
 
 ```java
@@ -5652,9 +5654,72 @@ bunnies.sort((b1, b2) -> b1.compareTo(b2));
 System.out.println(bunnies);     // [floppy, hoppy, long ear]
 ```
 
-# Streams
-
 # Generics
+
+## Generic Classes
+
+The syntax for introducing a generic is to declare a **formal type parameter** in angle brackets
+
+```java
+public class Crate<T> {
+   private T contents;
+   public T lookInCrate() {
+      return contents;
+   }
+   public void packCrate(T contents) {
+      this.contents = contents;
+   }
+}
+```
+
+The generic type T is available anywhere within the class. When you instantiate the class, you tell the compiler what T should be for that particular instance.
+
+```java
+Elephant elephant = new Elephant();
+Crate<Elephant> crateForElephant = new Crate<>();
+crateForElephant.packCrate(elephant);
+Elephant inNewHome = crateForElephant.lookInCrate();
+```
+
+Generic classes become useful when the classes used as the type parameter can have absolutely nothing to do with each other
+
+```java
+Robot joeBot = new Robot();
+Crate<Robot> robotCrate = new Crate<>();
+robotCrate.packCrate(joeBot);
+ 
+// ship to Houston
+Robot atDestination = robotCrate.lookInCrate();
+```
+We aren't requiring the objects to implement an interface named Crateable or the like. A class can be put in the Crate without any changes at all.
+
+```java
+public class SizeLimitedCrate<T, U> {
+   private T contents;
+   private U sizeLimit;
+   public SizeLimitedCrate(T contents, U sizeLimit) {
+      this.contents = contents;
+      this.sizeLimit = sizeLimit;
+   } 
+}
+```   
+
+```java
+Elephant elephant = new Elephant();
+Integer numPounds = 15_000;
+SizeLimitedCrate<Elephant, Integer> c1 = new SizeLimitedCrate<>(elephant, numPounds);
+```   
+
+## Naming conventions
+
+- `E` for an element
+- `K` for a map key
+- `V` for a map value
+- `N` for a number
+- `T` for a generic data type
+- `S, U, V` and so forth for multiple generic types
+
+# Streams
 
 # Exceptions
 
