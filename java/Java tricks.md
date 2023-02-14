@@ -192,6 +192,8 @@
   - [Sorting a List](#sorting-a-list)
 - [Generics](#generics)
   - [Generic Classes](#generic-classes)
+    - [Understanding Type Erasure](#understanding-type-erasure)
+  - [Generic interfaces and their implementation](#generic-interfaces-and-their-implementation)
   - [Naming conventions](#naming-conventions)
 - [Streams](#streams)
 - [Exceptions](#exceptions)
@@ -5710,6 +5712,74 @@ Integer numPounds = 15_000;
 SizeLimitedCrate<Elephant, Integer> c1 = new SizeLimitedCrate<>(elephant, numPounds);
 ```   
 
+### Understanding Type Erasure
+
+- After the code compiles, your generics are just Object types
+- Process of removing the generics syntax from code is referred to as **type erasure**
+- The compiler adds the relevant casts for code to work with this type of erased class.
+  
+```java
+public class Crate {
+   private Object contents;
+   public Object lookInCrate() {
+      return contents;
+   }
+   public void packCrate(Object contents) {
+      this.contents = contents;
+   }
+}
+```    
+
+```java
+Robot r = crate.lookInCrate();
+```
+
+The compiler turns it into the following:
+
+```java
+ Robot r = (Robot) crate.lookInCrate();
+ ```
+
+```java
+public class LongTailAnimal {
+   protected void chew(List<Object> input) {}
+   protected void chew(List<Double> input) {}  // DOES NOT COMPILE
+}
+```
+
+```java
+public class LongTailAnimal {
+   protected void chew(List<Object> input) {}
+}
+ 
+public class Anteater extends LongTailAnimal {
+   protected void chew(List<Double> input) {}  // DOES NOT COMPILE
+}
+```
+
+
+```java
+public class Mammal {
+   public List<CharSequence> play() { … }
+   public CharSequence sleep() { … }
+}
+ 
+public class Monkey extends Mammal {
+   public ArrayList<CharSequence> play() { … }
+}
+ 
+public class Goat extends Mammal {
+   public List<String> play() { … }  // DOES NOT COMPILE
+   public String sleep() { … }
+}
+```
+
+The `Monkey` class compiles because `ArrayList` is a subtype of `List`. The `play()` method in the `Goat` class does not compile, though. For the return types to be covariant, the generic type parameter must match. Even though `String` is a subtype of `CharSequence`, it does not exactly match the generic type defined in the `Mammal` class. Therefore, this is considered an invalid override.
+
+## Generic interfaces and their implementation
+
+
+
 ## Naming conventions
 
 - `E` for an element
@@ -5718,6 +5788,8 @@ SizeLimitedCrate<Elephant, Integer> c1 = new SizeLimitedCrate<>(elephant, numPou
 - `N` for a number
 - `T` for a generic data type
 - `S, U, V` and so forth for multiple generic types
+
+
 
 # Streams
 
