@@ -180,6 +180,8 @@
       - [LinkedHashMap](#linkedhashmap)
       - [TreeMap](#treemap)
     - [Maps methods](#maps-methods)
+- [Sorting data](#sorting-data)
+  - [Comparable Class](#comparable-class)
 - [Streams](#streams)
 - [Generics](#generics)
 - [Exceptions](#exceptions)
@@ -222,13 +224,13 @@ then run it with package
 java packageb.ClassB
 ```
 
-`javac` creates by default class at the same directories. It's not goot enough. It's useful to specify a directory for classes for created package structure and put compiled files there.
+`javac` creates by default class at the same directories. It's not good enough. It's useful to specify a directory for classes for created package structure and put compiled files there.
 ```
 javac -d classes packagea/ClassA.java packageb/ClassB.java
 ```
 this command created classes folder and package structure and then compiled java classes to class files.
 
-after that from current directory it's possible to run this programe with class path options. There are several ways to do that:
+after that from current directory it's possible to run this program with class path options. There are several ways to do that:
 ```
 java -cp classes packageb.ClassB
 java -classpath classes packageb.ClassB
@@ -265,7 +267,7 @@ jar -cvf myNewFile.jar -C dir .
 
 # Main arguments tricks
 ---
-use quates for arguments with spaces
+use quotes for arguments with spaces
 ```
 javac Zoo.java
 java Zoo "San Diego" Zoo
@@ -449,7 +451,7 @@ The `Boolean` and `Character` wrapper classes include `booleanValue()` and `char
 
 > new line after first """ or compile error
 
-> quates inside may be with escaping \ or not
+> quotes inside may be with escaping \ or not
 
 > spaces at the end of the line are ignored but we can use \s
 
@@ -5359,6 +5361,90 @@ favorites.put("Tom", "Bus Tour");
 favorites.merge("Jenny", "Skyride", mapper);
 favorites.merge("Sam", "Skyride", mapper);
 System.out.println(favorites);   // {Tom=Bus Tour, Sam=Skyride}
+```
+
+# Sorting data
+
+- When working with a String, remember that numbers sort before letters, and uppercase letters sort before lowercase letters
+
+##  Comparable Class
+
+```java
+public interface Comparable<T> {
+   int compareTo(T o);
+}
+```
+
+- The number 0 is returned when the current object is equivalent to the argument to compareTo().
+- A negative number (less than 0) is returned when the current object is smaller than the argument to compareTo().
+- A positive number (greater than 0) is returned when the current object is larger than the argument to compareTo().
+
+```java
+import java.util.*;
+public class Duck implements Comparable<Duck> {
+   private String name;
+   public Duck(String name) {
+      this.name = name;
+   }
+   public String toString() {         // use readable output
+      return name;
+   }
+   public int compareTo(Duck d) {
+      return name.compareTo(d.name); // sorts ascendingly by name
+   }
+   public static void main(String[] args) {
+      var ducks = new ArrayList<Duck>();
+      ducks.add(new Duck("Quack"));
+      ducks.add(new Duck("Puddles"));
+      Collections.sort(ducks);        // sort by name
+      System.out.println(ducks);     // [Puddles, Quack]
+}}
+```
+
+```java
+public class Animal implements Comparable<Animal> {
+   private int id;
+   public int compareTo(Animal a) {
+      return id - a.id;                       // sorts ascending by id
+      // return Integer.compare(id, a.id)  sorts ascending by id
+      // return a.id - id  for  descending order.
+   }
+   public static void main(String[] args) {
+      var a1 = new Animal();
+      var a2 = new Animal();
+      a1.id = 5;
+      a2.id = 7;
+      System.out.println(a1.compareTo(a2));   // -2
+      System.out.println(a1.compareTo(a1));   // 0
+      System.out.println(a2.compareTo(a1));   // 2
+   } }
+```
+
+```java
+public class LegacyDuck implements Comparable {
+   private String name;
+   public int compareTo(Object obj) {
+      LegacyDuck d = (LegacyDuck) obj; // cast because no generics
+      return name.compareTo(d.name);
+   }
+}
+```
+
+you should check for null
+
+```java
+public class MissingDuck implements Comparable<MissingDuck> {
+   private String name;
+   public int compareTo(MissingDuck quack) {
+      if (quack == null)
+         throw new IllegalArgumentException("Poorly formed duck!");
+      if (this.name == null && quack.name == null)
+         return 0;
+      else if (this.name == null) return -1;
+      else if (quack.name == null) return 1;
+      else return name.compareTo(quack.name);
+   }
+}
 ```
 
 # Streams
