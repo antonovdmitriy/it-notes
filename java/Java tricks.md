@@ -212,6 +212,14 @@
   - [Common terminal operations](#common-terminal-operations)
     - [reduce](#reduce)
   - [collect](#collect)
+  - [Common Intermediate Operations](#common-intermediate-operations)
+    - [Restricting by Position](#restricting-by-position)
+    - [Mapping](#mapping)
+      - [map](#map)
+      - [flatMap](#flatmap)
+    - [Sorting](#sorting)
+    - [Taking a Peek](#taking-a-peek)
+  - [Examples](#examples-2)
 - [Exceptions](#exceptions)
 - [Internalization](#internalization)
 - [Modules](#modules)
@@ -6388,7 +6396,6 @@ System.out.println(word); // wolf
 - The second parameter is the accumulator, which is a BiConsumer that takes two parameters and doesn't return anything. It is responsible for adding one more element to the data collection
 - The final parameter is the combiner, which is another BiConsumer. It is responsible for taking two data collections and merging them. This is useful when we are processing in parallel. Two smaller collections are formed and then merged into one. This would work with StringBuilder only if we didn't care about the order of the letters. In this case, the accumulator and combiner have similar logic.
 
-
 ```java
 Stream<String> stream = Stream.of("w", "o", "l", "f");
  
@@ -6399,6 +6406,181 @@ TreeSet<String> set = stream.collect(
  
 System.out.println(set); // [f, l, o, w]
 ```
+
+The collector has three parts as before. The supplier creates an empty TreeSet. The accumulator adds a single String from the Stream to the TreeSet. The combiner adds all of the elements of one TreeSet to another in case the operations were done in parallel and need to be merged.
+
+```java
+Stream<String> stream = Stream.of("w", "o", "l", "f");
+TreeSet<String> set =
+   stream.collect(Collectors.toCollection(TreeSet::new));
+System.out.println(set); // [f, l, o, w]
+```
+
+
+If we didn't need the set to be sorted
+```java
+Stream<String> stream = Stream.of("w", "o", "l", "f");
+Set<String> set = stream.collect(Collectors.toSet());
+System.out.println(set); // [f, w, l, o]
+```
+
+## Common Intermediate Operations
+
+```java
+public Stream<T> filter(Predicate<? super T> predicate)
+```
+
+```java
+Stream<String> s = Stream.of("monkey", "gorilla", "bonobo");
+s.filter(x -> x.startsWith("m"))
+   .forEach(System.out::print); // monkey
+```
+
+```java
+public Stream<T> distinct() // returns a stream with duplicate values removed
+```
+
+```java
+Stream<String> s = Stream.of("duck", "duck", "duck", "goose");
+s.distinct().forEach(System.out::print); // duckgoose
+```
+
+### Restricting by Position
+
+```java
+public Stream<T> limit(long maxSize)
+public Stream<T> skip(long n)
+```
+
+```java
+Stream<Integer> s = Stream.iterate(1, n -> n + 1);
+s.skip(5)
+   .limit(2)
+   .forEach(System.out::print); // 67
+```   
+
+### Mapping
+
+#### map
+
+```java
+public <R> Stream<R> map(Function<? super T, ? extends R> mapper) // creates a one-to-one mapping from the elements in the stream to the elements of the next step in the stream
+```
+
+```java
+Stream<String> s = Stream.of("monkey", "gorilla", "bonobo");
+s.map(String::length)
+   .forEach(System.out::print); // 676
+```   
+
+#### flatMap
+
+ method takes each element in the stream and makes any elements it contains top-level elements in a single stream. This is helpful when you want to remove empty elements from a stream or combine a stream of lists. 
+
+```java
+public <R> Stream<R> flatMap(
+   Function<? super T, ? extends Stream<? extends R>> mapper)
+```   
+
+```java
+List<String> zero = List.of();
+var one = List.of("Bonobo");
+var two = List.of("Mama Gorilla", "Baby Gorilla");
+Stream<List<String>> animals = Stream.of(zero, one, two);
+ 
+animals.flatMap(m -> m.stream())
+   .forEach(System.out::println);
+```   
+
+While `flatMap()` is good for the general case, there is a more convenient way to concatenate two streams:
+
+```java
+var one = Stream.of("Bonobo");
+var two = Stream.of("Mama Gorilla", "Baby Gorilla");
+ 
+Stream.concat(one, two)
+   .forEach(System.out::println);
+```
+
+### Sorting
+
+```java
+public Stream<T> sorted()
+public Stream<T> sorted(Comparator<? super T> comparator)
+```
+
+```java
+Stream<String> s = Stream.of("brown-", "bear-");
+s.sorted()
+   .forEach(System.out::print); // bear-brown-
+```   
+
+```java
+Stream<String> s = Stream.of("brown bear-", "grizzly-");
+s.sorted(Comparator.reverseOrder())
+   .forEach(System.out::print); // grizzly-brown bear-
+```
+
+```java
+Stream<String> s = Stream.of("brown bear-", "grizzly-");
+s.sorted(Comparator::reverseOrder);  // DOES NOT COMPILE
+```
+
+### Taking a Peek
+
+```java
+public Stream<T> peek(Consumer<? super T> action) //  It is useful for debugging because it allows us to perform a stream operation without changing the stream
+```
+
+```java
+var stream = Stream.of("black bear", "brown bear", "grizzly");
+long count = stream.filter(s -> s.startsWith("g"))
+   .peek(System.out::println).count();              // grizzly
+System.out.println(count);   
+```
+
+```java
+var numbers = new ArrayList<>();
+var letters = new ArrayList<>();
+numbers.add(1);
+letters.add('a');
+ 
+Stream<List<?>> stream = Stream.of(numbers, letters);
+stream.map(List::size).forEach(System.out::print); // 11
+
+Stream<List<?>> bad = Stream.of(numbers, letters);
+ bad.peek(x -> x.remove(0))
+    .map(List::size)
+    .forEach(System.out::print); // 00    
+```
+
+## Examples
+
+to get the first two names of our friends alphabetically that are four characters long.
+```java
+var list = List.of("Toby", "Anna", "Leroy", "Alex");
+list.stream()
+   .filter(n -> n.length() == 4)
+   .sorted()
+   .limit(2)
+   .forEach(System.out::println);
+```
+
+```java
+Stream.generate(() -> "Elsa")
+   .filter(n -> n.length() == 4)
+   .sorted()
+   .limit(2)
+   .forEach(System.out::println); // hangs until you kill the program, or it throws an exception after running out of memory.
+```   
+
+```java
+Stream.generate(() -> "Olaf Laz")
+   .filter(n -> n.length() == 4)
+   .limit(2)
+   .sorted()
+   .forEach(System.out::println); // This one hangs as well until we kill the program. The filter doesn't allow anything through, so limit() never sees two elements
+```   
 
 # Exceptions
 
