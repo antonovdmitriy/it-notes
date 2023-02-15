@@ -204,6 +204,8 @@
   - [Lower-Bounded Wildcards](#lower-bounded-wildcards)
   - [Examples](#examples-1)
   - [Naming conventions](#naming-conventions)
+- [Optional](#optional)
+  - [Optional methods](#optional-methods)
 - [Streams](#streams)
 - [Exceptions](#exceptions)
 - [Internalization](#internalization)
@@ -6105,7 +6107,7 @@ List<?> list6 = new ArrayList<? extends A>(); // DOES NOT COMPILE
 <B extends A> B third(List<B> list) {
    return new B(); // DOES NOT COMPILE
 }
-```
+````
 
 This method, third(), does not compile. <B extends A> says that you want to use B as a type parameter just for this method and that it needs to extend the A class. Coincidentally, B is also the name of a class. Well, it isn't a coincidence. It's an evil trick. Within the scope of the method, B can represent class A, B, or C, because all extend the A class. Since B no longer refers to the B class in the method, you can't instantiate it.
 
@@ -6127,9 +6129,78 @@ void fourth(List<? super B> list) {} // You can pass the type List<B>, List<A>, 
 - `T` for a generic data type
 - `S, U, V` and so forth for multiple generic types
 
+# Optional
 
+```java
+public static Optional<Double> average(int… scores) {
+   if (scores.length == 0) return Optional.empty();
+   int sum = 0;
+   for (int score: scores) sum += score;
+   return Optional.of((double) sum / scores.length);
+}
+```
 
+```java
+System.out.println(average(90, 100)); // Optional[95.0]
+System.out.println(average());        // Optional.empty
+```
+
+```java
+Optional<Double> opt = average(90, 100);
+if (opt.isPresent())
+   System.out.println(opt.get()); // 95.0
+```
+
+```java
+Optional<Double> opt = average();
+System.out.println(opt.get()); // can be NoSuchElementException. java.util.NoSuchElementException: No value present
+```
+
+```java
+Optional o = Optional.ofNullable(value);
+```
+
+```java
+Optional<Double> opt = average(90, 100);
+opt.ifPresent(System.out::println);
+```
+
+## Optional methods
+
+Method | When Optional is empty | When Optional contains value
+-------| ---------------------- | ---------------------------
+`get()` | Throws exception | Returns value
+`ifPresent(Consumer c)` | Does nothing	| Calls Consumer with value
+`isPresent()` | Returns `false` | Returns `true`
+`orElse(T other)` | Returns other parameter | Returns value
+`orElseGet(Supplier s)` | Returns result of calling `Supplier` | Returns value
+`orElseThrow()` | Throws `NoSuchElementException` | Returns value
+`orElseThrow(Supplier s)` | Throws exception created by calling `Supplier` | Returns value
+
+```java
+Optional<Double> opt = average();
+System.out.println(opt.orElse(Double.NaN));
+System.out.println(opt.orElseGet(() -> Math.random()));
+```
+
+```java
+Optional<Double> opt = average();
+System.out.println(opt.orElseThrow());
+```
+
+```java
+ Optional<Double> opt = average();
+ System.out.println(opt.orElseThrow( () -> new IllegalStateException()));
+```
+
+```java
+System.out.println(opt.orElseGet( () -> new IllegalStateException())); // DOES NOT COMPILE
+```
 # Streams
+
+A stream in Java is a sequence of data. A stream pipeline consists of the operations that run on a stream to produce a result.
+
+
 
 # Exceptions
 
