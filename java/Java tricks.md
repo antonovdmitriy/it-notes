@@ -211,6 +211,7 @@
   - [Infinite Streams](#infinite-streams)
   - [Common terminal operations](#common-terminal-operations)
     - [reduce](#reduce)
+  - [collect](#collect)
 - [Exceptions](#exceptions)
 - [Internalization](#internalization)
 - [Modules](#modules)
@@ -6258,7 +6259,10 @@ public Optional<T> reduce(BinaryOperator<T> accumulator)
 public <U> U reduce(U identity,
    BiFunction<U,? super T,U> accumulator,
    BinaryOperator<U> combiner)
-<R> R collect(Supplier<R> supplier, BiConsumer<R, ? super T> accumulator, BiConsumer<R, R> combiner);
+public <R> R collect(Supplier<R> supplier,
+   BiConsumer<R, ? super T> accumulator,
+   BiConsumer<R, R> combiner)
+public <R,A> R collect(Collector<? super T, A,R> collector)
 ```
 
 ```java
@@ -6307,6 +6311,8 @@ for (Integer i  : s) {} // DOES NOT COMPILE
 ```
 
 ### reduce
+
+The `reduce()` method combines a stream into a single object. It is a reduction, which means it processes all elements. 
 
 ```java
 var array = new String[] { "w", "o", "l", "f" };
@@ -6362,6 +6368,37 @@ System.out.println(length); // 5
 - The first parameter (0) is the value for the **initializer**. If we had an empty stream, this would be the answer. 
 - The second parameter is the **accumulator**. Unlike the accumulators you saw previously, this one handles mixed data types. In this example, the first argument, i, is an Integer, while the second argument, s, is a String. It adds the length of the current String to our running total. 
 - The third parameter is called the **combiner**, which combines any intermediate totals. In this case, a and b are both Integer values.
+
+## collect
+
+The `collect()` method is a special type of reduction called a mutable reduction. It is more efficient than a regular reduction because we use the same mutable object while accumulating. Common mutable objects include `StringBuilder` and `ArrayList`
+
+```java
+Stream<String> stream = Stream.of("w", "o", "l", "f");
+ 
+StringBuilder word = stream.collect(
+   StringBuilder::new,
+   StringBuilder::append,
+   StringBuilder::append);
+ 
+System.out.println(word); // wolf
+```
+
+- The first parameter is the supplier, which creates the object that will store the results as we collect data. 
+- The second parameter is the accumulator, which is a BiConsumer that takes two parameters and doesn't return anything. It is responsible for adding one more element to the data collection
+- The final parameter is the combiner, which is another BiConsumer. It is responsible for taking two data collections and merging them. This is useful when we are processing in parallel. Two smaller collections are formed and then merged into one. This would work with StringBuilder only if we didn't care about the order of the letters. In this case, the accumulator and combiner have similar logic.
+
+
+```java
+Stream<String> stream = Stream.of("w", "o", "l", "f");
+ 
+TreeSet<String> set = stream.collect(
+   TreeSet::new,
+   TreeSet::add,
+   TreeSet::addAll);
+ 
+System.out.println(set); // [f, l, o, w]
+```
 
 # Exceptions
 
