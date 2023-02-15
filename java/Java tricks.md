@@ -196,6 +196,13 @@
   - [Generic interfaces and their implementation](#generic-interfaces-and-their-implementation)
   - [Generic limitations](#generic-limitations)
   - [Generic Methods](#generic-methods)
+  - [Generic Record](#generic-record)
+  - [Bounding Generic Types](#bounding-generic-types)
+    - [Unbounded Wildcards](#unbounded-wildcards)
+    - [Upper-Bounded Wildcards](#upper-bounded-wildcards)
+      - [Upper+bounded and interfaces](#upperbounded-and-interfaces)
+  - [Lower-Bounded Wildcards](#lower-bounded-wildcards)
+  - [Examples](#examples-1)
   - [Naming conventions](#naming-conventions)
 - [Streams](#streams)
 - [Exceptions](#exceptions)
@@ -5831,6 +5838,283 @@ public class Handler {
       System.out.println("Shipping " + t);
       return new Crate<T>();
    }
+}
+```
+
+```java
+public class More {
+   public static <T> void sink(T t) { }
+   public static <T> T identity(T t) { return t; }
+   public static T noGood(T t) { return t; } // DOES NOT COMPILE
+}
+```
+
+you can specify the type explicitly to make it obvious what the type is.
+```java
+Box.<String>ship("package");
+Box.<String[]>ship(args);
+```
+
+When you have a method declare a generic parameter type, it is independent of the class generics.
+```java
+public class TrickyCrate<T> {
+   public <T> T tricky(T t) {
+      return t;
+   }
+}
+```
+
+```java
+public static String crateName() {
+   TrickyCrate<Robot> crate = new TrickyCrate<>();
+   return crate.tricky("bot");
+}
+```
+
+## Generic Record
+
+```java
+public record CrateRecord<T>(T contents) {
+   @Override
+   public T contents() {
+      if (contents == null)
+         throw new IllegalStateException("missing contents");
+      return contents; 
+   }
+}
+```
+
+This is convenient. Now we have an immutable, generic record!
+```java
+Robot robot = new Robot();
+CrateRecord<Robot> record = new CrateRecord<>(robot);
+```
+
+## Bounding Generic Types
+
+A **bounded parameter type** is a generic type that specifies a bound for the generic.
+
+
+A **wildcard generic type** is an unknown generic type represented with a question mark `?`. 
+You can use generic wildcards in three ways
+1. Unbounded wildcard. `?`
+   
+   ```java
+   List<?> a = new ArrayList<String>();
+   ```
+   
+2. Wildcard with upper bound	`? extends type`
+   ```java
+   List<? extends Exception> a = new ArrayList<RuntimeException>();
+   ```
+3. Wildcard with lower bound	`? super type`	
+   ```java
+   List<? super Exception> a = new ArrayList<Object>();
+   ```
+
+### Unbounded Wildcards
+
+An unbounded wildcard represents any data type. You use ? when you want to specify that any type is okay with you.
+
+```java
+public static void printList(List<Object> list) {
+   for (Object x: list)
+      System.out.println(x);
+}
+public static void main(String[] args) {
+   List<String> keywords = new ArrayList<>();
+   keywords.add("java");
+   printList(keywords); // DOES NOT COMPILE
+}
+```
+
+A String is a subclass of an Object. This is true. However, `List<String>` cannot be assigned to `List<Object>`
+
+ Imagine if we could write code like this:
+
+ ```java
+List<Integer> numbers = new ArrayList<>();
+numbers.add(Integer.valueOf(42));
+List<Object> objects = numbers; // DOES NOT COMPILE
+objects.add("forty two");
+System.out.println(numbers.get(1));
+```
+
+the compiler promises us that only Integer objects will appear in numbers. If line compiled, line next line would break that promise by putting a String in there since numbers and objects are references to the same object. Good thing the compiler prevents this.
+
+a List of “whatever.”. Unbounded generics are immutable
+```java
+public static void printList(List<?> list) {
+   for (Object x: list)
+      System.out.println(x);
+}
+public static void main(String[] args) {
+   List<String> keywords = new ArrayList<>();
+   keywords.add("java");
+   printList(keywords);
+}
+```
+
+```java
+List<?> x1 = new ArrayList<>();
+var x2 = new ArrayList<>(); // ArrayList<Object> = new ArrayList<>()
+```
+
+### Upper-Bounded Wildcards
+
+```java
+ArrayList<Number> list = new ArrayList<Integer>(); // DOES NOT COMPILE
+```
+
+```java
+List<? extends Number> list = new ArrayList<Integer>();
+```
+
+The upper-bounded wildcard says that any class that `extends Number` or `Number` itself can be used as the formal parameter type:
+
+```java
+public static long total(List<? extends Number> list) {
+   long count = 0;
+   for (Number number: list)
+      count += number.longValue();
+   return count;
+}
+```
+
+after type erasure
+```java
+public static long total(List list) {
+   long count = 0;
+   for (Object obj: list) {
+      Number number = (Number) obj;
+      count += number.longValue();
+   }
+   return count;
+}
+```
+
+The list becomes logically immutable and therefore cannot be modified. Technically, you can remove elements from the list
+```java
+static class Sparrow extends Bird { }
+static class Bird { }
+
+public static void main(String[] args) {
+   List<? extends Bird> birds = new ArrayList<Bird>();
+   birds.add(new Sparrow()); // DOES NOT COMPILE
+   birds.add(new Bird());    // DOES NOT COMPILE
+}
+```
+
+The problem stems from the fact that Java doesn't know what type `List<? extends Bird>` really is. It could be `List<Bird>` or `List<Sparrow>` or some other generic type that hasn't even been written yet. Line doesn't compile because we can't add a `Sparrow` to `List<? extends Bird>`, and line  doesn't compile because we can't add a `Bird` to `List<Sparrow>`. From Java's point of view, both scenarios are equally possible, so neither is allowed.
+
+#### Upper+bounded and interfaces
+
+ Upper bounds are like anonymous classes in that they use extends regardless of whether we are working with a class or an interface.
+
+```java
+interface Flyer { void fly(); }
+class HangGlider implements Flyer { public void fly() {} }
+class Goose implements Flyer { public void fly() {} }
+```
+
+```java
+private void anyFlyer(List<Flyer> flyer) {}
+private void groupOfFlyers(List<? extends Flyer> flyer) {}
+```
+
+## Lower-Bounded Wildcards
+
+Let's try to write a method that adds a string "quack" to two lists:
+
+```java
+List<String> strings = new ArrayList<String>();
+strings.add("tweet");
+ 
+List<Object> objects = new ArrayList<Object>(strings);
+addSound(strings);
+addSound(objects);
+```
+
+```java
+static void addSound(List<?> list) {list.add("quack");} // DOES NOT COMPILE unbounded generics are immutable
+static void addSound(List<? extends Object> list) {list.add("quack");} // DOES NOT COMPILE upper-bounded generics are immutable
+static void addSound(List<Object> list) {list.add("quack");} // DOES NOT COMPILE with generics, must pass exact match
+
+```
+
+```java
+public static void addSound(List<? super String> list) {
+   list.add("quack");
+}
+```
+
+With a lower bound, we are telling Java that the list will be a list of String objects or a list of some objects that are a superclass of String.  Either way, it is safe to add a String to that list.
+
+tricky
+
+```java
+3: List<? super IOException> exceptions = new ArrayList<Exception>();
+4: exceptions.add(new Exception()); // DOES NOT COMPILE
+5: exceptions.add(new IOException());
+6: exceptions.add(new FileNotFoundException());
+```
+
+
+```java
+List<? super IOException> exceptions = new ArrayList<Exception>();
+exceptions.add(new Exception()); 
+```
+
+Line 3 references a `List` that could be `List<IOException>` or `List<Exception>` or `List<Object>`. Line 4 does not compile because we could have a `List<IOException>`, and an Exception object wouldn't fit in there.
+
+Line 5 is fine. `IOException` can be added to any of those types. Line 6 is also fine. `FileNotFoundException` can also be added to any of those three types. This is tricky because `FileNotFoundException` is a subclass of `IOException`, and the keyword says super. Java says, “Well, FileNotFoundException also happens to be an IOException, so everything is fine.”
+
+## Examples
+
+```java
+class A {}
+class B extends A {}
+class C extends B {}
+```
+
+```java
+List<?> list1 = new ArrayList<A>();
+List<? extends A> list2 = new ArrayList<A>(); // You can have ArrayList<A>, ArrayList<B>, or ArrayList<C>
+List<? super A> list3 = new ArrayList<A>();
+```
+
+```java
+List<? extends B> list4 = new ArrayList<A>(); // DOES NOT COMPILE
+List<? super B> list5 = new ArrayList<A>();  // ArrayList<A>, ArrayList<B>, or ArrayList<Object>.
+List<?> list6 = new ArrayList<? extends A>(); // DOES NOT COMPILE
+```
+
+```java
+<T> T first(List<? extends T> list) {
+   return list.get(0);
+}
+```
+
+```java
+<T> <? extends T> second(List<? extends T> list) { // DOES NOT COMPILE
+   return list.get(0);
+}
+```
+
+```java
+<B extends A> B third(List<B> list) {
+   return new B(); // DOES NOT COMPILE
+}
+```
+
+This method, third(), does not compile. <B extends A> says that you want to use B as a type parameter just for this method and that it needs to extend the A class. Coincidentally, B is also the name of a class. Well, it isn't a coincidence. It's an evil trick. Within the scope of the method, B can represent class A, B, or C, because all extend the A class. Since B no longer refers to the B class in the method, you can't instantiate it.
+
+```java
+void fourth(List<? super B> list) {} // You can pass the type List<B>, List<A>, or List<Object>.
+```
+
+```java
+<X> void fifth(List<X super B> list) { // DOES NOT COMPILE tries to mix a method-specific type parameter with a wildcard. A wildcard must have a ? in it
 }
 ```
 
