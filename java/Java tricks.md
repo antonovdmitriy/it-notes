@@ -207,6 +207,10 @@
 - [Optional](#optional)
   - [Optional methods](#optional-methods)
 - [Streams](#streams)
+  - [Finite stream](#finite-stream)
+  - [Infinite Streams](#infinite-streams)
+  - [Common terminal operations](#common-terminal-operations)
+    - [reduce](#reduce)
 - [Exceptions](#exceptions)
 - [Internalization](#internalization)
 - [Modules](#modules)
@@ -6200,7 +6204,164 @@ System.out.println(opt.orElseGet( () -> new IllegalStateException())); // DOES N
 
 A stream in Java is a sequence of data. A stream pipeline consists of the operations that run on a stream to produce a result.
 
+- **Source**: Where the stream comes from.
+- **Intermediate operations**: Transforms the stream into another one. There can be as few or as many intermediate operations as you'd like. Since streams use lazy evaluation, the intermediate operations do not run until the terminal operation runs.
+- **Terminal operation**: Produces a result. Since streams can be used only once, the stream is no longer valid after a terminal operation completes.
 
+## Finite stream
+
+```java
+Stream<String> empty = Stream.empty();            // count = 0
+Stream<Integer> singleElement = Stream.of(1);     // count = 1
+Stream<Integer> fromArray = Stream.of(1, 2, 3);   // count = 3
+```
+
+```java
+var list = List.of("a", "b", "c");
+Stream<String> fromList = list.stream();
+```
+
+```java
+var list = List.of("a", "b", "c");
+Stream<String> fromListParallel = list.parallelStream();
+```
+
+## Infinite Streams
+```java
+Stream<Double> randoms = Stream.generate(Math::random);
+Stream<Integer> oddNumbers = Stream.iterate(1, n -> n + 2);
+```
+
+Added in Java 9
+
+```java
+Stream<Integer> oddNumberUnder100 = Stream.iterate(
+   1,                // seed
+   n -> n < 100,     // Predicate to specify when done
+   n -> n + 2);      // UnaryOperator to get next value
+```
+
+## Common terminal operations
+
+```java
+ long count();
+public Optional<T> min(Comparator<? super T> comparator)
+public Optional<T> max(Comparator<? super T> comparator)
+public Optional<T> findAny()
+public Optional<T> findFirst()
+public boolean anyMatch(Predicate <? super T> predicate)
+public boolean allMatch(Predicate <? super T> predicate)
+public boolean noneMatch(Predicate <? super T> predicate)
+public void forEach(Consumer<? super T> action)
+public T reduce(T identity, BinaryOperator<T> accumulator)
+public Optional<T> reduce(BinaryOperator<T> accumulator)
+public <U> U reduce(U identity,
+   BiFunction<U,? super T,U> accumulator,
+   BinaryOperator<U> combiner)
+<R> R collect(Supplier<R> supplier, BiConsumer<R, ? super T> accumulator, BiConsumer<R, R> combiner);
+```
+
+```java
+Stream<String> s = Stream.of("monkey", "gorilla", "bonobo");
+System.out.println(s.count()); // 3
+```
+
+```java
+Stream<String> s = Stream.of("monkey", "ape", "bonobo");
+Optional<String> min = s.min((s1, s2) -> s1.length()-s2.length());
+min.ifPresent(System.out::println); // ape
+```
+
+```java
+Optional<?> minEmpty = Stream.empty().min((s1, s2) -> 0);
+System.out.println(minEmpty.isPresent()); // false
+```
+
+```java
+Stream<String> s = Stream.of("monkey", "gorilla", "bonobo");
+Stream<String> infinite = Stream.generate(() -> "chimp");
+ 
+s.findAny().ifPresent(System.out::println); // monkey (usually)
+infinite.findAny().ifPresent(System.out::println); // chimp
+```
+
+```java
+var list = List.of("monkey", "2", "chimp");
+Stream<String> infinite = Stream.generate(() -> "chimp");
+Predicate<String> pred = x -> Character.isLetter(x.charAt(0));
+ 
+System.out.println(list.stream().anyMatch(pred));   // true
+System.out.println(list.stream().allMatch(pred));   // false
+System.out.println(list.stream().noneMatch(pred));  // false
+System.out.println(infinite.anyMatch(pred));        // true
+```
+
+```java
+Stream<String> s = Stream.of("Monkey", "Gorilla", "Bonobo");
+s.forEach(System.out::print); // MonkeyGorillaBonobo
+```
+
+```java
+Stream<Integer> s = Stream.of(1);
+for (Integer i  : s) {} // DOES NOT COMPILE
+```
+
+### reduce
+
+```java
+var array = new String[] { "w", "o", "l", "f" };
+var result = "";
+for (var s: array) result = result + s;
+System.out.println(result); // wolf
+```
+
+```java
+Stream<String> stream = Stream.of("w", "o", "l", "f");
+String word = stream.reduce("", (s, c) -> s + c);
+System.out.println(word); // wolf
+```
+
+The **identity** is the initial value of the reduction, in this case an empty String. The **accumulator** combines the current result with the current value in the stream
+
+```java
+Stream<String> stream = Stream.of("w", "o", "l", "f");
+String word = stream.reduce("", String::concat);
+System.out.println(word); // wolf
+```
+
+```java
+Stream<Integer> stream = Stream.of(3, 5, 6);
+System.out.println(stream.reduce(1, (a, b) -> a*b)); // 90
+```
+
+
+There are three choices for what is in the Optional:
+
+- If the stream is empty, an empty Optional is returned.
+- If the stream has one element, it is returned.
+- If the stream has multiple elements, the accumulator is applied to combine them.
+
+```java
+BinaryOperator<Integer> op = (a, b) -> a * b;
+Stream<Integer> empty = Stream.empty();
+Stream<Integer> oneElement = Stream.of(3);
+Stream<Integer> threeElements = Stream.of(3, 5, 6);
+ 
+empty.reduce(op).ifPresent(System.out::println);         // no output
+oneElement.reduce(op).ifPresent(System.out::println);    // 3
+threeElements.reduce(op).ifPresent(System.out::println); // 90
+```
+
+The third method signature is used when we are dealing with different types. It allows Java to create intermediate reductions and then combine them at the end.
+```java
+Stream<String> stream = Stream.of("w", "o", "l", "f!");
+int length = stream.reduce(0, (i, s) -> i+s.length(), (a, b) -> a+b);
+System.out.println(length); // 5
+```
+
+- The first parameter (0) is the value for the **initializer**. If we had an empty stream, this would be the answer. 
+- The second parameter is the **accumulator**. Unlike the accumulators you saw previously, this one handles mixed data types. In this example, the first argument, i, is an Integer, while the second argument, s, is a String. It adds the length of the current String to our running total. 
+- The third parameter is called the **combiner**, which combines any intermediate totals. In this case, a and b are both Integer values.
 
 # Exceptions
 
