@@ -259,7 +259,18 @@
   - [Formatting Numbers](#formatting-numbers)
   - [Formatting Dates and Times](#formatting-dates-and-times)
     - [Adding Custom Text Values](#adding-custom-text-values)
-- [Internalization](#internalization)
+- [Supporting Internationalization and Localization](#supporting-internationalization-and-localization)
+  - [Locale](#locale)
+  - [Localizing Numbers](#localizing-numbers)
+    - [CompactNumberFormat](#compactnumberformat)
+  - [Localizing Dates](#localizing-dates)
+  - [Locale Category](#locale-category)
+  - [Loading Properties with Resource Bundles](#loading-properties-with-resource-bundles)
+    - [Creating a Resource Bundle](#creating-a-resource-bundle)
+    - [Picking a Resource Bundle](#picking-a-resource-bundle)
+    - [Selecting Resource Bundle Values](#selecting-resource-bundle-values)
+  - [Formatting Messages](#formatting-messages)
+  - [Properties Class](#properties-class)
 - [Modules](#modules)
 - [Concurrency](#concurrency)
   - [Data races](#data-races)
@@ -8522,8 +8533,295 @@ System.out.println(value);  // 92807.99
 
 `CompactNumberFormat` class inherited from `NumberFormat` added in Java 17
 
+- First it determines the highest range for the number, such as thousand (K), million (M), billion (B), or trillion (T).
+- It then returns up to the first three digits of that range, rounding the last digit as needed.
+- Finally, it prints an identifier. If SHORT is used, a symbol is returned. If LONG is used, a space followed by a word is returned.
 
+```java
+var formatters = Stream.of(
+   NumberFormat.getCompactNumberInstance(),
+   NumberFormat.getCompactNumberInstance(Locale.getDefault(), Style.SHORT),
+   NumberFormat.getCompactNumberInstance(Locale.getDefault(), Style.LONG),
+ 
+   NumberFormat.getCompactNumberInstance(Locale.GERMAN, Style.SHORT),
+   NumberFormat.getCompactNumberInstance(Locale.GERMAN, Style.LONG),
+   NumberFormat.getNumberInstance());
+ 
+formatters.map(s -> s.format(7_123_456)).forEach(System.out::println);
+```
 
+```
+7M
+7M
+7 million
+ 
+7 Mio.
+7 Millionen
+ 
+7,123,456
+```
+
+-  If you don't specify a style, `SHORT` is used by default
+- notice that the values except the last one (which doesn't use a compact number formatter) are truncated
+- the short form uses common labels for large values, such as K for thousand. 
+
+```java
+formatters.map(s -> s.format(314_900_000)).forEach(System.out::println);
+```
+```
+315M
+315M
+315 million
+ 
+315 Mio.
+315 Millionen
+ 
+314,900,000
+```
+- the third digit is automatically rounded up for the entries that use a CompactNumberFormat.
+
+## Localizing Dates
+
+Like numbers, date formats can vary by locale. These are methods used to retrieve an instance of a `DateTimeFormatter` using the default locale.
+
+<table>
+<thead>
+<tr>
+<th scope="col">Description</th>
+<th scope="col">Using default <code>Locale</code></th> </tr> </thead>
+<tbody>
+<tr>
+<td class="left">For formatting dates</td>
+<td class="left"><code>DateTimeFormatter.ofLocalizedDate(FormatStyle dateStyle)</code></td> </tr>
+<tr>
+<td class="left">For formatting times</td>
+<td class="left"><code>DateTimeFormatter.ofLocalizedTime(FormatStyle timeStyle)</code></td> </tr>
+<tr>
+<td class="left">For formatting dates and times</td>
+<td class="left"><code>DateTimeFormatter.ofLocalizedDateTime(FormatStyle dateStyle,</code> <br> <code> FormatStyle timeStyle)</code> <br> <code>DateTimeFormatter.ofLocalizedDateTime(FormatStyle dateTimeStyle)</code></td> </tr> </tbody> </table>
+
+Each method takes a `FormatStyle` parameter (or two) with possible values 
+- SHORT
+- MEDIUM
+- LONG
+- FULL
+
+```java
+public static void print(DateTimeFormatter dtf,
+      LocalDateTime dateTime, Locale locale) {
+   System.out.println(dtf.format(dateTime) + " --- "
+      + dtf.withLocale(locale).format(dateTime));
+}
+public static void main(String[] args) {
+   Locale.setDefault(new Locale("en", "US"));
+   var italy = new Locale("it", "IT");
+   var dt = LocalDateTime.of(2022, Month.OCTOBER, 20, 15, 12, 34);
+ 
+   // 10/20/22 --- 20/10/22
+   print(DateTimeFormatter.ofLocalizedDate(SHORT),dt,italy);
+ 
+   // 3:12 PM --- 15:12
+   print(DateTimeFormatter.ofLocalizedTime(SHORT),dt,italy);
+ 
+   // 10/20/22, 3:12 PM --- 20/10/22, 15:12
+   print(DateTimeFormatter.ofLocalizedDateTime(SHORT,SHORT),dt,italy);
+}
+```
+
+## Locale Category
+
+ If you require finer-grained control of the default locale, Java subdivides the underlying formatting options into distinct categories with the `§ocale.Category` enum.
+
+ - `DISPLAY`	Category used for displaying data about locale
+- `FORMAT`	Category used for formatting dates, numbers, or currencies
+
+```java
+ public static void printCurrency(Locale locale, double money) {
+    System.out.println(
+       NumberFormat.getCurrencyInstance().format(money)
+       + ", " + locale.getDisplayLanguage());
+ }
+ public static void main(String[] args) {
+    var spain = new Locale("es", "ES");
+    var money = 1.23;
+
+    // Print with default locale
+    Locale.setDefault(new Locale("en", "US"));
+    printCurrency(spain, money);  // $1.23, Spanish
+
+    // Print with selected locale display
+    Locale.setDefault(Category.DISPLAY, spain);
+    printCurrency(spain, money);  // $1.23, español
+
+    // Print with selected locale format
+    Locale.setDefault(Category.FORMAT, spain);
+    printCurrency(spain, money);  // 1,23 €, español
+ }
+```
+
+You just need to know that you can set parts of the locale independently. You should also know that calling Locale.setDefault(us) after the previous code snippet will change both locale categories to en_US.
+
+## Loading Properties with Resource Bundles
+
+### Creating a Resource Bundle
+
+- A **resource bundle** contains the locale-specific objects to be used by a program. It is like a map with keys and values. 
+- The resource bundle is commonly stored in a properties file. 
+- A properties file is a text file in a specific format with key/value pairs.
+- They will let us easily translate our application to multiple locales or even support multiple locales at once.
+-  If we don't have a country-specific resource bundle, Java will use a language-specific one
+
+Zoo_en.properties
+```properties
+hello=Hello
+open=The zoo is open
+```
+
+Zoo_fr.properties
+```properties
+hello=Bonjour
+open=Le zoo est ouvert
+```
+
+```java
+public static void printWelcomeMessage(Locale locale) {
+   var rb = ResourceBundle.getBundle("Zoo", locale);
+   System.out.println(rb.getString("hello")
+      + ", " + rb.getString("open"));
+}
+public static void main(String[] args) {
+   var us = new Locale("en", "US");
+   var france = new Locale("fr", "FR");
+   printWelcomeMessage(us); // Hello, The zoo is open
+   printWelcomeMessage(france); // Bonjour, Le zoo est ouvert
+}
+```
+
+```java
+var us = new Locale("en", "US");
+ResourceBundle rb = ResourceBundle.getBundle("Zoo", us);
+rb.keySet().stream()
+   .map(k -> k + ": " + rb.getString(k))
+   .forEach(System.out::println);
+```   
+
+```
+hello: Hello
+open: The zoo is open
+```
+
+approach is to have all of the properties files in a separate properties JAR or folder and load them in the classpath at runtime. In this manner, a new language can be added without changing the application JAR.
+
+### Picking a Resource Bundle
+
+two common methods for obtaining a resource bundle
+
+```java
+ResourceBundle.getBundle("name"); // uses the default locale
+ResourceBundle.getBundle("name", locale);
+```
+
+ It tries to find the most specific value
+
+When asked for resource bundle Zoo with the locale new Locale("fr", "FR") when the default locale is U.S. English.
+1.	`Zoo_fr_FR.properties`	Requested locale
+2.	`Zoo_fr.properties`	Language we requested with no country
+3.	`Zoo_en_US.properties`	Default locale
+4.	`Zoo_en.properties`	Default locale's language with no country
+5.	`Zoo.properties`	No locale at all—default bundle
+6.	If still not found, throw `MissingResourceException`. No locale or default bundle available
+
+```java
+Locale.setDefault(new Locale("hi"));
+ResourceBundle rb = ResourceBundle.getBundle("Zoo", new Locale("en"));
+```
+
+1. Zoo_en.properties
+1. Zoo_hi.properties
+1. Zoo.properties
+
+### Selecting Resource Bundle Values
+
+ - Java isn't required to get all of the keys from the same resource bundle. 
+ - It can get them from any parent of the matching resource bundle. 
+ - A parent resource bundle in the hierarchy just removes components of the name until it gets to the top
+- Once a resource bundle has been selected, only properties along a single hierarchy will be used. 
+  
+Matching resource bundle:	`Zoo_fr_FR`	
+Properties files keys can come from:
+- `Zoo_fr_FR.properties`
+- `Zoo_fr.properties`
+- `Zoo.properties`
+
+```properties
+Zoo.properties
+name=Vancouver Zoo
+ 
+Zoo_en.properties
+hello=Hello
+open=is open
+ 
+Zoo_en_US.properties
+name=The Zoo
+ 
+Zoo_en_CA.properties
+visitors=Canada visitors
+```
+
+```java
+Locale.setDefault(new Locale("en", "US"));
+Locale locale = new Locale("en", "CA");
+ResourceBundle rb = ResourceBundle.getBundle("Zoo", locale);
+System.out.print(rb.getString("hello"));
+System.out.print(". ");
+System.out.print(rb.getString("name"));
+System.out.print(" ");
+System.out.print(rb.getString("open"));
+System.out.print(" ");
+System.out.print(rb.getString("visitors"));
+// Hello. Vancouver Zoo is open Canada visitors
+```
+
+The default locale is en_US, and the requested locale is en_CA. First, Java goes through the available resource bundles to find a match. It finds one right away with Zoo_en_CA.properties. This means the default locale of en_US is irrelevant.
+
+if a property is not found in any resource bundle? `MissingResourceException` at runtime.
+
+## Formatting Messages
+
+```
+helloByName=Hello, {0} and {1}
+```
+
+```java
+String format = rb.getString("helloByName");
+System.out.print(MessageFormat.format(format, "Tammy", "Henry"));
+// Hello, Tammy and Henry
+```
+
+## Properties Class
+
+`Properties` functions like the `HashMap` class except that it uses `String` values for the keys and values.
+
+```java
+import java.util.Properties;
+public class ZooOptions {
+   public static void main(String[] args) {
+      var props = new Properties();
+      props.setProperty("name", "Our zoo");
+      props.setProperty("open", "10am");
+   }
+}
+```
+
+```java
+System.out.println(props.getProperty("camel"));        // null
+System.out.println(props.getProperty("camel", "Bob")); // Bob
+```
+
+```java
+props.get("open");                               // 10am
+props.get("open", "The zoo will be open soon");  // DOES NOT COMPILE
+```
 
 # Modules
 
