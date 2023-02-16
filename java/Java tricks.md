@@ -8380,7 +8380,150 @@ DateTimeFormatter.ofPattern("The time is hh:mm"); // Exception thrown
 DateTimeFormatter.ofPattern("'Time is: hh:mm: "); // Exception thrown
 ```
 
-# Internalization
+# Supporting Internationalization and Localization
+
+**Internationalization** is the process of designing your program so it can be adapted. This involves placing strings in a properties file and ensuring that the proper data formatters are used
+
+**Localization** means supporting multiple locales or geographic regions. You can think of a locale as being like a language and country pairing. Localization includes translating strings to different languages. It also includes outputting dates and numbers in the correct format for that locale.
+
+##  Locale
+
+to find is the user's current locale
+```java
+Locale locale = Locale.getDefault();
+System.out.println(locale);
+```
+
+The language is always required. Then comes an underscore followed by the uppercase country code. The country is optional
+
+```java
+US     // Cannot have country without language
+enUS   // Missing underscore
+US_en  // The country and language are reversed
+EN     // Language must be lowercase
+```
+The corrected versions are `en` and `en_US`.
+
+- The first is to use the built-in constants in the Locale class, available for some common locales.
+```java
+System.out.println(Locale.GERMAN);  // de
+System.out.println(Locale.GERMANY); // de_DE
+```
+- The second way of selecting a Locale is to use the constructors to create a new object. You can pass just a language, or both a language and country:
+```java
+System.out.println(new Locale("fr"));       // fr
+System.out.println(new Locale("hi", "IN")); // hi_IN
+```
+- There's a third way to create a Locale that is more flexible
+
+```java
+Locale l1 = new Locale.Builder()
+   .setLanguage("en")
+   .setRegion("US")
+   .build();
+ 
+Locale l2 = new Locale.Builder()
+   .setRegion("US")
+   .setLanguage("en")
+   .build();
+```   
+
+to use a Locale other than a computer's default.
+```java
+System.out.println(Locale.getDefault());  // en_US
+Locale locale = new Locale("fr");
+Locale.setDefault(locale);
+System.out.println(Locale.getDefault());  // fr
+```
+
+## Localizing Numbers
+
+ For example, in the United States, the dollar sign is prepended before the value along with a decimal point for values less than one dollar, such as $2.15. In Germany, though, the euro symbol is appended to the value along with a comma for values less than one euro, such as 2,15 €.
+
+ Once you have the `NumberFormat` instance, you can call `format()` to turn a number into a `String`, or you can use `parse()` to turn a `String` into a number.
+
+<table>
+<thead>
+<tr>
+<th scope="col">Description</th>
+<th scope="col">Using default <code>Locale</code> and a specified <code>Locale</code></th> </tr> </thead>
+<tbody>
+<tr>
+<td class="left">General-purpose formatter</td>
+<td class="left"><code>NumberFormat.getInstance() <br> NumberFormat.getInstance(Locale locale)</code></td> </tr>
+<tr>
+<td class="left">Same as <code>getInstance</code></td>
+<td class="left"><code>NumberFormat.getNumberInstance() <br> NumberFormat.getNumberInstance(Locale locale)</code></td> </tr>
+<tr>
+<td class="left">For formatting monetary amounts</td>
+<td class="left"><code>NumberFormat.getCurrencyInstance() <br> NumberFormat.getCurrencyInstance(Locale locale)</code></td> </tr>
+<tr>
+<td class="left">For formatting percentages</td>
+<td class="left"><code>NumberFormat.getPercentInstance() <br> NumberFormat.getPercentInstance(Locale locale)</code></td> </tr>
+<tr>
+<td class="left">Rounds decimal values before displaying</td>
+<td class="left"><code>NumberFormat.getIntegerInstance() <br> NumberFormat.getIntegerInstance(Locale locale)</code></td> </tr>
+<tr>
+<td class="left">Returns compact number formatter</td>
+<td class="left"><code>NumberFormat.getCompactNumberInstance() <br> NumberFormat.getCompactNumberInstance(</code> <br> <code>Locale locale, NumberFormat.Style formatStyle)</code></td> </tr> </tbody> </table>
+
+```java
+int attendeesPerYear = 3_200_000;
+int attendeesPerMonth = attendeesPerYear / 12;
+ 
+var us = NumberFormat.getInstance(Locale.US);
+System.out.println(us.format(attendeesPerMonth)); // 266,666
+ 
+var gr = NumberFormat.getInstance(Locale.GERMANY);
+System.out.println(gr.format(attendeesPerMonth)); // 266.666
+ 
+var ca = NumberFormat.getInstance(Locale.CANADA_FRENCH);
+System.out.println(ca.format(attendeesPerMonth)); // 266 666
+```
+
+```java
+double price = 48;
+var myLocale = NumberFormat.getCurrencyInstance();
+System.out.println(myLocale.format(price));
+```
+When run with the default locale of en_US for the United States, this code outputs $48.00. On the other hand, when run with the default locale of en_GB for Great Britain, it outputs £48.00.
+
+```java
+double successRate = 0.802;
+var us = NumberFormat.getPercentInstance(Locale.US);
+System.out.println(us.format(successRate)); // 80%
+ 
+var gr = NumberFormat.getPercentInstance(Locale.GERMANY);
+System.out.println(gr.format(successRate)); // 80 %
+```
+
+When we parse data, we convert it from a String to a structured object or primitive value. The `NumberFormat.parse()` method accomplishes this and takes the locale into consideration.
+
+the `parse()` method, found in various types, declares a checked exception `ParseException` that must be handled or declared in the method in which it is called.
+
+```java
+String s = "40.45";
+ 
+var en = NumberFormat.getInstance(Locale.US);
+System.out.println(en.parse(s)); // 40.45
+ 
+var fr = NumberFormat.getInstance(Locale.FRANCE);
+System.out.println(fr.parse(s)); // 40
+```
+
+```java
+String income = "$92,807.99";
+var cf = NumberFormat.getCurrencyInstance();
+double value = (Double) cf.parse(income);
+System.out.println(value);  // 92807.99
+```
+
+###  CompactNumberFormat
+
+`CompactNumberFormat` class inherited from `NumberFormat` added in Java 17
+
+
+
 
 # Modules
 
