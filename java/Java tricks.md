@@ -7457,6 +7457,721 @@ Spliterator can have a number of characteristics such as
 
 # Exceptions
 
+![](images/exceptions_1.png)
+
+## Checked Exceptions
+
+- A checked exception is an exception that must be declared or handled by the application code where it is thrown. 
+- In Java, checked exceptions all inherit `Exception` but not `RuntimeException`
+  
+```java
+void fall(int distance) throws IOException {
+   if(distance> 10) {
+      throw new IOException();
+   }
+}
+```
+
+```java
+void fall(int distance) {
+   try {
+      if(distance> 10) {
+         throw new IOException();
+      }
+   } catch (Exception e) {
+      e.printStackTrace();
+   }
+}
+```
+
+## Unchecked exceptions
+
+- An unchecked exception is any exception that does not need to be declared or handled by the application code where it is thrown. 
+- Unchecked exceptions are often referred to as runtime exceptions
+- unchecked exceptions include any class that inherits `RuntimeException` or `Error`.
+- The code will compile if you declare an unchecked exception. However, it is redundant.
+
+```java
+void fall(String input) {
+   System.out.println(input.toLowerCase());
+// NullPointerException can be thrown in the body of
+//  the following method if the input reference is null:   
+}
+```
+
+## Error and Throwable
+
+- Error means something went so horribly wrong that your program should not attempt to recover from it
+- you can handle Throwable and Error exceptions, it is not recommended you do so in your application code.
+  
+## Examples
+
+```java
+String[] animals = new String[0];
+System.out.println(animals[0]);  // ArrayIndexOutOfBoundsException
+```
+
+legal
+```java
+var e = new RuntimeException();
+throw e;
+```
+
+```java
+throw RuntimeException();   // DOES NOT COMPILE
+```
+
+```java
+try {
+   throw new RuntimeException();
+   throw new ArrayIndexOutOfBoundsException();  // DOES NOT COMPILE
+} catch (Exception e) {}
+```
+
+## Calling Methods That Throw Exceptions
+
+```java
+class NoMoreCarrotsException extends Exception {}
+ 
+public class Bunny {
+   public static void main(String[] args) {
+      eatCarrot(); // DOES NOT COMPILE
+   }
+   private static void eatCarrot() throws NoMoreCarrotsException {}
+}
+```
+
+```java
+public static void main(String[] args) throws NoMoreCarrotsException {
+   eatCarrot();
+}
+ 
+public static void main(String[] args) {
+   try {
+      eatCarrot();
+   } catch (NoMoreCarrotsException e) {
+      System.out.print("sad rabbit");
+   }
+}
+```
+
+You might have noticed that `eatCarrot()` didn't throw an exception; it just declared that it could. This is enough for the compiler to require the caller to handle or declare the exception.
+
+The compiler is still on the lookout for unreachable code
+```java
+public void bad() {
+   try {
+      eatCarrot();
+   } catch (NoMoreCarrotsException e) { // DOES NOT COMPILE
+      System.out.print("sad rabbit");
+   }
+}
+ 
+private void eatCarrot() {}
+```
+
+## Overriding Methods with Exceptions
+
+- An overridden method may not declare any new or broader checked exceptions than the method it inherits
+
+```java
+class CanNotHopException extends Exception {}
+ 
+class Hopper {
+   public void hop() {}
+}
+ 
+class Bunny extends Hopper {
+   public void hop() throws CanNotHopException {} // DOES NOT COMPILE
+}
+```
+
+- An overridden method in a subclass is allowed to declare fewer exceptions than the superclass or interface
+```java
+class Hopper {
+   public void hop() throws CanNotHopException {}
+}
+class Bunny extends Hopper {
+   public void hop() {} // This is fine
+}
+// this is legal because callers are already handling them.
+```
+
+## Printing an Exception
+
+```java
+public static void main(String[] args) {
+   try {
+      hop();
+   } catch (Exception e) {
+      System.out.println(e + "\n");
+      System.out.println(e.getMessage()+ "\n");
+      e.printStackTrace();
+   }
+}
+private static void hop() {
+   throw new RuntimeException("cannot hop");
+}
+```
+
+```log
+java.lang.RuntimeException: cannot hop
+ 
+cannot hop
+ 
+java.lang.RuntimeException: cannot hop
+   at Handling.hop(Handling.java:15)
+   at Handling.main(Handling.java:7)
+```
+
+## Common Exceptions
+
+### RuntimeException Classes
+
+<table>
+<thead>
+<tr>
+<th scope="col">Unchecked exception</th>
+<th scope="col">Description</th> </tr> </thead>
+<tbody>
+<tr>
+<td class="left"><code>ArithmeticException</code></td>
+<td class="left">Thrown when code attempts to divide by zero.</td> </tr>
+<tr>
+<td class="left"><code>ArrayIndexOutOfBoundsException</code></td>
+<td class="left">Thrown when code uses illegal index to access array.</td> </tr>
+<tr>
+<td class="left"><code>ClassCastException</code></td>
+<td class="left">Thrown when attempt is made to cast object to class of which it is not an instance.</td> </tr>
+<tr>
+<td class="left"><code>NullPointerException</code></td>
+<td class="left">Thrown when there is a <code>null</code> reference where an object is required.</td> </tr>
+<tr>
+<td class="left"><code>IllegalArgumentException</code></td>
+<td class="left">Thrown by programmer to indicate that method has been passed illegal or inappropriate argument.</td> </tr>
+<tr>
+<td class="left"><code>NumberFormatException</code></td>
+<td class="left">Subclass of <code>IllegalArgumentException</code>. Thrown when attempt is made to convert <code>String</code> to numeric type but <code>String</code> doesn't have appropriate format.</td> </tr> </tbody> </table>
+
+```java
+int answer = 11 / 0;
+// Exception in thread "main" java.lang.ArithmeticException: / by zero
+```
+
+```java
+int[] countsOfMoose = new int[3];
+System.out.println(countsOfMoose[-1]);
+// Exception in thread "main" java.lang.ArrayIndexOutOfBoundsException:
+// Index -1 out of bounds for length 3
+```
+
+```java
+String type = "moose";
+Integer number = (Integer) type; // DOES NOT COMPILE
+```
+
+```java
+String type = "moose";
+Object obj = type;
+Integer number = (Integer) obj; // ClassCastException
+// Exception in thread "main" java.lang.ClassCastException:  java.base/java.lang.String
+// cannot be cast to java.lang.base/java.lang.Integer
+```
+
+```java
+public class Frog {
+   public void hop(String name, Integer jump) {
+      System.out.print(name.toLowerCase() + " " + jump.intValue());
+   }
+   
+   public static void main(String[] args) {
+      new Frog().hop(null, 1); 
+   } }
+// Exception in thread "main" java.lang.NullPointerException: 
+// Cannot invoke "String.toLowerCase()" because "<parameter1>" is null   
+```
+
+in Java 17
+The JVM now tells you the object reference that triggered the NullPointerException! This new feature is called Helpful NullPointerExceptions.
+
+
+```java
+Exception in thread "main" java.lang.NullPointerException: Cannot invoke "java.lang.Integer.intValue()" because "<parameter2>" is null
+```
+
+ By default, a NullPointerException on a local variable or method parameter is printed with a number indicating the order in which it appears in the method, such as <local2> or <parameter4>. If you're like us and want the actual variable name to be shown, compile the code with the -g:vars flag, which adds debug info. In the previous examples, <parameter1> and <parameter2> are then replaced with name and jump, respectively.
+
+```java
+public void setNumberEggs(int numberEggs) {
+   if (numberEggs < 0)
+      throw new IllegalArgumentException("# eggs must not be negative");
+   this.numberEggs = numberEggs;
+}
+// Exception in thread "main"
+// java.lang.IllegalArgumentException: # eggs must not be negative
+```
+
+```java
+Integer.parseInt("abc");
+// Exception in thread "main"
+// java.lang.NumberFormatException: For input string: "abc"
+```
+
+### Checked Exception Classes
+
+<table>
+<thead>
+<tr>
+<th scope="col">Checked exception</th>
+<th scope="col">Description</th> </tr> </thead>
+<tbody>
+<tr>
+<td class="left"><code>FileNotFoundException</code></td>
+<td class="left">Subclass of <code>IOException</code>. Thrown programmatically when code tries to reference file that does not exist.</td> </tr>
+<tr>
+<td class="left"><code>IOException</code></td>
+<td class="left">Thrown programmatically when problem reading or writing file.</td> </tr>
+<tr>
+<td class="left"><code>NotSerializableException</code></td>
+<td class="left">Subclass of <code>IOException</code>. Thrown programmatically when attempting to serialize or deserialize non-serializable class.</td> </tr>
+<tr>
+<td class="left"><code>ParseException</code></td>
+<td class="left">Indicates problem parsing input.</td> </tr>
+<tr>
+<td class="left"><code>SQLException</code></td>
+<td class="left">Thrown when error related to accessing database.</td> </tr> </tbody> </table>
+
+### Error Classes
+
+<table>
+<thead>
+<tr>
+<th scope="col">Error</th>
+<th scope="col">Description</th> </tr> </thead>
+<tbody>
+<tr>
+<td class="left"><code>ExceptionInInitializerError</code></td>
+<td class="left">Thrown when <code>static</code> initializer throws exception and doesn't handle it</td> </tr>
+<tr>
+<td class="left"><code>StackOverflowError</code></td>
+<td class="left">Thrown when method calls itself too many times (called <i>infinite recursion</i> because method typically calls itself without end)</td> </tr>
+<tr>
+<td class="left"><code>NoClassDefFoundError</code></td>
+<td class="left">Thrown when class that code uses is available at compile time but not runtime</td> </tr> </tbody> </table>
+
+## Handling exceptions
+
+```java
+void explore() {
+   try {
+      fall();
+      System.out.println("never get here");
+   } catch (RuntimeException e) {
+      getUp();
+   }
+   seeAnimals();
+}
+void fall() {  throw new RuntimeException(); }
+```
+
+```java
+try  // DOES NOT COMPILE
+   fall();
+catch (Exception e)
+   System.out.println("get up");
+```
+
+```java
+try {  // DOES NOT COMPILE
+   fall();
+}
+```
+
+### Chaining catch Blocks
+
+A rule exists for the order of the catch blocks. Java looks at them in the order they appear. If it is impossible for one of the catch blocks to be executed, a compiler error about unreachable code occurs. For example, this happens when a superclass catch block appears before a subclass catch block
+
+```java
+class AnimalsOutForAWalk extends RuntimeException {} 
+class ExhibitClosed extends RuntimeException {}
+class ExhibitClosedForLunch extends ExhibitClosed {}
+```
+
+```java
+public void visitPorcupine() {
+   try {
+      seeAnimal();
+   } catch (AnimalsOutForAWalk e) { // first catch block
+      System.out.print("try back later");
+   } catch (ExhibitClosed e) { // second catch block
+      System.out.print("not today");
+   }
+}
+```
+
+```java
+public void visitMonkeys() {
+   try {
+      seeAnimal();
+   } catch (ExhibitClosedForLunch e) { // Subclass exception
+      System.out.print("try back later");
+   } catch (ExhibitClosed e) { // Superclass exception
+      System.out.print("not today");
+   }
+}
+```
+
+```java
+public void visitMonkeys() {
+   try {
+      seeAnimal();
+   } catch (ExhibitClosed e) {
+      System.out.print("not today");
+   } catch (ExhibitClosedForLunch e) { // DOES NOT COMPILE
+      System.out.print("try back later");
+   }
+}
+```
+
+```java
+public void visitSnakes() {
+   try {
+   } catch (IllegalArgumentException e) {
+   } catch (NumberFormatException e) { // DOES NOT COMPILE
+   }
+}
+```
+
+```java
+public void visitManatees() {
+   try {
+   } catch (NumberFormatException e1) {
+      System.out.println(e1);
+   } catch (IllegalArgumentException e2) {
+      System.out.println(e1); // DOES NOT COMPILE
+   }
+}
+```
+
+### Multi-catch Block
+
+```java
+public static void main(String[] args) {
+   try {
+      System.out.println(Integer.parseInt(args[1]));
+   } catch (ArrayIndexOutOfBoundsException | NumberFormatException e) {
+      System.out.println("Missing or invalid input");
+   }
+}
+```
+
+```java
+catch(Exception1 e | Exception2 e | Exception3 e) // DOES NOT COMPILE
+catch(Exception1 e1 | Exception2 e2 | Exception3 e3) // DOES NOT COMPILE
+catch(Exception1 | Exception2 | Exception3 e)
+```
+
+Java intends multi-catch to be used for exceptions that aren't related, and it prevents you from specifying redundant types in a multi-catch
+```java
+try {
+   throw new IOException();
+} catch (FileNotFoundException | IOException p) {} // DOES NOT COMPILE
+
+// The exception FileNotFoundException is already caught by the alternative IOException
+```
+
+```java
+try {
+   throw new IOException();
+} catch (IOException e) {}
+```
+
+### finally Block
+
+If an exception is thrown, the finally block is run after the catch block. If no exception is thrown, the finally block is run after the try block completes.
+
+```java
+void explore() {
+   try {
+      seeAnimals();
+      fall();
+   } catch (Exception e) {
+      getHugFromDaddy();
+   } finally {
+      seeMoreAnimals();
+   }
+   goHome();
+}
+```
+
+```java
+try { // DOES NOT COMPILE
+   fall();
+} finally {
+   System.out.println("all better");
+} catch (Exception e) {
+   System.out.println("get up");
+}
+try { // DOES NOT COMPILE
+   fall();
+}
+try {
+   fall();
+} finally {
+   System.out.println("all better");
+}
+```
+
+```java
+int goHome() {
+   try {
+      // Optionally throw an exception here
+      System.out.print("1");
+      return -1;
+   } catch (Exception e) {
+      System.out.print("2");
+      return -2;
+   } finally {
+      System.out.print("3");
+      return -3;
+   }
+// it's always -3 
+}
+```
+
+```java
+try {
+   System.exit(0);
+} finally {
+   System.out.print("Never going to get here");  // Not printed
+}
+```
+
+## Try-with-Resources
+
+- one or more resources can be opened in the try clause. 
+- When multiple resources are opened, they are closed in the reverse of the order in which they were created. 
+- parentheses are used to list those resources, and semicolons are used to separate the declarations. 
+- catch and finally are optional 
+- Only classes that implement the `AutoCloseable` interface can be used in a try-with-resources statement. 
+- `Closeable` extends `AutoCloseable`, they are both supported in try-with-resources statements. The only difference between the two is that `Closeable`'s `close()` method declares `IOException`, while `AutoCloseable`'s `close()` method declares `Exception`.
+- You can declare a resource using `var`
+- The resources created in the try clause are in scope only within the try block.
+- While resources are often created in the try-with-resources statement, it is possible to declare them ahead of time, provided they are marked final or effectively final. 
+
+
+```java
+interface AutoCloseable {
+   public void close() throws Exception;
+}
+```
+
+```java
+public void readFile(String file) {
+   FileInputStream is = null;
+   try {
+      is = new FileInputStream("myfile.txt");
+      // Read file data
+   } catch (IOException e) {
+      e.printStackTrace();
+   } finally {
+      if(is != null) {
+         try {
+            is.close();
+         } catch (IOException e2) {
+            e2.printStackTrace();
+         }
+      }
+   }
+}
+```
+
+```java
+public void readFile(String file) {
+   try (FileInputStream is = new FileInputStream("myfile.txt")) {
+      // Read file data
+   } catch (IOException e) {
+      e.printStackTrace();
+   }
+}
+```
+
+```java
+public void readFile(String file) throws IOException {
+   try (FileInputStream is = new FileInputStream("myfile.txt")) {
+      // Read file data
+   }
+}
+```
+
+```java
+try (String reptile = "lizard") {}  // DOES NOT COMPILE
+```
+
+```java
+public class MyFileClass implements AutoCloseable {
+   private final int num;
+   public MyFileClass(int num) { this.num = num; }
+   @Override public void close() {
+      System.out.println("Closing: " + num);
+   } }
+```
+
+```java
+try (var f = new BufferedInputStream(new FileInputStream("it.txt"))) {
+   // Process file
+}
+```
+
+```java
+try (Scanner s = new Scanner(System.in)) {
+   s.nextLine();
+} catch(Exception e) {
+   s.nextInt(); // DOES NOT COMPILE
+} finally {
+   s.nextInt(); // DOES NOT COMPILE
+}
+```
+
+```java
+public static void main(String… xyz) {
+   try (MyFileClass bookReader = new MyFileClass(1);
+         MyFileClass movieReader = new MyFileClass(2)) {
+      System.out.println("Try Block");
+      throw new RuntimeException();
+   } catch (Exception e) {
+      System.out.println("Catch Block");
+   } finally {
+      System.out.println("Finally Block");
+   }
+}
+```
+```
+Try Block
+Closing: 2
+Closing: 1
+Catch Block
+Finally Block
+```
+
+### Applying Effectively Final
+
+While resources are often created in the try-with-resources statement, it is possible to declare them ahead of time, provided they are marked final or effectively final. 
+
+```java
+public static void main(String… xyz) {
+   final var bookReader = new MyFileClass(4);
+   MyFileClass movieReader = new MyFileClass(5);
+   try (bookReader;
+         var tvReader = new MyFileClass(6);
+         movieReader) {
+      System.out.println("Try Block");
+   } finally {
+      System.out.println("Finally Block");
+   }
+}
+```
+```
+Try Block
+Closing: 5
+Closing: 6
+Closing: 4
+Finally Block
+```
+
+```java
+var writer = Files.newBufferedWriter(path);
+try (writer) { // DOES NOT COMPILE
+   writer.append("Welcome to the zoo!");
+}
+writer = null;
+```
+
+```java
+var writer = Files.newBufferedWriter(path);
+writer.append("This write is permitted but a really bad idea!");
+try (writer) {
+   writer.append("Welcome to the zoo!");
+}
+writer.append("This write will fail!"); // IOException
+```
+
+## Suppressed Exceptions
+
+-  If more than two resources throw an exception, the first one to be thrown becomes the primary exception, and the rest are grouped as suppressed exceptions. And since resources are closed in the reverse of the order in which they are declared, the primary exception will be on the last declared resource that throws an exception.
+
+```java
+public class JammedTurkeyCage implements AutoCloseable {
+   public void close() throws IllegalStateException {
+      throw new IllegalStateException("Cage door does not close");
+   }
+   public static void main(String[] args) {
+      try (JammedTurkeyCage t = new JammedTurkeyCage()) {
+         System.out.println("Put turkeys in");
+      } catch (IllegalStateException e) {
+         System.out.println("Caught: " + e.getMessage());
+      }
+   }
+// Caught: Cage door does not close   
+}
+```
+
+What happens if the try block also throws an exception? When multiple exceptions are thrown, all but the first are called **suppressed exceptions**.
+
+```java
+public static void main(String[] args) {
+   try (JammedTurkeyCage t = new JammedTurkeyCage()) {
+      throw new IllegalStateException("Turkeys ran off");
+   } catch (IllegalStateException e) {
+      System.out.println("Caught: " + e.getMessage());
+      for (Throwable t: e.getSuppressed())
+         System.out.println("Suppressed: "+t.getMessage());
+   }
+}
+```
+```
+Caught: Turkeys ran off
+Suppressed: Cage door does not close
+```
+
+```java
+public static void main(String[] args) {
+   try (JammedTurkeyCage t = new JammedTurkeyCage()) {
+      throw new RuntimeException("Turkeys ran off");
+   } catch (IllegalStateException e) {
+      System.out.println("caught: " + e.getMessage());
+   }
+}
+```
+ Since this does not match the catch clause, the exception is thrown to the caller. Eventually, the main() method would output something like the following:
+```
+Exception in thread "main" java.lang.RuntimeException: Turkeys ran off
+   at JammedTurkeyCage.main(JammedTurkeyCage.java:7)
+   Suppressed: java.lang.IllegalStateException:
+         Cage door does not close
+      at JammedTurkeyCage.close(JammedTurkeyCage.java:3)
+      at JammedTurkeyCage.main(JammedTurkeyCage.java:8)
+```      
+
+Suppressed exceptions apply only to exceptions thrown in the try clause. The following example does not throw a suppressed exception:
+```java
+public static void main(String[] args) {
+   try (JammedTurkeyCage t = new JammedTurkeyCage()) {
+      throw new IllegalStateException("Turkeys ran off");
+   } finally {
+      throw new RuntimeException("and we couldn't find them");
+   }
+}
+```
+Since line 9 also throws an exception, the previous exception is lost, with the code printing the following:
+```
+Exception in thread "main" java.lang.RuntimeException:
+   and we couldn't find them
+   at JammedTurkeyCage.main(JammedTurkeyCage.java:9)
+```
+
+# Formatting values
+
 # Internalization
 
 # Modules
