@@ -206,21 +206,41 @@
   - [Naming conventions](#naming-conventions)
 - [Optional](#optional)
   - [Optional methods](#optional-methods)
+  - [Chaining Optionals](#chaining-optionals)
 - [Streams](#streams)
   - [Finite stream](#finite-stream)
   - [Infinite Streams](#infinite-streams)
   - [Common terminal operations](#common-terminal-operations)
     - [reduce](#reduce)
   - [collect](#collect)
+    - [Using Basic Collectors](#using-basic-collectors)
+    - [Collecting into Maps](#collecting-into-maps)
+    - [Grouping](#grouping)
+    - [Partitioning](#partitioning)
+    - [Mapping](#mapping)
+    - [Teeing Collectors](#teeing-collectors)
   - [Common Intermediate Operations](#common-intermediate-operations)
     - [Restricting by Position](#restricting-by-position)
-    - [Mapping](#mapping)
+    - [Mapping](#mapping-1)
       - [map](#map)
       - [flatMap](#flatmap)
     - [Sorting](#sorting)
     - [Taking a Peek](#taking-a-peek)
   - [Examples](#examples-2)
   - [Primitive Streams](#primitive-streams)
+    - [Create primitive stream](#create-primitive-stream)
+    - [Mapping Streams](#mapping-streams)
+    - [Optional with Primitive Streams](#optional-with-primitive-streams)
+    - [Summarizing Statistics](#summarizing-statistics)
+  - [Advanced Stream Pipeline Concepts](#advanced-stream-pipeline-concepts)
+    - [Linking Streams to the Underlying Data](#linking-streams-to-the-underlying-data)
+    - [Checked exceptions and functional interfaces](#checked-exceptions-and-functional-interfaces)
+  - [Spliterator](#spliterator)
+- [Exceptions](#exceptions)
+- [Internalization](#internalization)
+- [Modules](#modules)
+- [Concurrency](#concurrency)
+  - [Data races](#data-races)
 - [I/O](#io)
 - [JDBC](#jdbc)
 
@@ -489,7 +509,37 @@ The `Boolean` and `Character` wrapper classes include `booleanValue()` and `char
 
 ![Example](images/text_blocks_1.png)
 
-![Escaping rules](images/text_blocks_2.png)
+<table>
+<thead>
+<tr>
+<th scope="col" class="left">Formatting</th>
+<th scope="col" class="left">Meaning in regular <code>String</code></th>
+<th scope="col" class="left">Meaning in text block</th> </tr> </thead>
+<tbody>
+<tr>
+<td class="left"><code>\"</code></td>
+<td class="left"><code>"</code></td>
+<td class="left"><code>"</code></td> </tr>
+<tr>
+<td class="left"><code>\"""</code></td>
+<td class="left">n/a – Invalid</td>
+<td class="left"><code>"""</code></td> </tr>
+<tr>
+<td class="left"><code>\"\"\"</code></td>
+<td class="left"><code>"""</code></td>
+<td class="left"><code>"""</code></td> </tr>
+<tr>
+<td class="left">Space (at end of line)</td>
+<td class="left">Space</td>
+<td class="left">Ignored</td> </tr>
+<tr>
+<td class="left"><code>\s</code></td>
+<td class="left">Two spaces (<code>\s</code> is a space and preserves leading space on the line)</td>
+<td class="left">Two spaces</td> </tr>
+<tr>
+<td class="left"><code>\</code> (at end of line)</td>
+<td class="left">n/a – Invalid</td>
+<td class="left">Omits new line on that line</td> </tr> </tbody> </table>
 
 # Naming
 
@@ -1559,7 +1609,34 @@ public String stripIndent()
 - `indent()` also normalizes whitespace characters. What does normalizing whitespace mean, you ask? First, a line break is added to the end of the string if not already there. Second, any line breaks are converted to the \n format. Regardless of whether your operating system uses \r\n (Windows) or\n (Mac/Unix), Java will standardize on \n for you.
 - The `stripIndent()` method is useful when a String was built with concatenation rather than using a text block. It gets rid of all incidental whitespace. This means that all non-blank lines are shifted left so the same number of whitespace characters are removed from each line and the first character that remains is not blank. Like indent(), \r\n is turned into \n. However, the stripIndent() method does not add a trailing line break if it is missing.
 
-![Differences between indent and stripIndent](images/indent_and_stript_indent_diff_1.png)
+<table>
+<thead>
+<tr>
+<th scope="col" class="left">Method</th>
+<th scope="col" class="left">Indent change</th>
+<th scope="col" class="left">Normalizes existing line breaks</th>
+<th scope="col" class="left">Adds line break at end if missing</th> </tr> </thead>
+<tbody>
+<tr>
+<td class="left"><code>indent(n)</code> where n &gt; 0</td>
+<td class="left">Adds <code>n</code> spaces to beginning of each line</td>
+<td class="left">Yes</td>
+<td class="left">Yes</td> </tr>
+<tr>
+<td class="left"><code>indent(n)</code> where <code>n</code> == 0</td>
+<td class="left">No change</td>
+<td class="left">Yes</td>
+<td class="left">Yes</td> </tr>
+<tr>
+<td class="left"><code>indent(n)</code> where <code>n</code> &lt; 0</td>
+<td class="left">Removes up to <code>n</code> spaces from each line where the same number of characters is removed from each non-blank line</td>
+<td class="left">Yes</td>
+<td class="left">Yes</td> </tr>
+<tr>
+<td class="left"><code>stripIndent()</code></td>
+<td class="left">Removes all leading incidental whitespace</td>
+<td class="left">Yes</td>
+<td class="left">No</td> </tr> </tbody> </table>
 
 ```java
 var block = """
@@ -1921,7 +1998,39 @@ rules:
 - For strings/characters, numbers are smaller than letters.
 - For strings/characters, uppercase is smaller than lowercase.
 
-![Array comparison example](images/array_comparison_1.png)
+<table>
+<thead>
+<tr>
+<th scope="col" class="left">First array</th>
+<th scope="col" class="left">Second array</th>
+<th scope="col" class="left">Result</th>
+<th scope="col" class="left">Reason</th> </tr> </thead>
+<tbody>
+<tr>
+<td class="left"><code>new int[] {1, 2}</code></td>
+<td class="left"><code>new int[] {1}</code></td>
+<td class="left">Positive number</td>
+<td class="left">The first element is the same, but the first array is longer.</td> </tr>
+<tr>
+<td class="left"><code>new int[] {1, 2}</code></td>
+<td class="left"><code>new int[] {1, 2}</code></td>
+<td class="left">Zero</td>
+<td class="left">Exact match</td> </tr>
+<tr>
+<td class="left"><code>new String[] {"a"}</code></td>
+<td class="left"><code>new String[] {"aa"}</code></td>
+<td class="left">Negative number</td>
+<td class="left">The first element is a substring of the second.</td> </tr>
+<tr>
+<td class="left"><code>new String[] {"a"}</code></td>
+<td class="left"><code>new String[] {"A"}</code></td>
+<td class="left">Positive number</td>
+<td class="left">Uppercase is smaller than lowercase.</td> </tr>
+<tr>
+<td class="left"><code>new String[] {"a"}</code></td>
+<td class="left"><code>new String[] {null}</code></td>
+<td class="left">Positive number</td>
+<td class="left"><code>null</code> is smaller than a letter.</td> </tr> </tbody> </table>
 
 ```java
 System.out.println(Arrays.compare(
@@ -4865,6 +4974,47 @@ System.out.println(b1.getAsBoolean()); // true
 System.out.println(b2.getAsBoolean()); // false
 ```
 
+<table>
+<thead>
+<tr>
+<th scope="col" class="left">Functional interfaces</th>
+<th scope="col" class="left">Return type</th>
+<th scope="col" class="left">Single abstract method</th>
+<th scope="col" class="left"># of parameters</th> </tr> </thead>
+<tbody>
+<tr>
+<td class="left"><code>DoubleSupplier</code> <br> <code>IntSupplier</code> <br> <code>LongSupplier</code></td>
+<td class="left"><code>double</code> <br> <code>int</code> <br> <code>long</code></td>
+<td class="left"><code>getAsDouble</code> <br> <code>getAsInt</code> <br> <code>getAsLong</code></td>
+<td class="left">0</td> </tr>
+<tr>
+<td class="left"><code>DoubleConsumer</code> <br> <code>IntConsumer</code> <br> <code>LongConsumer</code></td>
+<td class="left"><code>void</code></td>
+<td class="left"><code>accept</code></td>
+<td class="left">1 (<code>double</code>)<br> 1 (<code>int</code>)<br> 1 (<code>long</code>)</td> </tr>
+<tr>
+<td class="left"><code>DoublePredicate</code> <br> <code>IntPredicate</code> <br> <code>LongPredicate</code></td>
+<td class="left"><code>boolean</code></td>
+<td class="left"><code>test</code></td>
+<td class="left">1 (<code>double</code>)<br> 1 (<code>int</code>)<br> 1 (<code>long</code>)</td> </tr>
+<tr>
+<td class="left"><code>DoubleFunction&lt;R&gt;</code> <br> <code>IntFunction&lt;R&gt;</code> <br> <code>LongFunction&lt;R&gt;</code></td>
+<td class="left"><code>R</code></td>
+<td class="left"><code>apply</code></td>
+<td class="left">1 (<code>double</code>)<br> 1 (<code>int</code>)<br> 1 (<code>long</code>)</td> </tr>
+<tr>
+<td class="left"><code>DoubleUnaryOperator</code> <br> <code>IntUnaryOperator</code> <br> <code>LongUnaryOperator</code></td>
+<td class="left"><code>double</code> <br> <code>int</code> <br> <code>long</code></td>
+<td class="left"><code>applyAsDouble</code> <br> <code>applyAsInt</code> <br> <code>applyAsLong</code></td>
+<td class="left">1 (<code>double</code>)<br> 1 (<code>int</code>)<br> 1 (<code>long</code>)</td> </tr>
+<tr>
+<td class="left"><code>DoubleBinaryOperator</code> <br> <code>IntBinaryOperator</code> <br> <code>LongBinaryOperator</code></td>
+<td class="left"><code>double</code> <br> <code>int</code> <br> <code>long</code></td>
+<td class="left"><code>applyAsDouble</code> <br> <code>applyAsInt</code> <br> <code>applyAsLong</code></td>
+<td class="left">2 (<code>double, double</code>)<br> 2 (<code>int</code>, <code>int</code>)<br> 2 (<code>long</code>, <code>long</code>)</td> </tr> </tbody> </table>
+
+<details>
+
 | Functional interfaces  | Return type   | Single abstract method   |
 | ---------------------- | ------------- | ------------------------ |
 | DoubleSupplier         | double        | getAsDouble              |
@@ -4913,6 +5063,7 @@ System.out.println(b2.getAsBoolean()); // false
 | ObjDoubleConsumer<T>      | void          | accept                   |
 | ObjIntConsumer<T>         | void          | accept                   |
 | ObjLongConsumer<T>        | void          | accept                   |
+</details>
 
 # Collections Framework
 
@@ -6455,12 +6606,267 @@ TreeSet<String> set =
 System.out.println(set); // [f, l, o, w]
 ```
 
-
 If we didn't need the set to be sorted
 ```java
 Stream<String> stream = Stream.of("w", "o", "l", "f");
 Set<String> set = stream.collect(Collectors.toSet());
 System.out.println(set); // [f, w, l, o]
+```
+
+### Using Basic Collectors
+
+```java
+var ohMy = Stream.of("lions", "tigers", "bears");
+String result = ohMy.collect(Collectors.joining(", "));
+System.out.println(result); // lions, tigers, bears
+```
+
+<table>
+<thead>
+<tr>
+<th scope="col">Collector</th>
+<th scope="col">Description</th>
+<th scope="col">Return value when passed to <code>collect</code></th> </tr> </thead>
+<tbody>
+<tr>
+<td class="left"><code>averagingDouble(ToDoubleFunction f)</code> <br> <code>averagingInt(ToIntFunction f)</code> <br> <code>averagingLong(ToLongFunction f)</code></td>
+<td class="left">Calculates average for three core primitive types</td>
+<td class="left"><code>Double</code></td> </tr>
+<tr>
+<td class="left"><code>counting()</code></td>
+<td class="left">Counts number of elements</td>
+<td class="left"><code>Long</code></td> </tr>
+<tr>
+<td class="left"><code>filtering(Predicate p, Collector c)</code></td>
+<td class="left">Applies filter before calling downstream collector</td>
+<td class="left"><code>R</code></td> </tr>
+<tr>
+<td class="left"><code>groupingBy(Function f)</code> <br> <code>groupingBy(Function f, Collector dc)</code> <br> <code>groupingBy(Function f, Supplier s, Collector dc)</code></td>
+<td class="left">Creates map grouping by specified function with optional map type supplier and optional downstream collector</td>
+<td class="left"><code>Map&lt;K, List&lt;T&gt;&gt;</code></td> </tr>
+<tr>
+<td class="left"><code>joining(CharSequence cs)</code></td>
+<td class="left">Creates single <code>String</code> using <code>cs</code> as delimiter between elements if one is specified</td>
+<td class="left"><code>String</code></td> </tr>
+<tr>
+<td class="left"><code>maxBy(Comparator c)</code> <br> <code>minBy(Comparator c)</code></td>
+<td class="left">Finds largest/smallest elements</td>
+<td class="left"><code>Optional&lt;T&gt;</code></td> </tr>
+<tr>
+<td class="left"><code>mapping(Function f, Collector dc)</code></td>
+<td class="left">Adds another level of collectors</td>
+<td class="left"><code>Collector</code></td> </tr>
+<tr>
+<td class="left"><code>partitioningBy(Predicate p)</code> <br> <code>partitioningBy(Predicate p, Collector dc)</code></td>
+<td class="left">Creates map grouping by specified predicate with optional further downstream collector</td>
+<td class="left"><code>Map&lt;Boolean, List&lt;T&gt;&gt;</code></td> </tr>
+<tr>
+<td class="left"><code>summarizingDouble(ToDoubleFunction f)</code> <br> <code>summarizingInt(ToIntFunction f)</code> <br> <code>summarizingLong(ToLongFunction f)</code></td>
+<td class="left">Calculates average, min, max, etc.</td>
+<td class="left"><code>DoubleSummaryStatistics IntSummaryStatistics LongSummaryStatistics</code></td> </tr>
+<tr>
+<td class="left"><code>summingDouble(ToDoubleFunction f)</code> <br> <code>summingInt(ToIntFunction f)</code> <br> <code>summingLong(ToLongFunction f)</code></td>
+<td class="left">Calculates sum for our three core primitive types</td>
+<td class="left"><code>Double</code> <br> <code>Integer</code> <br> <code>Long</code></td> </tr>
+<tr>
+<td class="left"><code>teeing(Collector c1, Collector c2, BiFunction f)</code></td>
+<td class="left">Works with results of two collectors to create new type</td>
+<td class="left"><code>R</code></td> </tr>
+<tr>
+<td class="left"><code>toList()</code> <br> <code>toSet()</code></td>
+<td class="left">Creates arbitrary type of list or set</td>
+<td class="left"><code>List</code> <br> <code>Set</code></td> </tr>
+<tr>
+<td class="left"><code>toCollection(Supplier s)</code></td>
+<td class="left">Creates <code>Collection</code> of specified type</td>
+<td class="left"><code>Collection</code></td> </tr>
+<tr>
+<td class="left"><code>toMap(Function k, Function v)</code> <br> <code>toMap(Function k, Function v, BinaryOperator m)</code> <br> <code>toMap(Function k, Function v, BinaryOperator m, Supplier s)</code></td>
+<td class="left">Creates map using functions to map keys, values, optional merge function, and optional map type supplier</td>
+<td class="left"><code>Map</code></td> </tr> </tbody> </table>
+
+```java
+var ohMy = Stream.of("lions", "tigers", "bears");
+Double result = ohMy.collect(Collectors.averagingInt(String::length));
+System.out.println(result); // 5.333333333333333
+```
+
+```java
+var ohMy = Stream.of("lions", "tigers", "bears");
+TreeSet<String> result = ohMy
+   .filter(s -> s.startsWith("t"))
+   .collect(Collectors.toCollection(TreeSet::new));
+System.out.println(result); // [tigers]
+```
+
+if we didn't care which implementation of Set we got, we could have written `Collectors.toSet()`, instead.
+
+### Collecting into Maps
+
+```java
+var ohMy = Stream.of("lions", "tigers", "bears");
+Map<String, Integer> map = ohMy.collect(
+   Collectors.toMap(s -> s, String::length));
+System.out.println(map); // {lions=5, bears=5, tigers=6}
+```
+
+You can rewrite `s -> s` as `Function.identity()`
+
+```java
+var ohMy = Stream.of("lions", "tigers", "bears");
+Map<Integer, String> map = ohMy.collect(Collectors.toMap(
+   String::length,
+   k -> k)); // BAD
+   // Exception in thread "main" java.lang.IllegalStateException: Duplicate key 5
+```   
+
+Should the collector choose the first one it encounters? The last one it encounters? Concatenate the two? Since the collector has no idea what to do, it “solves” the problem by throwing an exception
+
+```java
+var ohMy = Stream.of("lions", "tigers", "bears");
+Map<Integer, String> map = ohMy.collect(Collectors.toMap(
+   String::length,
+   k -> k,
+  (s1, s2) -> s1 + "," + s2));
+System.out.println(map);            // {5=lions,bears, 6=tigers}
+System.out.println(map.getClass()); // class java.util.HashMap
+```
+
+```java
+var ohMy = Stream.of("lions", "tigers", "bears");
+TreeMap<Integer, String> map = ohMy.collect(Collectors.toMap(
+   String::length,
+   k -> k,
+   (s1, s2) -> s1 + "," + s2,
+   TreeMap::new));
+System.out.println(map); //         // {5=lions,bears, 6=tigers}
+System.out.println(map.getClass()); // class java.util.TreeMap
+```
+
+### Grouping
+
+we want to get groups of names by their length
+
+```java
+var ohMy = Stream.of("lions", "tigers", "bears");
+Map<Integer, List<String>> map = ohMy.collect(
+   Collectors.groupingBy(String::length));
+System.out.println(map);    // {5=[lions, bears], 6=[tigers]}
+```
+
+we don't want a List as the value in the map and prefer a Set instead. 
+```java
+var ohMy = Stream.of("lions", "tigers", "bears");
+Map<Integer, Set<String>> map = ohMy.collect(
+   Collectors.groupingBy(
+      String::length,
+      Collectors.toSet()));
+System.out.println(map);    // {5=[lions, bears], 6=[tigers]}
+```
+
+We can even change the type of Map returned through yet another parameter.
+```java
+var ohMy = Stream.of("lions", "tigers", "bears");
+TreeMap<Integer, Set<String>> map = ohMy.collect(
+   Collectors.groupingBy(
+      String::length,
+      TreeMap::new,
+      Collectors.toSet()));
+System.out.println(map); // {5=[lions, bears], 6=[tigers]}
+```
+
+we want to change the type of Map returned but leave the type of values alone as a List
+
+```java
+var ohMy = Stream.of("lions", "tigers", "bears");
+TreeMap<Integer, List<String>> map = ohMy.collect(
+   Collectors.groupingBy(
+       String::length,
+       TreeMap::new,
+       Collectors.toList()));
+System.out.println(map);
+```
+
+### Partitioning
+
+Partitioning is a special case of grouping. With partitioning, there are only two possible groups: true and false. Partitioning is like splitting a list into two parts.
+
+```java
+var ohMy = Stream.of("lions", "tigers", "bears");
+Map<Boolean, List<String>> map = ohMy.collect(
+   Collectors.partitioningBy(s -> s.length() <= 5));
+System.out.println(map);    // {false=[tigers], true=[lions, bears]}
+```
+
+```java
+var ohMy = Stream.of("lions", "tigers", "bears");
+Map<Boolean, List<String>> map = ohMy.collect(
+   Collectors.partitioningBy(s -> s.length() <= 7));
+System.out.println(map);    // {false=[], true=[lions, tigers, bears]}
+```
+
+we can change the type of List to something else.
+```java
+var ohMy = Stream.of("lions", "tigers", "bears");
+Map<Boolean, Set<String>> map = ohMy.collect(
+   Collectors.partitioningBy(
+      s -> s.length() <= 7,
+      Collectors.toSet()));
+System.out.println(map);    // {false=[], true=[lions, tigers, bears]}
+```
+
+Unlike `groupingBy()`, we cannot change the type of Map that is returned.
+
+Instead of using the downstream collector to specify the type, we can use any of the collectors that we've already shown.
+
+```java
+var ohMy = Stream.of("lions", "tigers", "bears");
+Map<Integer, Long> map = ohMy.collect(
+   Collectors.groupingBy(
+      String::length,
+      Collectors.counting()));
+System.out.println(map);    // {5=2, 6=1}
+```
+### Mapping
+
+`mapping()` collector that lets us go down a level and add another collector. 
+
+ Suppose that we wanted to get the first letter of the first animal alphabetically of each length. Why? Perhaps for random sampling.
+
+ ```java
+ var ohMy = Stream.of("lions", "tigers", "bears");
+Map<Integer, Optional<Character>> map = ohMy.collect(
+   Collectors.groupingBy(
+      String::length,
+      Collectors.mapping(
+         s -> s.charAt(0),
+         Collectors.minBy((a, b) -> a - b))));
+System.out.println(map);    // {5=Optional[b], 6=Optional[t]}
+```
+
+```java
+var ohMy = Stream.of("lions", "tigers", "bears");
+var map = ohMy.collect(groupingBy(String::length,
+   mapping(s -> s.charAt(0), minBy((a, b) -> a - b))));
+System.out.println(map);    // {5=Optional[b], 6=Optional[t]}
+```
+
+### Teeing Collectors
+
+use `teeing()` to return multiple values
+
+```java
+record Separations(String spaceSeparated, String commaSeparated) {}
+```
+
+```java
+var list = List.of("x", "y", "z");
+Separations result = list.stream()
+   .collect(Collectors.teeing(
+               Collectors.joining(" "),
+               Collectors.joining(","),
+               (s, c) -> new Separations(s, c)));
+System.out.println(result); // Separations[spaceSeparated=x y z, commaSeparated=x,y,z]
 ```
 
 ## Common Intermediate Operations
@@ -6484,6 +6890,8 @@ public Stream<T> distinct()
 Stream<String> s = Stream.of("duck", "duck", "duck", "goose");
 s.distinct().forEach(System.out::print); // duckgoose
 ```
+
+
 
 ### Restricting by Position
 
@@ -6993,7 +7401,59 @@ public void wrapped() {
 
 ## Spliterator
 
+You take roughly half the food out of the main bag and put it into the bag you brought from home. The original bag still exists with the other half of the food.
 
+A `Spliterator` provides this level of control over processing. It starts with a `Collection` or a stream—that is your bag of food. You call `trySplit()` to take some food out of the bag. The rest of the food stays in the original `Spliterator` object.
+
+ A `Collection` data source is a basic `Spliterator`. By contrast, when using a `Stream` data source, the `Spliterator` can be parallel or even infinite.
+
+<table>
+<thead>
+<tr>
+<th scope="col">Method</th>
+<th scope="col">Description</th> </tr> </thead>
+<tbody>
+<tr>
+<td class="left"><code>Spliterator&lt;T&gt; trySplit()</code></td>
+<td class="left">Returns <code>Spliterator</code> containing ideally half of the data, which is removed from current <code>Spliterator</code>. This method can be called multiple times and will eventually return <code>null</code> when data is no longer splittable.</td> </tr>
+<tr>
+<td class="left"><code>void forEachRemaining(Consumer&lt;T&gt; c)</code></td>
+<td class="left">Processes remaining elements in <code>Spliterator</code>.</td> </tr>
+<tr>
+<td class="left"><code>boolean tryAdvance(Consumer&lt;T&gt; c)</code></td>
+<td class="left">Processes single element from <code>Spliterator</code> if any remain. Returns whether element was processed.</td> </tr> </tbody> </table>
+
+```java
+var stream = List.of("bird-", "bunny-", "cat-", "dog-", "fish-", "lamb-", "mouse-");
+Spliterator<String> originalBagOfFood = stream.spliterator();
+Spliterator<String> emmaBag = originalBagOfFood.trySplit();
+emmaBag.forEachRemaining(System.out::print);  // bird-bunny-cat-
+
+Spliterator<String> jillsBag = originalBagOfFood.trySplit();
+jillsBag.tryAdvance(System.out::print);        // dog-
+jillsBag.forEachRemaining(System.out::print);  // fish-
+
+originalBagOfFood.forEachRemaining(System.out::print); // lamb-mouse-
+```
+
+```java
+var originalBag = Stream.iterate(1, n -> ++n) // infinite stream
+   .spliterator();
+ 
+Spliterator<Integer> newBag = originalBag.trySplit();
+ 
+newBag.tryAdvance(System.out::print); // 1
+newBag.tryAdvance(System.out::print); // 2
+newBag.tryAdvance(System.out::print); // 3
+```
+
+You might have noticed that this is an infinite stream. No problem! The Spliterator recognizes that the stream is infinite and doesn't attempt to give you half. Instead, newBag contains a large number of elements. We get the first three since we call tryAdvance() three times. It would be a bad idea to call forEachRemaining() on an infinite stream
+
+Spliterator can have a number of characteristics such as
+- CONCURRENT
+- ORDERED
+- SIZED
+- SORTED. 
 
 # Exceptions
 
