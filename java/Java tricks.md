@@ -257,6 +257,8 @@
   - [Suppressed Exceptions](#suppressed-exceptions)
 - [Formatting values](#formatting-values)
   - [Formatting Numbers](#formatting-numbers)
+  - [Formatting Dates and Times](#formatting-dates-and-times)
+    - [Adding Custom Text Values](#adding-custom-text-values)
 - [Internalization](#internalization)
 - [Modules](#modules)
 - [Concurrency](#concurrency)
