@@ -256,6 +256,7 @@
     - [Applying Effectively Final](#applying-effectively-final)
   - [Suppressed Exceptions](#suppressed-exceptions)
 - [Formatting values](#formatting-values)
+  - [Formatting Numbers](#formatting-numbers)
 - [Internalization](#internalization)
 - [Modules](#modules)
 - [Concurrency](#concurrency)
@@ -1738,6 +1739,8 @@ var str = "Food: %d tons".formatted(2.0); // IllegalFormatConversionException
 ```
 
 > By default, %f displays exactly six digits past the decimal. If you want to display only one digit after the decimal, you can use %.1f instead of %f.
+
+more here - [Formatting values](#formatting-values)
 
 ## StringBuilder
 
@@ -8190,6 +8193,190 @@ Exception in thread "main" java.lang.RuntimeException:
 ```
 
 # Formatting values
+
+in addition to [Formatting](#formatting)
+
+## Formatting Numbers
+
+`NumberFormat` interface
+```java
+public final String format(double number)
+public final String format(long number)
+```
+
+`DecimalFormat` is an implementation of `NumberFormat`
+```java
+public DecimalFormat(String pattern)
+```
+
+<table>
+<thead>
+<tr>
+<th scope="col">Symbol</th>
+<th scope="col">Meaning</th>
+<th scope="col">Examples</th> </tr> </thead>
+<tbody>
+<tr>
+<td class="left"><code>#</code></td>
+<td class="left">Omit position if no digit exists for it.</td>
+<td class="left"><code>$2.2</code></td> </tr>
+<tr>
+<td class="left"><code>0</code></td>
+<td class="left">Put <code>0</code> in position if no digit exists for it.</td>
+<td class="left"><code>$002.20</code></td> </tr> </tbody> </table>
+
+```java
+double d = 1234.567;
+NumberFormat f1 = new DecimalFormat("###,###,###.0");
+System.out.println(f1.format(d));  // 1,234.6
+
+NumberFormat f2 = new DecimalFormat("000,000,000.00000");
+System.out.println(f2.format(d));  // 000,001,234.56700
+
+NumberFormat f3 = new DecimalFormat("Your Balance $#,###,###.##");
+System.out.println(f3.format(d));  // Your Balance $1,234.57
+```
+
+## Formatting Dates and Times
+
+```java
+LocalDate date = LocalDate.of(2022, Month.OCTOBER, 20);
+System.out.println(date.getDayOfWeek()); // THURSDAY
+System.out.println(date.getMonth());     // OCTOBER
+System.out.println(date.getYear());      // 2022
+System.out.println(date.getDayOfYear()); // 293
+```
+
+class `DateTimeFormatter` to display standard formats
+
+```java
+LocalDate date = LocalDate.of(2022, Month.OCTOBER, 20);
+LocalTime time = LocalTime.of(11, 12, 34);
+LocalDateTime dt = LocalDateTime.of(date, time);
+
+System.out.println(date.format(DateTimeFormatter.ISO_LOCAL_DATE));
+System.out.println(time.format(DateTimeFormatter.ISO_LOCAL_TIME));
+System.out.println(dt.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+```
+```
+2022-10-20
+11:12:34
+2022-10-20T11:12:34
+```
+
+```java
+date.format(DateTimeFormatter.ISO_LOCAL_TIME); // RuntimeException
+time.format(DateTimeFormatter.ISO_LOCAL_DATE); // RuntimeException
+```
+
+If you don't want to use one of the predefined formats, `DateTimeFormatter` supports a custom format using a date format String.
+
+```java
+var f = DateTimeFormatter.ofPattern("MMMM dd, yyyy 'at' hh:mm");
+System.out.println(dt.format(f));  // October 20, 2022 at 11:12
+```
+
+<table>
+<thead>
+<tr>
+<th scope="col">Symbol</th>
+<th scope="col">Meaning</th>
+<th scope="col">Examples</th> </tr> </thead>
+<tbody>
+<tr>
+<td><code>y</code> </td>
+<td class="left">Year</td>
+<td class="left"><code>22</code>, <code>2022</code></td> </tr>
+<tr>
+<td><code>M</code> </td>
+<td class="left">Month</td>
+<td class="left"><code>1</code>, <code>01</code>, <code>Jan</code>, <code>January</code></td> </tr>
+<tr>
+<td><code>d</code> </td>
+<td class="left">Day</td>
+<td class="left"><code>5</code>, <code>05</code></td> </tr>
+<tr>
+<td><code>h</code> </td>
+<td class="left">Hour</td>
+<td class="left"><code>9</code>, <code>09</code></td> </tr>
+<tr>
+<td><code>m</code> </td>
+<td class="left">Minute</td>
+<td class="left"><code>45</code></td> </tr>
+<tr>
+<td><code>S</code> </td>
+<td class="left">Second</td>
+<td class="left"><code>52</code></td> </tr>
+<tr>
+<td><code>a</code> </td>
+<td class="left">a.m./p.m.</td>
+<td class="left"><code>AM</code>, <code>PM</code></td> </tr>
+<tr>
+<td><code>z</code> </td>
+<td class="left">Time zone name</td>
+<td class="left"><code>Eastern Standard Time</code>, <code>EST</code></td> </tr>
+<tr>
+<td><code>Z</code> </td>
+<td class="left">Time zone offset</td>
+<td class="left"><code>-0400</code></td> </tr> </tbody> </table>
+
+```java
+var dt = LocalDateTime.of(2022, Month.OCTOBER, 20, 6, 15, 30);
+ 
+var formatter1 = DateTimeFormatter.ofPattern("MM/dd/yyyy hh:mm:ss");
+System.out.println(dt.format(formatter1));  // 10/20/2022 06:15:30
+ 
+var formatter2 = DateTimeFormatter.ofPattern("MM_yyyy_-_dd");
+System.out.println(dt.format(formatter2));  // 10_2022_-_20
+ 
+var formatter3 = DateTimeFormatter.ofPattern("h:mm z");
+System.out.println(dt.format(formatter3));  // DateTimeException
+```
+
+```java
+var dateTime = LocalDateTime.of(2022, Month.OCTOBER, 20, 6, 15, 30);
+var formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy hh:mm:ss");
+ 
+System.out.println(dateTime.format(formatter)); // 10/20/2022 06:15:30
+System.out.println(formatter.format(dateTime)); // 10/20/2022 06:15:30
+```
+
+### Adding Custom Text Values
+
+- One way to address this would be to break the formatter into multiple smaller formatters and then concatenate the results.
+  
+```java
+var dt = LocalDateTime.of(2022, Month.OCTOBER, 20, 6, 15, 30);
+ 
+var f1 = DateTimeFormatter.ofPattern("MMMM dd, yyyy ");
+var f2 = DateTimeFormatter.ofPattern(" hh:mm");
+System.out.println(dt.format(f1) + "at" + dt.format(f2)); 
+```
+
+- You can escape the text by surrounding it with a pair of single quotes ('). Escaping text instructs the formatter to ignore the values inside the single quotes and just insert them as part of the final value.
+
+```java
+var f = DateTimeFormatter.ofPattern("MMMM dd, yyyy 'at' hh:mm");
+System.out.println(dt.format(f));  // October 20, 2022 at 06:15
+```
+
+But what if you need to display a single quote in the output, too?  Java supports this by putting two single quotes next to each other.
+
+```java
+var g1 = DateTimeFormatter.ofPattern("MMMM dd', Party''s at' hh:mm");
+System.out.println(dt.format(g1));  // October 20, Party's at 06:15
+ 
+var g2 = DateTimeFormatter.ofPattern("'System format, hh:mm: 'hh:mm");
+System.out.println(dt.format(g2));  // System format, hh:mm: 06:15
+ 
+var g3 = DateTimeFormatter.ofPattern("'NEW! 'yyyy', yay!'");
+System.out.println(dt.format(g3));  // NEW! 2022, yay!
+```
+
+```java
+DateTimeFormatter.ofPattern("The time is hh:mm"); // Exception thrown
+DateTimeFormatter.ofPattern("'Time is: hh:mm: "); // Exception thrown
+```
 
 # Internalization
 
