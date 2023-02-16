@@ -8825,6 +8825,57 @@ props.get("open", "The zoo will be open soon");  // DOES NOT COMPILE
 
 # Modules
 
+The Java Platform Module System (JPMS) groups code at a higher level. The main purpose of a module is to provide groups of related packages that offer developers a particular set of functionality. It's like a JAR file, except a developer chooses which packages are accessible outside the module.
+
+The Java Platform Module System includes the following:
+
+- A format for module JAR files
+- Partitioning of the JDK into modules
+- Additional command-line options for Java tools
+
+## A Module
+
+- A module is a group of one or more packages plus a special file called `module-info.java`
+- The contents of this file are the **module declaration** 
+
+ problems they are designed to solve:
+- Better access control: In addition to the levels of access control you can have packages that are only accessible to other packages in the module.
+- Clearer dependency management: Since modules specify what they rely on, Java can complain about a missing JAR when starting up the program rather than when it is first accessed at runtime.
+- Custom Java builds: You can create a Java runtime that has only the parts of the JDK that your program needs rather than the full one at over 150 MB.
+- Improved security: Since you can omit parts of the JDK from your custom build, you don't have to worry about vulnerabilities discovered in a part you don't use.
+- Improved performance: Another benefit of a smaller Java package is improved startup time and a lower memory requirement.
+- Unique package enforcement: Since modules specify exposed packages, Java can ensure that each package comes from only one module and avoid confusion about what is being run.
+
+## Creating and Running a Modular Program
+
+```java
+package zoo.animal.feeding;
+ 
+public class Task {
+   public static void main(String… args) {
+      System.out.println("All fed!");
+   }
+}
+```
+
+**module-info.java**
+```java
+module zoo.animal.feeding {
+}
+```
+
+There are a few key differences between a module declaration and a regular Java class declaration:
+- The `module-info.java` file must be in the root directory of your module. Regular Java classes should be in packages.
+- The module declaration must use the keyword module instead of class, interface, or enum.
+- The module name follows the naming rules for package names. It often includes periods (.) in its name. Regular class and package names are not allowed to have dashes (-). Module names follow the same rule.
+
+to compile 
+```
+javac --module-path mods
+   -d feeding
+   feeding/zoo/animal/feeding/*.java feeding/module-info.java
+```
+
 # Concurrency
 
 ## Data races
