@@ -6210,6 +6210,44 @@ System.out.println(opt.orElseThrow());
 ```java
 System.out.println(opt.orElseGet( () -> new IllegalStateException())); // DOES NOT COMPILE
 ```
+
+## Chaining Optionals
+
+you are given an Optional<Integer> and asked to print the value, but only if it is a three-digit number.
+
+```java
+private static void threeDigit(Optional<Integer> optional) {
+   if (optional.isPresent()) {  // outer if
+      var num = optional.get();
+      var string = "" + num;
+      if (string.length() == 3) // inner if
+         System.out.println(string);
+   }
+}
+```
+
+```java
+private static void threeDigit(Optional<Integer> optional) {
+   optional.map(n -> "" + n)            // part 1
+      .filter(s -> s.length() == 3)     // part 2
+      .ifPresent(System.out::println);  // part 3
+}
+```
+
+What if we had a helper method that did the logic of calculating something for us that returns `Optional<Integer>`
+
+```java
+Optional<Integer> result = optional
+   .map(ChainingOptionals::calculator); // DOES NOT COMPILE
+```
+The map() method adds another `Optional`, giving us `Optional<Optional<Integer>>`.
+
+the solution is to call flatMap()
+```java
+Optional<Integer> result = optional
+   .flatMap(ChainingOptionals::calculator);
+```
+
 # Streams
 
 A stream in Java is a sequence of data. A stream pipeline consists of the operations that run on a stream to produce a result.
@@ -6767,6 +6805,194 @@ rangeClosed.forEach(System.out::print); // 12345
 <td class="left"><code>mapToInt()</code></td>
 <td class="left"><code>map()</code></td> </tr> </tbody> </table>
 
+Java requires a mapping function to be provided as a parameter
+```java
+Stream<String> objStream = Stream.of("penguin", "fish");
+IntStream intStream = objStream.mapToInt(s -> s.length())
+```
+
+<table>
+<thead>
+<tr>
+<th scope="col">Source stream class</th>
+<th scope="col"> To create <br> <code>Stream</code> </th>
+<th scope="col"> To create <br> <code>DoubleStream</code> </th>
+<th scope="col"> To create <br> <code>IntStream</code> </th>
+<th scope="col"> To create <br> <code>LongStream</code> </th> </tr> </thead>
+<tbody>
+<tr>
+<td class="left"><code>Stream&lt;T&gt;</code></td>
+<td class="left"><code>Function&lt;T,R&gt;</code></td>
+<td class="left"><code>ToDoubleFunction&lt;T&gt;</code></td>
+<td class="left"><code>ToIntFunction&lt;T&gt;</code></td>
+<td class="left"><code>ToLongFunction&lt;T&gt;</code></td> </tr>
+<tr>
+<td class="left"><code>DoubleStream</code></td>
+<td class="left"><code>Double Function&lt;R&gt;</code></td>
+<td class="left"><code>DoubleUnary Operator</code></td>
+<td class="left"><code>DoubleToInt Function</code></td>
+<td class="left"><code>DoubleToLong Function</code></td> </tr>
+<tr>
+<td class="left"><code>IntStream</code></td>
+<td class="left"><code>IntFunction&lt;R&gt;</code></td>
+<td class="left"><code>IntToDouble Function</code></td>
+<td class="left"><code>IntUnary Operator</code></td>
+<td class="left"><code>IntToLong Function</code></td> </tr>
+<tr>
+<td class="left"><code>LongStream</code></td>
+<td class="left"><code>Long Function&lt;R&gt;</code></td>
+<td class="left"><code>LongToDouble Function</code></td>
+<td class="left"><code>LongToInt Function</code></td>
+<td class="left"><code>LongUnary Operator</code></td> </tr> </tbody> </table>
+
+```java
+private static Stream<Integer> mapping(IntStream stream) {
+   return stream.mapToObj(x -> x);
+}
+ 
+private static Stream<Integer> boxing(IntStream stream) {
+  return stream.boxed();
+}
+```
+
+### Optional with Primitive Streams
+
+```java
+var stream = IntStream.rangeClosed(1,10);
+OptionalDouble optional = stream.average();
+```
+
+```java
+optional.ifPresent(System.out::println); // 5.5
+System.out.println(optional.getAsDouble()); // 5.5
+System.out.println(optional.orElseGet(() -> Double.NaN)); // 5.5
+```
+
+<table>
+<thead>
+<tr>
+<th scope="col" class="left"></th>
+<th scope="col"> <code>OptionalDouble</code> </th>
+<th scope="col"> <code>OptionalInt</code> </th>
+<th scope="col"> <code>OptionalLong</code> </th> </tr> </thead>
+<tbody>
+<tr>
+<td class="left">Getting as primitive</td>
+<td class="left"><code>getAsDouble()</code></td>
+<td class="left"><code>getAsInt()</code></td>
+<td class="left"><code>getAsLong()</code></td> </tr>
+<tr>
+<td class="left"><code>orElseGet()</code> parameter type</td>
+<td class="left"><code>DoubleSupplier</code></td>
+<td class="left"><code>IntSupplier</code></td>
+<td class="left"><code>LongSupplier</code></td> </tr>
+<tr>
+<td class="left">Return type of <code>max()</code> and <code>min()</code></td>
+<td class="left"><code>OptionalDouble</code></td>
+<td class="left"><code>OptionalInt</code></td>
+<td class="left"><code>OptionalLong</code></td> </tr>
+<tr>
+<td class="left">Return type of <code>sum()</code></td>
+<td class="left"><code>double</code></td>
+<td class="left"><code>int</code></td>
+<td class="left"><code>long</code></td> </tr>
+<tr>
+<td class="left">Return type of <code>average()</code></td>
+<td class="left"><code>OptionalDouble</code></td>
+<td class="left"><code>OptionalDouble</code></td>
+<td class="left"><code>OptionalDouble</code></td> </tr> </tbody> </table>
+
+```java
+LongStream longs = LongStream.of(5, 10);
+long sum = longs.sum();
+System.out.println(sum);     // 15
+DoubleStream doubles = DoubleStream.generate(() -> Math.PI);
+OptionalDouble min = doubles.min(); // runs infinitely
+```
+
+### Summarizing Statistics
+
+Both `min()` and `max()` are terminal operations, which means that they use up the stream when they are run. We can't run two terminal operations against the same stream. Luckily, this is a common problem, and the primitive streams solve it for us with summary statistics. 
+
+```java
+private static int range(IntStream ints) {
+   IntSummaryStatistics stats = ints.summaryStatistics();
+   if (stats.getCount() == 0) throw new RuntimeException();
+   return stats.getMax()-stats.getMin();
+}
+```
+
+- `getCount()`: Returns a long representing the number of values.
+- `getAverage()`: Returns a double representing the average. If the stream is empty, returns 0.
+- `getSum()`: Returns the sum as a double for DoubleSummaryStream and long for IntSummaryStream and LongSummaryStream.
+- `getMin()`: Returns the smallest number (minimum) as a double, int, or long, depending on the type of the stream. If the stream is empty, returns the largest numeric value based on the type.
+- `getMax()`: Returns the largest number (maximum) as a double, int, or long depending on the type of the stream. If the stream is empty, returns the smallest numeric value based on the type.
+
+## Advanced Stream Pipeline Concepts
+
+### Linking Streams to the Underlying Data
+
+```java
+var cats = new ArrayList<String>();
+cats.add("Annie");
+cats.add("Ripley");
+var stream = cats.stream();
+cats.add("KC");
+System.out.println(stream.count()); // 3
+```
+
+### Checked exceptions and functional interfaces
+
+```java
+import java.io.*;
+import java.util.*;
+public class ExceptionCaseStudy {
+   private static List<String> create() throws IOException {
+      throw new IOException();
+   }
+}
+```
+
+```java
+public void good() throws IOException {
+   ExceptionCaseStudy.create().stream().count();
+}
+
+public void bad() throws IOException {
+   Supplier<List<String>> s = ExceptionCaseStudy::create; 
+   // DOES NOT COMPILE  unhandled exception type IOException
+}
+```
+
+```java
+public void ugly() {
+   Supplier<List<String>> s = () -> {
+      try {
+         return ExceptionCaseStudy.create();
+      } catch (IOException e) {
+         throw new RuntimeException(e);
+      }
+   };
+}
+```
+
+```java
+private static List<String> createSafe() {
+   try {
+      return ExceptionCaseStudy.create();
+   } catch (IOException e) {
+      throw new RuntimeException(e);
+   } }
+```   
+
+```java
+public void wrapped() {
+   Supplier<List<String>> s2 = ExceptionCaseStudy::createSafe;
+}
+```
+
+## Spliterator
+
 
 
 # Exceptions
@@ -6820,19 +7046,3 @@ public int hashCode() {
 # I/O
 
 # JDBC
-
-```java
-Stream.generate(() -> "Elsa")
-   .filter(n -> n.length() == 4)
-   .sorted()
-   .limit(2)
-   .forEach(System.out::println);
-```   
-
-```java
-Stream.generate(() -> "Olaf Laz")
-   .filter(n -> n.length() == 4)
-   .limit(2)
-   .sorted()
-   .forEach(System.out::println); 
-```   
