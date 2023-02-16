@@ -272,6 +272,8 @@
   - [Formatting Messages](#formatting-messages)
   - [Properties Class](#properties-class)
 - [Modules](#modules)
+  - [A Module](#a-module)
+  - [Creating and Running a Modular Program](#creating-and-running-a-modular-program)
 - [Concurrency](#concurrency)
   - [Data races](#data-races)
 - [I/O](#io)
