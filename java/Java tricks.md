@@ -220,11 +220,7 @@
     - [Sorting](#sorting)
     - [Taking a Peek](#taking-a-peek)
   - [Examples](#examples-2)
-- [Exceptions](#exceptions)
-- [Internalization](#internalization)
-- [Modules](#modules)
-- [Concurrency](#concurrency)
-  - [Data races](#data-races)
+  - [Primitive Streams](#primitive-streams)
 - [I/O](#io)
 - [JDBC](#jdbc)
 
@@ -3468,14 +3464,14 @@ public Animal(List<String> favoriteFoods) {
 - Interface methods without a body are implicitly abstract.
 - Interface methods without the private modifier are implicitly public.
 
-Item	         | Membership type |	Required modifiers |	Implicit modifiers   |  Has value or body?
-------| ---             |  ------------------ | -------------------- | -------------------
-Constant variable	| Class	| — | 	public static final	| Yes
-abstract method |	Instance	| — | 	public abstract	| No
-default method	| Instance	| default | 	public | 	Yes
-static method	| Class	| static	| public	| Yes
-private method	| Instance	| private	| —	| Yes
-private static method	| Class	| private static	| —	| Yes
+| Item                  | Membership type | Required modifiers | Implicit modifiers  | Has value or body? |
+| --------------------- | --------------- | ------------------ | ------------------- | ------------------ |
+| Constant variable     | Class           | —                  | public static final | Yes                |
+| abstract method       | Instance        | —                  | public abstract     | No                 |
+| default method        | Instance        | default            | public              | Yes                |
+| static method         | Class           | static             | public              | Yes                |
+| private method        | Instance        | private            | —                   | Yes                |
+| private static method | Class           | private static     | —                   | Yes                |
 
 > Alongside public methods, interfaces now support private methods. They do not support protected access, though, as a class cannot extend an interface. They also do not support package access, although more likely for syntax reasons and backward compatibility
 
@@ -4630,17 +4626,17 @@ System.out.println(myString.equals("Zebra"));  // true
 ## General functional interfaces
 
 
-Functional interface |  Return type	| Method name  | # of parameters
----------------------| -------------| -------------| ---------------
-`Supplier<T>`        | `T`	         | `get()`      |	0
-`Consumer<T>`        | `void`	      | `accept(T)`	| 1 (T)
-`BiConsumer<T, U>`	| `void`	      | `accept(T,U)`| 2 (T, U)
-`Predicate<T>`	      | `boolean`    | `test(T)`	   | 1 (T)
-`BiPredicate<T, U>`	| `boolean`	   | `test(T,U)`	| 2 (T, U)
-`Function<T, R>`	   | `R`	         | `apply(T)`	| 1 (T)
-`BiFunction<T, U, R>`| `R`	         | `apply(T,U)`	| 2 (T, U)
-`UnaryOperator<T>`	| `T`	         | `apply(T)`	| 1 (T)
-`BinaryOperator<T>`	| `T`	         | `apply(T,T)`	| 2 (T, T)
+| Functional interface  | Return type | Method name   | # of parameters |
+| --------------------- | ----------- | ------------- | --------------- |
+| `Supplier<T>`         | `T`         | `get()`       | 0               |
+| `Consumer<T>`         | `void`      | `accept(T)`   | 1 (T)           |
+| `BiConsumer<T, U>`    | `void`      | `accept(T,U)` | 2 (T, U)        |
+| `Predicate<T>`        | `boolean`   | `test(T)`     | 1 (T)           |
+| `BiPredicate<T, U>`   | `boolean`   | `test(T,U)`   | 2 (T, U)        |
+| `Function<T, R>`      | `R`         | `apply(T)`    | 1 (T)           |
+| `BiFunction<T, U, R>` | `R`         | `apply(T,U)`  | 2 (T, U)        |
+| `UnaryOperator<T>`    | `T`         | `apply(T)`    | 1 (T)           |
+| `BinaryOperator<T>`   | `T`         | `apply(T,T)`  | 2 (T, T)        |
 
 ### Supplier
 
@@ -4820,14 +4816,14 @@ System.out.println(b2.apply("baby ", "chick")); // baby chick
 
 ### Convenience Methods on Functional Interfaces
 
-Interface instance   |	Method return type   |	Method name |	Method parameters
----------------------|-----------------------|--------------|-------------------
-Consumer             | Consumer	            | `andThen()`  |	Consumer
-Function	            | Function	            | `andThen()`  |	Function
-Function	            | Function	            | `compose()`  |	Function
-Predicate         	| Predicate	            | `and()`	   | Predicate
-Predicate         	| Predicate	            | `negate()`   | —
-Predicate         	| Predicate	            | `or()`	      | Predicate
+| Interface instance | Method return type | Method name | Method parameters |
+| ------------------ | ------------------ | ----------- | ----------------- |
+| Consumer           | Consumer           | `andThen()` | Consumer          |
+| Function           | Function           | `andThen()` | Function          |
+| Function           | Function           | `compose()` | Function          |
+| Predicate          | Predicate          | `and()`     | Predicate         |
+| Predicate          | Predicate          | `negate()`  | —                 |
+| Predicate          | Predicate          | `or()`      | Predicate         |
 
 ```java
 Predicate<String> egg = s -> s.contains("egg");
@@ -4869,54 +4865,54 @@ System.out.println(b1.getAsBoolean()); // true
 System.out.println(b2.getAsBoolean()); // false
 ```
 
-Functional interfaces | Return type | Single abstract method | 
-----------------------|-------------|------------------------|
-DoubleSupplier        | double      | getAsDouble
-IntSupplier           | int         | getAsInt
-LongSupplier          | long	      | getAsLong     
-----------------------|-------------|------------------------|
-DoubleConsumer        | void        | accept
-IntConsumer           | void        | accept
-LongConsumer          | void        | accept
-----------------------|-------------|------------------------|
-DoublePredicate       | boolean     | test
-IntPredicate          | boolean     | test
-LongPredicate	       | boolean     | test
-----------------------|-------------|------------------------|
-DoubleFunction<R>     | R           | apply
-IntFunction<R>        | R           | apply
-LongFunction<R>       | R           | apply
-----------------------|-------------|------------------------|
-DoubleUnaryOperator   | double      | applyAsDouble
-IntUnaryOperator      | int         | applyAsInt
-LongUnaryOperator	    | long        | applyAsLong
-----------------------|-------------|------------------------|
-DoubleBinaryOperator  | double      | applyAsDouble
-IntBinaryOperator     | int         | applyAsInt
-LongBinaryOperator	 | long        | applyAsLong
+| Functional interfaces  | Return type   | Single abstract method   |
+| ---------------------- | ------------- | ------------------------ |
+| DoubleSupplier         | double        | getAsDouble              |
+| IntSupplier            | int           | getAsInt                 |
+| LongSupplier           | long          | getAsLong                |
+| ---------------------- | ------------- | ------------------------ |
+| DoubleConsumer         | void          | accept                   |
+| IntConsumer            | void          | accept                   |
+| LongConsumer           | void          | accept                   |
+| ---------------------- | ------------- | ------------------------ |
+| DoublePredicate        | boolean       | test                     |
+| IntPredicate           | boolean       | test                     |
+| LongPredicate          | boolean       | test                     |
+| ---------------------- | ------------- | ------------------------ |
+| DoubleFunction<R>      | R             | apply                    |
+| IntFunction<R>         | R             | apply                    |
+| LongFunction<R>        | R             | apply                    |
+| ---------------------- | ------------- | ------------------------ |
+| DoubleUnaryOperator    | double        | applyAsDouble            |
+| IntUnaryOperator       | int           | applyAsInt               |
+| LongUnaryOperator      | long          | applyAsLong              |
+| ---------------------- | ------------- | ------------------------ |
+| DoubleBinaryOperator   | double        | applyAsDouble            |
+| IntBinaryOperator      | int           | applyAsInt               |
+| LongBinaryOperator     | long          | applyAsLong              |
 
-Functional interfaces    | Return type | Single abstract method | 
--------------------------|-------------|------------------------|
-ToDoubleFunction<T>      | double      | applyAsDouble
-ToIntFunction<T>         | int         | applyAsInt
-ToLongFunction<T>	       | long        | applyAsLong
--------------------------|-------------|------------------------|
-ToDoubleBiFunction<T, U> | double      | applyAsDouble
-ToIntBiFunction<T, U>    | int         | applyAsInt
-ToLongBiFunction<T, U>	 | long        | applyAsLong
--------------------------|-------------|------------------------|
-DoubleToIntFunction      | int         | applyAsInt
-DoubleToLongFunction     | long        | applyAsLong
--------------------------|-------------|------------------------|
-IntToDoubleFunction      | double      | applyAsDouble
-IntToLongFunction        | long        | applyAsLong
--------------------------|-------------|------------------------|
-LongToDoubleFunction     | double      | applyAsDouble
-LongToIntFunction	       | int         | applyAsInt
--------------------------|-------------|------------------------|
-ObjDoubleConsumer<T>     | void        | accept
-ObjIntConsumer<T>        | void        | accept
-ObjLongConsumer<T>       | void        | accept
+| Functional interfaces     | Return type   | Single abstract method   |
+| ------------------------- | ------------- | ------------------------ |
+| ToDoubleFunction<T>       | double        | applyAsDouble            |
+| ToIntFunction<T>          | int           | applyAsInt               |
+| ToLongFunction<T>         | long          | applyAsLong              |
+| ------------------------- | ------------- | ------------------------ |
+| ToDoubleBiFunction<T, U>  | double        | applyAsDouble            |
+| ToIntBiFunction<T, U>     | int           | applyAsInt               |
+| ToLongBiFunction<T, U>    | long          | applyAsLong              |
+| ------------------------- | ------------- | ------------------------ |
+| DoubleToIntFunction       | int           | applyAsInt               |
+| DoubleToLongFunction      | long          | applyAsLong              |
+| ------------------------- | ------------- | ------------------------ |
+| IntToDoubleFunction       | double        | applyAsDouble            |
+| IntToLongFunction         | long          | applyAsLong              |
+| ------------------------- | ------------- | ------------------------ |
+| LongToDoubleFunction      | double        | applyAsDouble            |
+| LongToIntFunction         | int           | applyAsInt               |
+| ------------------------- | ------------- | ------------------------ |
+| ObjDoubleConsumer<T>      | void          | accept                   |
+| ObjIntConsumer<T>         | void          | accept                   |
+| ObjLongConsumer<T>        | void          | accept                   |
 
 # Collections Framework
 
@@ -5031,11 +5027,11 @@ System.out.println(list1.equals(set1));   // false
 
 ### Create list via factory methods
 
-Method | Description | Can add elements? | Can replace elements? | Can delete elements? |
--------|-------------|-------------------|-----------------------|----------------------|
-`Arrays.asList(varargs)` | Returns fixed size list backed by an array |	No | Yes | No |
-`List.of(varargs)` | Returns immutable list | No | No | No |
-`List.copyOf(collection)` | Returns immutable list with copy of original collection's values	| No | No |	No |
+| Method                    | Description                                                      | Can add elements? | Can replace elements? | Can delete elements? |
+| ------------------------- | ---------------------------------------------------------------- | ----------------- | --------------------- | -------------------- |
+| `Arrays.asList(varargs)`  | Returns fixed size list backed by an array                       | No                | Yes                   | No                   |
+| `List.of(varargs)`        | Returns immutable list                                           | No                | No                    | No                   |
+| `List.copyOf(collection)` | Returns immutable list with copy of original collection's values | No                | No                    | No                   |
 
 ```java
 String[] array = new String[] {"a", "b", "c"};
@@ -5559,13 +5555,13 @@ Comparator<Duck> byWeight = Comparator.comparing(Duck::getWeight);
 
 ## Comparing Comparable and Comparator
 
-Difference | Comparable | Comparator |
------------| ---------- | -----------|
-Package name |	`java.lang`	| `java.util`
-Interface must be implemented by class comparing? | Yes | No
-Method name in interface | `compareTo()` | `compare()`
-Number of parameters | 1 |	2 |
-Common to declare using a lambda	| No | Yes
+| Difference                                        | Comparable    | Comparator  |
+| ------------------------------------------------- | ------------- | ----------- |
+| Package name                                      | `java.lang`   | `java.util` |
+| Interface must be implemented by class comparing? | Yes           | No          |
+| Method name in interface                          | `compareTo()` | `compare()` |
+| Number of parameters                              | 1             | 2           |
+| Common to declare using a lambda                  | No            | Yes         |
 
 ```java
 var byWeight = new Comparator<Duck>() { // DOES NOT COMPILE
@@ -6125,11 +6121,14 @@ List<?> list6 = new ArrayList<? extends A>(); // DOES NOT COMPILE
 This method, third(), does not compile. <B extends A> says that you want to use B as a type parameter just for this method and that it needs to extend the A class. Coincidentally, B is also the name of a class. Well, it isn't a coincidence. It's an evil trick. Within the scope of the method, B can represent class A, B, or C, because all extend the A class. Since B no longer refers to the B class in the method, you can't instantiate it.
 
 ```java
-void fourth(List<? super B> list) {} // You can pass the type List<B>, List<A>, or List<Object>.
+void fourth(List<? super B> list) {} 
+// You can pass the type List<B>, List<A>, or List<Object>.
 ```
 
 ```java
-<X> void fifth(List<X super B> list) { // DOES NOT COMPILE tries to mix a method-specific type parameter with a wildcard. A wildcard must have a ? in it
+<X> void fifth(List<X super B> list) { 
+// DOES NOT COMPILE tries to mix a method-specific 
+// type parameter with a wildcard. A wildcard must have a ? in it
 }
 ```
 
@@ -6166,7 +6165,9 @@ if (opt.isPresent())
 
 ```java
 Optional<Double> opt = average();
-System.out.println(opt.get()); // can be NoSuchElementException. java.util.NoSuchElementException: No value present
+System.out.println(opt.get()); 
+// can be NoSuchElementException. 
+// java.util.NoSuchElementException: No value present
 ```
 
 ```java
@@ -6180,15 +6181,15 @@ opt.ifPresent(System.out::println);
 
 ## Optional methods
 
-Method | When Optional is empty | When Optional contains value
--------| ---------------------- | ---------------------------
-`get()` | Throws exception | Returns value
-`ifPresent(Consumer c)` | Does nothing	| Calls Consumer with value
-`isPresent()` | Returns `false` | Returns `true`
-`orElse(T other)` | Returns other parameter | Returns value
-`orElseGet(Supplier s)` | Returns result of calling `Supplier` | Returns value
-`orElseThrow()` | Throws `NoSuchElementException` | Returns value
-`orElseThrow(Supplier s)` | Throws exception created by calling `Supplier` | Returns value
+| Method                    | When Optional is empty                         | When Optional contains value |
+| ------------------------- | ---------------------------------------------- | ---------------------------- |
+| `get()`                   | Throws exception                               | Returns value                |
+| `ifPresent(Consumer c)`   | Does nothing                                   | Calls Consumer with value    |
+| `isPresent()`             | Returns `false`                                | Returns `true`               |
+| `orElse(T other)`         | Returns other parameter                        | Returns value                |
+| `orElseGet(Supplier s)`   | Returns result of calling `Supplier`           | Returns value                |
+| `orElseThrow()`           | Throws `NoSuchElementException`                | Returns value                |
+| `orElseThrow(Supplier s)` | Throws exception created by calling `Supplier` | Returns value                |
 
 ```java
 Optional<Double> opt = average();
@@ -6437,7 +6438,8 @@ s.filter(x -> x.startsWith("m"))
 ```
 
 ```java
-public Stream<T> distinct() // returns a stream with duplicate values removed
+public Stream<T> distinct() 
+// returns a stream with duplicate values removed
 ```
 
 ```java
@@ -6464,7 +6466,9 @@ s.skip(5)
 #### map
 
 ```java
-public <R> Stream<R> map(Function<? super T, ? extends R> mapper) // creates a one-to-one mapping from the elements in the stream to the elements of the next step in the stream
+// creates a one-to-one mapping from the elements in the stream to 
+// the elements of the next step in the stream
+public <R> Stream<R> map(Function<? super T, ? extends R> mapper) 
 ```
 
 ```java
@@ -6529,7 +6533,9 @@ s.sorted(Comparator::reverseOrder);  // DOES NOT COMPILE
 ### Taking a Peek
 
 ```java
-public Stream<T> peek(Consumer<? super T> action) //  It is useful for debugging because it allows us to perform a stream operation without changing the stream
+public Stream<T> peek(Consumer<? super T> action) 
+//  It is useful for debugging because it allows us
+//  to perform a stream operation without changing the stream
 ```
 
 ```java
@@ -6571,7 +6577,9 @@ Stream.generate(() -> "Elsa")
    .filter(n -> n.length() == 4)
    .sorted()
    .limit(2)
-   .forEach(System.out::println); // hangs until you kill the program, or it throws an exception after running out of memory.
+   .forEach(System.out::println); 
+// hangs until you kill the program, 
+// or it throws an exception after running out of memory.
 ```   
 
 ```java
@@ -6579,8 +6587,187 @@ Stream.generate(() -> "Olaf Laz")
    .filter(n -> n.length() == 4)
    .limit(2)
    .sorted()
-   .forEach(System.out::println); // This one hangs as well until we kill the program. The filter doesn't allow anything through, so limit() never sees two elements
+   .forEach(System.out::println); 
+// This one hangs as well until we kill the program. 
+// The filter doesn't allow anything through, 
+// so limit() never sees two elements
 ```   
+
+```java
+long count =  Stream.of("goldfish", "finch")
+   .filter(s -> s.length()> 5)
+   .collect(Collectors.toList())
+   .stream()
+   .count();
+System.out.println(count);   // 1
+```
+
+## Primitive Streams
+
+### Create primitive stream
+
+- `IntStream`: Used for the primitive types int, short, byte, and char
+- `LongStream`: Used for the primitive type long
+- `DoubleStream`: Used for the primitive types double and float
+
+```java
+Stream<Integer> stream = Stream.of(1, 2, 3);
+System.out.println(stream.reduce(0, (s, n) -> s + n));  // 6
+```
+
+```java
+Stream<Integer> stream = Stream.of(1, 2, 3);
+System.out.println(stream.mapToInt(x -> x).sum()); // 6
+```
+
+```java
+IntStream intStream = IntStream.of(1, 2, 3);
+OptionalDouble avg = intStream.average();
+System.out.println(avg.getAsDouble());  // 2.0
+```
+
+<table>
+<thead>
+<tr>
+<th scope="col">Method</th>
+<th scope="col">Primitive stream</th>
+<th scope="col">Description</th> </tr> </thead>
+<tbody>
+<tr>
+<td class="left"><code>OptionalDouble average()</code></td>
+<td class="left"><code>IntStream</code> <br> <code>LongStream</code> <br> <code>DoubleStream</code></td>
+<td class="left">Arithmetic mean of elements</td> </tr>
+<tr>
+<td class="left"><code>Stream&lt;T&gt; boxed()</code></td>
+<td class="left"><code>IntStream</code> <br> <code>LongStream</code> <br> <code>DoubleStream</code></td>
+<td class="left"><code>Stream&lt;T&gt;</code> where <code>T</code> is wrapper class associated with primitive value</td> </tr>
+<tr>
+<td class="left"><code>OptionalInt max()</code></td>
+<td class="left"><code>IntStream</code></td>
+<td class="left" rowspan="3">Maximum element of stream</td> </tr>
+<tr>
+<td class="left"><code>OptionalLong max()</code></td>
+<td class="left"><code>LongStream</code></td> </tr>
+<tr>
+<td class="left"><code>OptionalDouble max()</code></td>
+<td class="left"><code>DoubleStream</code></td> </tr>
+<tr>
+<td class="left"><code>OptionalInt min()</code></td>
+<td class="left"><code>IntStream</code></td>
+<td class="left" rowspan="3">Minimum element of stream</td> </tr>
+<tr>
+<td class="left"><code>OptionalLong min()</code></td>
+<td class="left"><code>LongStream</code></td> </tr>
+<tr>
+<td class="left"><code>OptionalDouble min()</code></td>
+<td class="left"><code>DoubleStream</code></td> </tr>
+<tr>
+<td class="left"><code>IntStream range(int a, int b)</code></td>
+<td class="left"><code>IntStream</code></td>
+<td class="left" rowspan="2">Returns primitive stream from <code>a</code> (inclusive) to <code>b</code> (exclusive)</td> </tr>
+<tr>
+<td class="left"><code>LongStream range(long a, long b)</code></td>
+<td class="left"><code>LongStream</code></td> </tr>
+<tr>
+<td class="left"><code>IntStream rangeClosed(int a, int b)</code></td>
+<td class="left"><code>IntStream</code></td>
+<td class="left" rowspan="2">Returns primitive stream from <code>a</code> (inclusive) to <code>b</code> (inclusive)</td> </tr>
+<tr>
+<td class="left"><code>LongStream rangeClosed(long a, long b)</code></td>
+<td class="left"><code>LongStream</code></td> </tr>
+<tr>
+<td class="left"><code>int sum()</code></td>
+<td class="left"><code>IntStream</code></td>
+<td class="left" rowspan="3">Returns sum of elements in stream</td> </tr>
+<tr>
+<td class="left"><code>long sum()</code></td>
+<td class="left"><code>LongStream</code></td> </tr>
+<tr>
+<td class="left"><code>double sum()</code></td>
+<td class="left"><code>DoubleStream</code></td> </tr>
+<tr>
+<td class="left"><code>IntSummaryStatistics summaryStatistics()</code></td>
+<td class="left"><code>IntStream</code></td>
+<td class="left" rowspan="3">Returns object containing numerous stream statistics such as average, min, max, etc.</td> </tr>
+<tr>
+<td class="left"><code>LongSummaryStatistics summaryStatistics()</code></td>
+<td class="left"><code>LongStream</code></td> </tr>
+<tr>
+<td class="left"><code>DoubleSummaryStatistics summaryStatistics()</code></td>
+<td class="left"><code>DoubleStream</code></td> </tr> </tbody> </table>
+
+
+```java
+DoubleStream empty = DoubleStream.empty();
+```
+
+```java
+DoubleStream oneValue = DoubleStream.of(3.14);
+oneValue.forEach(System.out::println);
+ 
+DoubleStream varargs = DoubleStream.of(1.0, 1.1, 1.2);
+varargs.forEach(System.out::println);
+```
+
+```java
+var random = DoubleStream.generate(Math::random);
+var fractions = DoubleStream.iterate(.5, d -> d / 2);
+random.limit(3).forEach(System.out::println);
+fractions.limit(3).forEach(System.out::println);
+```
+
+```java
+IntStream count = IntStream.iterate(1, n -> n+1).limit(5);
+count.forEach(System.out::print); // 12345
+```
+
+```java
+IntStream range = IntStream.range(1, 6);
+range.forEach(System.out::print); // 12345
+```
+
+```java
+IntStream rangeClosed = IntStream.rangeClosed(1, 5);
+rangeClosed.forEach(System.out::print); // 12345
+```
+
+### Mapping Streams
+
+<table>
+<thead>
+<tr>
+<th scope="col">Source stream class</th>
+<th scope="col">To create <code>Stream</code></th>
+<th scope="col">To create <code>DoubleStream</code></th>
+<th scope="col">To create <code>IntStream</code></th>
+<th scope="col">To create <code>LongStream</code></th> </tr> </thead>
+<tbody>
+<tr>
+<td class="left"><code>Stream&lt;T&gt;</code></td>
+<td class="left"><code>map()</code></td>
+<td class="left"><code>mapToDouble()</code></td>
+<td class="left"><code>mapToInt()</code></td>
+<td class="left"><code>mapToLong()</code></td> </tr>
+<tr>
+<td class="left"><code>DoubleStream</code></td>
+<td class="left"><code>mapToObj()</code></td>
+<td class="left"><code>map()</code></td>
+<td class="left"><code>mapToInt()</code></td>
+<td class="left"><code>mapToLong()</code></td> </tr>
+<tr>
+<td class="left"><code>IntStream</code></td>
+<td class="left"><code>mapToObj()</code></td>
+<td class="left"><code>mapToDouble()</code></td>
+<td class="left"><code>map()</code></td>
+<td class="left"><code>mapToLong()</code></td> </tr>
+<tr>
+<td class="left"><code>LongStream</code></td>
+<td class="left"><code>mapToObj()</code></td>
+<td class="left"><code>mapToDouble()</code></td>
+<td class="left"><code>mapToInt()</code></td>
+<td class="left"><code>map()</code></td> </tr> </tbody> </table>
+
+
 
 # Exceptions
 
@@ -6634,3 +6821,18 @@ public int hashCode() {
 
 # JDBC
 
+```java
+Stream.generate(() -> "Elsa")
+   .filter(n -> n.length() == 4)
+   .sorted()
+   .limit(2)
+   .forEach(System.out::println);
+```   
+
+```java
+Stream.generate(() -> "Olaf Laz")
+   .filter(n -> n.length() == 4)
+   .limit(2)
+   .sorted()
+   .forEach(System.out::println); 
+```   
