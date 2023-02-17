@@ -273,7 +273,35 @@
   - [Properties Class](#properties-class)
 - [Modules](#modules)
   - [A Module](#a-module)
-  - [Creating and Running a Modular Program](#creating-and-running-a-modular-program)
+  - [Creating and Running a First Modular Program](#creating-and-running-a-first-modular-program)
+    - [Compile](#compile)
+    - [Running](#running)
+    - [Packaging](#packaging)
+    - [Creating module with dependency](#creating-module-with-dependency)
+    - [Module with many dependencies](#module-with-many-dependencies)
+  - [Module Declaration](#module-declaration)
+    - [Exporting a Package](#exporting-a-package)
+    - [Requiring a Module Transitively](#requiring-a-module-transitively)
+    - [Opening a Package for Reflection](#opening-a-package-for-reflection)
+  - [Service](#service)
+    - [Declaring Service provider](#declaring-service-provider)
+    - [Creating a Service Locator](#creating-a-service-locator)
+    - [Invoking from a Consumer](#invoking-from-a-consumer)
+    - [Adding a Service Provider](#adding-a-service-provider)
+    - [Summary about directives](#summary-about-directives)
+  - [Discovering Modules](#discovering-modules)
+    - [Built-in Modules](#built-in-modules)
+    - [Getting Details with java](#getting-details-with-java)
+      - [Describing a Module](#describing-a-module)
+      - [Listing Available Modules](#listing-available-modules)
+      - [Showing Module Resolution](#showing-module-resolution)
+    - [Describing with jar](#describing-with-jar)
+    - [Learning about Dependencies with jdeps](#learning-about-dependencies-with-jdeps)
+    - [Using the --jdk-internals Flag](#using-the---jdk-internals-flag)
+    - [Using Module Files with jmod](#using-module-files-with-jmod)
+    - [Creating Java Runtimes with jlink](#creating-java-runtimes-with-jlink)
+    - [Reviewing Command-Line Options](#reviewing-command-line-options)
+  - [Comparing Types of Modules](#comparing-types-of-modules)
 - [Concurrency](#concurrency)
   - [Data races](#data-races)
 - [I/O](#io)
@@ -8848,7 +8876,9 @@ The Java Platform Module System includes the following:
 - Improved performance: Another benefit of a smaller Java package is improved startup time and a lower memory requirement.
 - Unique package enforcement: Since modules specify exposed packages, Java can ensure that each package comes from only one module and avoid confusion about what is being run.
 
-## Creating and Running a Modular Program
+## Creating and Running a First Modular Program
+
+![](images/modules_1.png)
 
 ```java
 package zoo.animal.feeding;
@@ -8871,12 +8901,987 @@ There are a few key differences between a module declaration and a regular Java 
 - The module declaration must use the keyword module instead of class, interface, or enum.
 - The module name follows the naming rules for package names. It often includes periods (.) in its name. Regular class and package names are not allowed to have dashes (-). Module names follow the same rule.
 
-to compile 
+### Compile
 ```
 javac --module-path mods
    -d feeding
    feeding/zoo/animal/feeding/*.java feeding/module-info.java
 ```
+
+<table>
+<thead>
+<tr>
+<th scope="col" class="left">Use for</th>
+<th scope="col" class="left">Abbreviation</th>
+<th scope="col" class="left">Long form</th> </tr> </thead>
+<tbody>
+<tr>
+<td class="left">Directory for class files</td>
+<td class="left"><code>-d &lt;dir&gt;</code></td>
+<td class="left">n/a</td> </tr>
+<tr>
+<td class="left">Module path</td>
+<td class="left"><code>-p &lt;path&gt;</code></td>
+<td class="left"><code>--module-path &lt;path&gt;</code></td> </tr> </tbody> </table>
+
+- The classpath option has three possible forms: `-cp`, `--class-path`, and `-classpath`. You can still use these options. In fact, it is common to do so when writing non-modular programs.
+
+
+```bash
+javac -p mods -d feeding
+   feeding/zoo/animal/feeding/*.java feeding/*.java
+ 
+javac -p mods -d feeding
+   feeding/zoo/animal/feeding/*.java feeding/module-info.java
+ 
+javac -p mods -d feeding
+   feeding/zoo/animal/feeding/Task.java feeding/module-info.java
+ 
+javac -p mods -d feeding
+   feeding/zoo/animal/feeding/Task.java feeding/*.java
+```
+
+### Running
+
+```bash
+java --module-path feeding
+   --module zoo.animal.feeding/zoo.animal.feeding.Task
+```
+
+```bash
+java -p feeding
+   -m zoo.animal.feeding/zoo.animal.feeding.Task
+```
+
+<table>
+<thead>
+<tr>
+<th scope="col" class="left">Use for</th>
+<th scope="col" class="left">Abbreviation</th>
+<th scope="col" class="left">Long form</th> </tr> </thead>
+<tbody>
+<tr>
+<td class="left">Module name</td>
+<td class="left"><code>-m &lt;name&gt;</code></td>
+<td class="left"><code>--module &lt;name&gt;</code></td> </tr>
+<tr>
+<td class="left">Module path</td>
+<td class="left"><code>-p &lt;path&gt;</code></td>
+<td class="left"><code>--module-path &lt;path&gt;</code></td> </tr> </tbody> </table>
+
+### Packaging
+
+```sh
+jar -cvf mods/zoo.animal.feeding.jar -C feeding/ .
+```
+
+run
+```sh
+java -p mods
+   -m zoo.animal.feeding/zoo.animal.feeding.Task
+```
+
+### Creating module with dependency
+
+- The `exports` directive is used to indicate that a module intends for those packages to be used by Java code outside the module. 
+- without an exports directive, the module is only available to be run from the command line on its own
+- The `requires` statement specifies that a module is needed  
+
+
+```java
+module zoo.animal.feeding {
+   exports zoo.animal.feeding; //  lists the package we are exporting so it can be used by other modules.
+}
+```
+
+```sh
+javac -p mods
+   -d feeding
+   feeding/zoo/animal/feeding/*.java feeding/module-info.java
+ 
+jar -cvf mods/zoo.animal.feeding.jar -C feeding/ .
+```
+
+then create module which will use previous module
+
+```java
+// HippoBirthday.java
+package zoo.animal.care.details;
+import zoo.animal.feeding.*;
+public class HippoBirthday {
+   private Task task;
+}
+ 
+// Diet.java
+package zoo.animal.care.medical;
+public class Diet { }
+```
+
+```java
+module zoo.animal.care {
+   exports zoo.animal.care.medical; //  lists the package we are exporting so it can be used by other modules.
+   requires zoo.animal.feeding; //  The zoo.animal.care module depends on the zoo.animal.feeding module.
+}
+```
+
+
+to compile
+```sh
+javac -p mods
+   -d care
+   care/zoo/animal/care/details/*.java
+   care/zoo/animal/care/medical/*.java
+   care/module-info.java
+```   
+
+to package
+```sh
+jar -cvf mods/zoo.animal.care.jar -C care/ .
+```
+
+### Module with many dependencies
+
+```java
+module zoo.animal.talks {
+   exports zoo.animal.talks.content;
+   exports zoo.animal.talks.media;
+   exports zoo.animal.talks.schedule;
+
+   requires zoo.animal.feeding;
+   requires zoo.animal.care;
+}
+```
+
+```java
+// ElephantScript.java
+package zoo.animal.talks.content;
+public class ElephantScript { }
+ 
+// SeaLionScript.java
+package zoo.animal.talks.content;
+public class SeaLionScript { }
+ 
+// Announcement.java
+package zoo.animal.talks.media;
+public class Announcement {
+   public static void main(String[] args) {
+      System.out.println("We will be having talks");
+   }
+}
+ 
+// Signage.java
+package zoo.animal.talks.media;
+public class Signage { }
+ 
+// Weekday.java
+package zoo.animal.talks.schedule;
+public class Weekday { }
+ 
+// Weekend.java
+package zoo.animal.talks.schedule;
+public class Weekend {}
+```
+
+```sh
+javac -p mods
+   -d talks
+   talks/zoo/animal/talks/content/*.java talks/zoo/animal/talks/media/*.java
+   talks/zoo/animal/talks/schedule/*.java talks/module-info.java
+ 
+jar -cvf mods/zoo.animal.talks.jar -C talks/ .
+```
+
+```java
+module zoo.staff {
+   requires zoo.animal.feeding;
+   requires zoo.animal.care;
+   requires zoo.animal.talks;
+}
+```
+
+```java
+package zoo.staff;
+public class Jobs { }
+```
+
+```sh
+javac -p mods
+   -d staff
+   staff/zoo/staff/*.java staff/module-info.java
+ 
+jar -cvf mods/zoo.staff.jar -C staff/ .
+```
+
+## Module Declaration
+
+### Exporting a Package
+
+- All public classes, interfaces, enums, and records are exported. Further, any public and protected fields and methods in those files are visible.
+- It's also possible to export a package to a specific module. 
+
+```java
+module zoo.animal.talks {
+   exports zoo.animal.talks.content to zoo.staff;
+   exports zoo.animal.talks.media;
+   exports zoo.animal.talks.schedule;
+ 
+   requires zoo.animal.feeding;
+   requires zoo.animal.care;
+}
+```
+
+<table>
+<thead>
+<tr>
+<th scope="col" class="left">Level</th>
+<th scope="col" class="left">Within module code</th>
+<th scope="col" class="left">Outside module</th> </tr> </thead>
+<tbody>
+<tr>
+<td class="left"><code>private</code></td>
+<td class="left">Available only within class</td>
+<td class="left">No access</td> </tr>
+<tr>
+<td class="left">Package</td>
+<td class="left">Available only within package</td>
+<td class="left">No access</td> </tr>
+<tr>
+<td class="left"><code>protected</code></td>
+<td class="left">Available only within package or to subclasses</td>
+<td class="left">Accessible to subclasses only if package is exported</td> </tr>
+<tr>
+<td class="left"><code>public</code></td>
+<td class="left">Available to all classes</td>
+<td class="left">Accessible only if package is exported</td> </tr> </tbody> </table>
+
+### Requiring a Module Transitively
+
+`requires transitive moduleName`, which means that any module that requires this module will also depend on `moduleName`
+
+```java
+module zoo.animal.feeding {
+   exports zoo.animal.feeding;
+}
+```
+
+```java
+module zoo.animal.care {
+   exports zoo.animal.care.medical;
+   requires transitive zoo.animal.feeding;
+}
+```
+
+```java
+module zoo.animal.talks {
+   exports zoo.animal.talks.content to zoo.staff;
+   exports zoo.animal.talks.media;
+   exports zoo.animal.talks.schedule;
+   // no longer needed requires zoo.animal.feeding;
+   // no longer needed requires zoo.animal.care;
+   requires transitive zoo.animal.care;
+}
+```
+
+```java
+module zoo.staff {
+   // no longer needed requires zoo.animal.feeding;
+   // no longer needed requires zoo.animal.care;
+   requires zoo.animal.talks;
+}
+```
+
+- Module `zoo.animal.talk`s can optionally declare that it requires the `zoo.animal.feeding` module, but it is not required.
+- Module `zoo.animal.care` cannot be compiled or executed without access to the `zoo.animal.feeding` module.
+- Module `zoo.animal.talks` cannot be compiled or executed without access to the `zoo.animal.feeding` module.
+
+```java
+module bad.module {
+   requires zoo.animal.talks;
+   requires transitive zoo.animal.talks; // DOES NOT COMPILE
+}
+```
+
+### Opening a Package for Reflection
+
+- The `opens` directive is used to enable reflection of a package within a module.
+- Since reflection can be dangerous, the module system requires developers to explicitly allow reflection in the module declaration if they want calling modules to be allowed to use it. 
+
+```java
+module zoo.animal.talks {
+   opens zoo.animal.talks.schedule; // allows any module using this one to use reflection
+   opens zoo.animal.talks.media to zoo.staff; // only gives that privilege to the zoo.staff module.
+}
+```
+
+to open whole module
+
+```java
+open module zoo.animal.talks {
+}
+```
+
+```java
+open module zoo.animal.talks {
+   opens zoo.animal.talks.schedule; // DOES NOT COMPILE
+}
+```
+
+## Service
+
+- A service is composed of an interface, any classes the interface references, and a way of looking up implementations of the interface. 
+- The implementations are not part of the service.
+
+### Declaring Service provider
+
+-  A service provider “interface” can be an abstract class rather than an actual interface
+
+```java
+// Souvenir.java
+package zoo.tours.api;
+ 
+public record Souvenir(String description) { }
+```
+
+```java
+// Tour.java
+package zoo.tours.api;
+ 
+public interface Tour {
+   String name();
+   int length();
+   Souvenir getSouvenir();
+}
+```
+
+```java
+// module-info.java
+module zoo.tours.api {
+   exports zoo.tours.api;
+}
+```
+
+```sh
+javac -d serviceProviderInterfaceModule
+   serviceProviderInterfaceModule/zoo/tours/api/*.java
+   serviceProviderInterfaceModule/module-info.java
+ 
+jar -cvf mods/zoo.tours.api.jar -C serviceProviderInterfaceModule/ .
+```
+
+### Creating a Service Locator
+
+- A **service locator** can find any classes that implement a service provider interface.
+- The `ServiceLoader` call is relatively expensive. If you are writing a real application, it is best to cache the result.
+
+
+```java
+public final class ServiceLoader<S> implements Iterable<S> {
+ 
+   public static <S> ServiceLoader<S> load(Class<S> service) { … }
+ 
+   public Stream<Provider<S>> stream() { … }
+ 
+    // Additional methods
+}
+```
+
+```java
+// TourFinder.java
+package zoo.tours.reservations;
+ 
+import java.util.*;
+import zoo.tours.api.*;
+ 
+public class TourFinder {
+ 
+   public static Tour findSingleTour() {
+      ServiceLoader<Tour> loader = ServiceLoader.load(Tour.class);
+      for (Tour tour : loader)
+         return tour;
+      return null;
+   }
+   public static List<Tour> findAllTours() {
+      List<Tour> tours = new ArrayList<>();
+      ServiceLoader<Tour> loader = ServiceLoader.load(Tour.class);
+      for (Tour tour : loader)
+         tours.add(tour);
+      return tours;
+   }
+}
+```
+
+```java
+// module-info.java
+module zoo.tours.reservations {
+   exports zoo.tours.reservations;
+   requires zoo.tours.api;
+   uses zoo.tours.api.Tour;
+}
+```
+
+```sh
+javac -p mods -d serviceLocatorModule
+   serviceLocatorModule/zoo/tours/reservations/*.java
+   serviceLocatorModule/module-info.java
+ 
+jar -cvf mods/zoo.tours.reservations.jar -C serviceLocatorModule/ .
+```
+
+### Invoking from a Consumer
+
+A consumer (or client) refers to a module that obtains and uses a service. Once the consumer has acquired a service via the service locator, it is able to invoke the methods provided by the service provider interface.
+
+```java
+// Tourist.java
+package zoo.visitor;
+ 
+import java.util.*;
+import zoo.tours.api.*;
+import zoo.tours.reservations.*;
+ 
+public class Tourist {
+   public static void main(String[] args) {
+      Tour tour = TourFinder.findSingleTour();
+      System.out.println("Single tour: " + tour);
+ 
+      List<Tour> tours = TourFinder.findAllTours();
+      System.out.println("# tours: " + tours.size());
+   }
+}
+```
+
+```java
+// module-info.java
+module zoo.visitor {
+   requires zoo.tours.api;
+   requires zoo.tours.reservations;
+}
+```
+
+```sh
+javac -p mods -d consumerModule
+   consumerModule/zoo/visitor/*.java consumerModule/module-info.java
+ 
+jar -cvf mods/zoo.visitor.jar -C consumerModule/ .
+ 
+java -p mods -m zoo.visitor/zoo.visitor.Tourist
+```
+
+```
+Single tour: null
+# tours: 0
+```
+
+### Adding a Service Provider
+
+- A service provider is the implementation of a service provider interface. 
+- at runtime it is possible to have multiple implementation classes or modules.
+
+
+```java
+// TourImpl.java
+package zoo.tours.agency;
+ 
+import zoo.tours.api.*;
+ 
+public class TourImpl implements Tour {
+   public String name() {
+      return "Behind the Scenes";
+   }
+   public int length() {
+      return 120;
+   }
+   public Souvenir getSouvenir() {
+      return new Souvenir("stuffed animal");
+   }
+}
+```
+
+```java
+// module-info.java
+module zoo.tours.agency {
+   requires zoo.tours.api;
+   provides zoo.tours.api.Tour with zoo.tours.agency.TourImpl;
+}
+```
+
+We don't export the package that implements the interface since we don't want callers referring to it directly. Instead, we use the provides directive. This allows us to specify that we provide an implementation of the interface with a specific implementation class.
+
+```sh
+javac -p mods -d serviceProviderModule
+   serviceProviderModule/zoo/tours/agency/*.java
+   serviceProviderModule/module-info.java
+jar -cvf mods/zoo.tours.agency.jar -C serviceProviderModule/ .
+```
+
+```sh
+java -p mods -m zoo.visitor/zoo.visitor.Tourist
+```
+
+```
+Single tour: zoo.tours.agency.TourImpl@1936f0f5
+# tours: 1
+```
+
+### Summary about directives
+
+<table>
+<thead>
+<tr>
+<th scope="col" class="left">Artifact</th>
+<th scope="col" class="left">Part of the service</th>
+<th scope="col" class="left">Directives required</th> </tr> </thead>
+<tbody>
+<tr>
+<td class="left">Service provider interface</td>
+<td class="left">Yes</td>
+<td class="left"><code>exports</code></td> </tr>
+<tr>
+<td class="left">Service provider</td>
+<td class="left">No</td>
+<td class="left"><code>requires</code> <br> <code>provides</code></td> </tr>
+<tr>
+<td class="left">Service locator</td>
+<td class="left">Yes</td>
+<td class="left"><code>exports</code> <br> <code>requires</code> <br> <code>uses</code></td> </tr>
+<tr>
+<td class="left">Consumer</td>
+<td class="left">No</td>
+<td class="left"><code>requires</code></td> </tr> </tbody> </table>
+
+<table >
+<thead>
+<tr>
+<th scope="col" class="left">Directive</th>
+<th scope="col" class="left">Description</th> </tr> </thead>
+<tbody>
+<tr>
+<td class="left"><b><code>exports</code> </b> <code><i>package</i>;</code><br><b> <code>exports</code> </b> <i><code>package</code></i><b><code>to</code></b> <code><i>module</i>;</code></td>
+<td class="left">Makes package available outside module</td> </tr>
+<tr>
+<td class="left"><b><code>requires</code> </b> <code><i>module</i>;</code><br><b> <code>requires transitive</code> </b> <code><i>module</i>;</code></td>
+<td class="left">Specifies another module as dependency</td> </tr>
+<tr>
+<td class="left"><b><code>opens</code> </b> <code><i>package</i>;</code><br><b> <code>opens</code> </b> <i><code>package</code></i><b><code>to</code></b> <code><i>module</i>;</code></td>
+<td class="left">Allows package to be used with reflection</td> </tr>
+<tr>
+<td class="left"><b><code>provides</code> </b> <i><code>serviceInterface</code></i><b><code>with</code></b> <code><i>implName</i>;</code></td>
+<td class="left">Makes service available</td> </tr>
+<tr>
+<td class="left"><b><code>uses</code> </b> <code><i>serviceInterface</i>;</code></td>
+<td class="left">References service</td> </tr> </tbody> </table>
+
+## Discovering Modules
+
+### Built-in Modules
+
+- you don't have to use the requires directive for `java.base`; it is available to all modular applications. 
+- `module-info.java` file will still compile if you explicitly require `java.base`. However, it is redundant
+- module names begin with `java` for APIs you are likely to use and with `jdk` for APIs that are specific to the JDK
+
+common modules
+<table>
+<thead>
+<tr>
+<th scope="col" class="left">Module name</th>
+<th scope="col" class="left">What it contains</th>
+<tbody>
+<tr>
+<td class="left"><code>java.base</code></td>
+<td class="left">Collections, math, IO, NIO.2, concurrency, etc.</td>
+<tr>
+<td class="left"><code>java.desktop</code></td>
+<td class="left">Abstract Windows Toolkit (AWT) and Swing</td>
+<tr>
+<td class="left"><code>java.logging</code></td>
+<td class="left">Logging</td>
+<tr>
+<td class="left"><code>java.sql</code></td>
+<td class="left">JDBC</td>
+<tr>
+<td class="left"><code>java.xml</code></td>
+<td class="left">Extensible Markup Language (XML)</td> </tbody> </table>
+
+another java modules:
+- java.naming	
+- java.smartcardio
+- java.compiler
+- java.net.http
+- java.datatransfer
+- java.prefs
+- java.sql.rowset
+- java.desktop
+- java.rmi	java.transaction.xa
+- java.instrument
+- java.scripting	java.xml
+- java.logging	
+- java.se	
+- java.xml.crypto
+- java.management	
+- java.security.jgss	
+- java.management.rmi	
+- java.security.sasl	
+
+jdk modules:
+
+- jdk.accessiblity
+- jdk.javadoc	
+- jdk.management.agent
+- jdk.attach
+- jdk.jcmd
+- jdk.management.jfr
+- jdk.charsets
+- jdk.jconsole
+- jdk.naming.dns
+- jdk.compiler
+- jdk.jdeps
+- jdk.naming.rmi
+- jdk.crypto.cryptoki
+- jdk.jdi
+- jdk.net
+- jdk.crypto.ec
+- jdk.jdwp.agent
+- jdk.nio.mapmode
+- jdk.dynalink
+- jdk.jfr
+- jdk.sctp
+- jdk.editpad
+- jdk.jlink
+- jdk.security.auth
+- jdk.hotspot.agent
+- jdk.jshell
+- jdk.security.jgss
+- jdk.httpserver
+- jdk.jsobject
+- jdk.xml.dom
+- jdk.incubator.foreign
+- jdk.jstatd
+- jdk.zipfs
+- jdk.incubator.vector
+- jdk.localedata	
+- jdk.jartool
+- jdk.management	
+
+### Getting Details with java
+
+#### Describing a Module
+
+- You could “unjar” it and open the `module-info.java` file
+and
+
+```sh
+java -p mods
+   -d zoo.animal.feeding
+ 
+java -p mods
+   --describe-module zoo.animal.feeding
+```
+
+```
+zoo.animal.feeding file:///absolutePath/mods/zoo.animal.feeding.jar
+exports zoo.animal.feeding
+requires java.base mandated
+```
+
+#### Listing Available Modules
+
+to list the modules that are available
+
+```sh
+java --list-modules
+```
+
+```
+java.base@17
+java.compiler@17
+java.datatransfer@17
+...
+```
+
+```sh
+java -p mods --list-modules
+```
+
+```
+zoo.animal.care file:///absolutePath/mods/zoo.animal.care.jar
+zoo.animal.feeding file:///absolutePath/mods/zoo.animal.feeding.jar
+```
+
+#### Showing Module Resolution
+
+ a way of debugging modules. It spits out a lot of output when the program starts up. Then it runs the program.
+
+```sh
+java --show-module-resolution
+   -p feeding
+   -m zoo.animal.feeding/zoo.animal.feeding.Task
+```
+
+```
+root zoo.animal.feeding file:///absolutePath/feeding/
+java.base binds java.desktop jrt:/java.desktop
+java.base binds jdk.jartool jrt:/jdk.jartool
+…
+jdk.security.auth requires java.naming jrt:/java.naming
+jdk.security.auth requires java.security.jgss jrt:/java.security.jgss
+…
+All fed!
+```
+
+### Describing with jar
+
+the jar command can describe a module
+
+```sh
+jar -f mods/zoo.animal.feeding.jar -d
+jar --file mods/zoo.animal.feeding.jar --describe-module
+```
+
+```
+zoo.animal.feeding jar:file:///absolutePath/mods/zoo.animal.feeding.jar
+/!module-info.class
+exports zoo.animal.feeding
+requires java.base mandated
+```
+
+### Learning about Dependencies with jdeps
+
+- `jdeps` command gives you information about dependencies within a module.
+- Unlike describing a module, it looks at the code in addition to the module declaration. This tells you what dependencies are actually used rather than simply declared
+
+```java
+// Animatronic.java
+package zoo.dinos;
+ 
+import java.time.*;
+import java.util.*;
+import sun.misc.Unsafe;
+ 
+public class Animatronic {
+   private List<String> names;
+   private LocalDate visitDate;
+ 
+   public Animatronic(List<String> names, LocalDate visitDate) {
+      this.names = names;
+      this.visitDate = visitDate;
+   }
+   public void unsafeMethod() {
+      Unsafe unsafe = Unsafe.getUnsafe();
+   }
+}
+```
+
+```sh
+javac zoo/dinos/*.java
+jar -cvf zoo.dino.jar .
+```
+
+```
+jdeps zoo.dino.jar
+ 
+zoo.dino.jar -> java.base
+zoo.dino.jar -> jdk.unsupported
+   zoo.dinos    -> java.lang       java.base
+   zoo.dinos    -> java.time       java.base
+   zoo.dinos    -> java.util       java.base
+   zoo.dinos    -> sun.misc        JDK internal API (jdk.unsupported)
+```
+
+in summary mode, we only see just the first part where jdeps lists the modules
+```
+jdeps -s zoo.dino.jar
+jdeps -summary zoo.dino.jar
+ 
+zoo.dino.jar -> java.base
+zoo.dino.jar -> jdk.unsupported
+```
+
+ a `--module-path` option that you can use if you want to look for modules outside the JDK
+
+
+### Using the --jdk-internals Flag
+
+Prior to the Java Platform Module System, classes had to be public if you wanted them to be used outside the package. It was reasonable to use the class in JDK code since that is low-level code that is already tightly coupled to the JDK. Since it was needed in multiple packages, the class was made public. Sun even named it Unsafe, figuring that would prevent anyone from using it outside the JDK.
+
+However, developers are clever and used the class since it was available. A number of widely used open source libraries started using Unsafe. While it is quite unlikely that you are using this class in your project directly, you probably use an open source library that is using it.
+
+The jdeps command allows you to look at these JARs to see whether you will have any problems when Oracle finally prevents the usage of this class. If you find any uses, you can look at whether there is a later version of the JAR that you can upgrade to.
+
+- jdeps command has an option to provide details about these unsupported APIs.
+- The `--jdk-internals` option lists any classes you are using that call an internal API along with which API. At the end, it provides a table suggesting what you should do about it. If you wrote the code calling the internal API, this message is useful. If not, the message would be useful to the team that did write the code. You, on the other hand, might need to update or replace that JAR file entirely with one that fixes the issue. 
+- `-jdkinternals` is equivalent to `--jdk-internals`.
+
+```
+jdeps --jdk-internals zoo.dino.jar
+ 
+zoo.dino.jar -> jdk.unsupported
+   zoo.dinos.Animatronic  -> sun.misc.Unsafe
+      JDK internal API (jdk.unsupported)
+ 
+Warning: <omitted warning>
+ 
+JDK Internal API      Suggested Replacement
+________________      _____________________
+sun.misc.Unsafe       See http://openjdk.java.net/jeps/260
+```
+
+### Using Module Files with jmod
+
+Oracle recommends using JAR files for most modules. JMOD files are recommended only when you have native libraries or something that can't go inside a JAR file
+
+### Creating Java Runtimes with jlink
+
+One of the benefits of modules is being able to supply just the parts of Java you need
+
+```sh
+jlink --module-path mods --add-modules zoo.animal.talks --output zooApp
+```
+
+The output directory contains the bin, conf, include, legal, lib, and man directories along with a release file. These should look familiar as you find them in the full JDK as well.
+
+### Reviewing Command-Line Options
+
+For OCP exam
+
+Comparing command-line operations
+
+<table>
+<thead>
+<tr>
+<th scope="col" class="left">Description</th>
+<th scope="col" class="left">Syntax</th> </tr> </thead>
+<tbody>
+<tr>
+<td class="left">Compile nonmodular code</td>
+<td class="left"><code><b>javac</b> -cp <i>classpath</i> -d <i>directory classesToCompile</i></code> <br> <code><b>javac</b> --class-path <i>classpath</i> -d <i>directory classesToCompile</i></code> <br> <code><b>javac</b> -classpath <i>classpath</i> -d <i>directory classesToCompile</i></code></td> </tr>
+<tr>
+<td class="left">Run nonmodular code</td>
+<td class="left"><code><b>java</b> -cp <i>classpath package.className</i></code> <br> <code><b>java</b> -classpath <i>classpath package.className</i></code> <br> <code><b>java</b> --class-path <i>classpath package.className</i></code></td> </tr>
+<tr>
+<td class="left">Compile module</td>
+<td class="left"><code><b>javac</b> -p <i>moduleFolderName</i> -d <i>directory classesToCompileIncludingModuleInfo</i></code> <br> <code><b>javac</b> --module-path <i>moduleFolderName</i> -d <i>directory classesToCompileIncludingModuleInfo</i></code></td> </tr>
+<tr>
+<td class="left">Run module</td>
+<td class="left"><code><b>java</b> -p <i>moduleFolderName</i> -m <i>moduleName/package.className</i></code> <br> <code><b>java</b> --module-path <i>moduleFolderName</i> --module <i>moduleName/package.className</i></code></td> </tr>
+<tr>
+<td class="left">Describe module</td>
+<td class="left"><code><b>java</b> -p <i>moduleFolderName</i> -d <i>moduleName</i></code> <br> <code><b>java</b> --module-path <i>moduleFolderName</i> --describe-module <i>moduleName</i></code> <br> <code><b>jar</b> --file <i>jarName</i> --describe-module</code> <br> <code><b>jar</b> -f <i>jarName</i> -d</code></td> </tr>
+<tr>
+<td class="left">List available modules</td>
+<td class="left"><code><b>java</b> --module-path <i>moduleFolderName</i> --list-modules</code> <br> <code><b>java</b> -p <i>moduleFolderName</i> --list-modules</code> <br> <code><b>java</b> --list-modules</code></td> </tr>
+<tr>
+<td class="left">View dependencies</td>
+<td class="left"><code><b>jdeps</b> -summary --module-path <i>moduleFolderName jarName</i></code> <br> <code><b>jdeps</b> -s --module-path <i>moduleFolderName jarName</i></code> <br> <code><b>jdeps</b> --jdk-internals <i>jarName</i></code> <br> <code><b>jdeps</b> -jdkinternals <i>jarName</i></code></td> </tr>
+<tr>
+<td class="left">Show module resolution</td>
+<td class="left"><code><b>java</b> --show-module-resolution -p <i>moduleFolderName</i> -m <i>moduleName</i></code> <br> <code><b>java</b> --show-module-resolution --module-path <i>moduleFolderName</i> --module <i>moduleName</i></code></td> </tr>
+<tr>
+<td class="left">Create runtime JAR</td>
+<td class="left"><code><b>jlink</b> -p <i>moduleFolderName</i> --add-modules <i>moduleName</i> --output <i>zooApp</i></code> <br> <code><b>jlink</b> --module-path <i>moduleFolderName</i> --add-modules <i>moduleName</i> --output <i>zooApp</i></code></td> </tr> </tbody> </table>
+
+ Options you need to know for the exam: javac
+
+ <table>
+<thead>
+<tr>
+<th scope="col" class="left">Option</th>
+<th scope="col" class="left">Description</th> </tr> </thead>
+<tbody>
+<tr>
+<td class="left"><code>-cp &lt;classpath&gt;</code> <br> <code>-classpath &lt;classpath&gt;</code> <br> <code>--class-path &lt;classpath&gt;</code></td>
+<td class="left">Location of JARs in nonmodular program</td> </tr>
+<tr>
+<td class="left"><code>-d &lt;dir&gt;</code></td>
+<td class="left">Directory in which to place generated class files</td> </tr>
+<tr>
+<td class="left"><code>-p &lt;path&gt;</code> <br> <code>--module-path &lt;path&gt;</code></td>
+<td class="left">Location of JARs in modular program</td> </tr> </tbody> </table>
+
+Options you need to know for the exam: java
+
+<table>
+<thead>
+<tr>
+<th scope="col" class="left">Option</th>
+<th scope="col" class="left">Description</th> </tr> </thead>
+<tbody>
+<tr>
+<td class="left"><code>-p &lt;path&gt;</code> <br> <code>--module-path &lt;path&gt;</code></td>
+<td class="left">Location of JARs in modular program</td> </tr>
+<tr>
+<td class="left"><code>-m &lt;name&gt;</code> <br> <code>--module &lt;name&gt;</code></td>
+<td class="left">Module name to run</td> </tr>
+<tr>
+<td class="left"><code>-d</code> <br> <code>--describe-module</code></td>
+<td class="left">Describes details of module</td> </tr>
+<tr>
+<td class="left"><code>--list-modules</code></td>
+<td class="left">Lists observable modules without running program</td> </tr>
+<tr>
+<td class="left"><code>--show-module-resolution</code></td>
+<td class="left">Shows modules when running program</td> </tr> </tbody> </table>
+
+Options you need to know for the exam: jar
+
+<table>
+<thead>
+<tr>
+<th scope="col" class="left">Option</th>
+<th scope="col" class="left">Description</th> </tr> </thead>
+<tbody>
+<tr>
+<td class="left"><code>-c</code> <br> <code>--create</code></td>
+<td class="left">Creates new JAR file</td> </tr>
+<tr>
+<td class="left"><code>-v</code> <br> <code>--verbose</code></td>
+<td class="left">Prints details when working with JAR files</td> </tr>
+<tr>
+<td class="left"><code>-f</code> <br> <code>--file</code></td>
+<td class="left">JAR filename</td> </tr>
+<tr>
+<td class="left"><code>-C</code></td>
+<td class="left">Directory containing files to be used to create JAR</td> </tr>
+<tr>
+<td class="left"><code>-d</code> <br> <code>--describe-module</code></td>
+<td class="left">Describes details of module</td> </tr> </tbody> </table>
+
+Options you need to know for the exam: jdeps
+
+<table>
+<thead>
+<tr>
+<th scope="col" class="left">Option</th>
+<th scope="col" class="left">Description</th> </tr> </thead>
+<tbody>
+<tr>
+<td class="left"><code>--module-path &lt;path&gt;</code></td>
+<td class="left">Location of JARs in modular program</td> </tr>
+<tr>
+<td class="left"><code>-s</code> <br> <code>-summary</code></td>
+<td class="left">Summarizes output</td> </tr>
+<tr>
+<td class="left"><code>--jdk-internals</code> <br> -<code>jdkinternals</code></td>
+<td class="left">Lists uses of internal APIs</td> </tr> </tbody> </table>
+
+Options you need to know for the exam: jlink
+
+<table>
+<thead>
+<tr>
+<th scope="col" class="left">Option</th>
+<th scope="col" class="left">Description</th> </tr> </thead>
+<tbody>
+<tr>
+<td class="left"><code>-p</code> <br> <code>--module-path &lt;path&gt;</code></td>
+<td class="left">Location of JARs in modular program</td> </tr>
+<tr>
+<td class="left"><code>--add-modules</code></td>
+<td class="left">List of modules to package</td> </tr>
+<tr>
+<td class="left"><code>--output</code></td>
+<td class="left">Name of output directory</td> </tr> </tbody> </table>
+
+## Comparing Types of Modules
 
 # Concurrency
 
