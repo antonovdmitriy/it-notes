@@ -310,6 +310,10 @@
     - [Automatic Modules](#automatic-modules)
     - [Unnamed modules](#unnamed-modules)
   - [Migrating an Application](#migrating-an-application)
+    - [a Bottom-Up Migration Strategy](#a-bottom-up-migration-strategy)
+    - [a Top-Down Migration Strategy](#a-top-down-migration-strategy)
+    - [Splitting a Big Project into Modules](#splitting-a-big-project-into-modules)
+    - [Failing to Compile with a Cyclic Dependency](#failing-to-compile-with-a-cyclic-dependency)
 
 
 # OCP preparation
@@ -10005,4 +10009,104 @@ the algorithm in a list for determining the name of an automatic module:
 - Unnamed modules do not export any packages to named or automatic modules. 
 - The unnamed module can read from any JARs on the classpath or module path. You can think of an unnamed module as code that works the way Java worked before modules. 
 
+
 ## Migrating an Application
+
+<table>
+<thead>
+<tr>
+<th scope="col" class="left">Category</th>
+<th scope="col" class="left">Bottom-Up</th>
+<th scope="col" class="left">Top-Down</th> </tr> </thead>
+<tbody>
+<tr>
+<td class="left">Project that depends on all others</td>
+<td class="left">Unnamed module on classpath</td>
+<td class="left">Named module on module path</td> </tr>
+<tr>
+<td class="left">Project that has no dependencies</td>
+<td class="left">Named module on module path</td>
+<td class="left">Automatic module on module path</td> </tr> </tbody> </table>
+
+### a Bottom-Up Migration Strategy
+
+The easiest approach to migration is a bottom-up migration. This approach works best when you have the power to convert any JAR files that aren't already modules. For a bottom-up migration, you follow these steps:
+
+- Pick the lowest-level project that has not yet been migrated. (Remember the way we ordered them by dependencies in the previous section?)
+- Add a module-info.java file to that project. Be sure to add any exports to expose any package used by higher-level JAR files. Also, add a requires directive for any modules this module depends on.
+- Move this newly migrated named module from the classpath to the module path.
+- Ensure that any projects that have not yet been migrated stay as unnamed modules on the classpath.
+- Repeat with the next-lowest-level project until you are done.
+
+With a bottom-up migration, you are getting the lower-level projects in good shape. This makes it easier to migrate the top-level projects at the end. It also encourages care in what is exposed.
+
+During migration, you have a mix of named modules and unnamed modules. The named modules are the lower-level ones that have been migrated. They are on the module path and not allowed to access any unnamed modules.
+
+The unnamed modules are on the classpath. They can access JAR files on both the classpath and the module path.
+
+![](images/module-migration_1.png)
+
+### a Top-Down Migration Strategy
+
+A top-down migration strategy is most useful when you don't have control of every JAR file used by your application. For example, suppose another team owns one project. They are just too busy to migrate. You wouldn't want this situation to hold up your entire migration.
+
+For a top-down migration, you follow these steps:
+
+- Place all projects on the module path.
+- Pick the highest-level project that has not yet been migrated.
+- Add a module-info.java file to that project to convert the automatic module into a named module. Again, remember to add any exports or requires directives. You can use the automatic module name of other modules when writing the requires directive since most of the projects on the module path do not have names yet.
+- Repeat with the next-highest-level project until you are done.
+
+With a top-down migration, you are conceding that all of the lower-level dependencies are not ready but that you want to make the application itself a module.
+
+During migration, you have a mix of named modules and automatic modules. The named modules are the higher-level ones that have been migrated. They are on the module path and have access to the automatic modules. The automatic modules are also on the module path.
+
+![](images/module-migration_2.png)
+
+### Splitting a Big Project into Modules
+
+The first step is to break them into logical groupings and draw the dependencies between them. 
+
+The Java Platform Module System does not allow for cyclic dependencies. A cyclic dependency, or circular dependency, is when two things directly or indirectly depend on each other. If the zoo.tickets.delivery module requires the zoo.tickets.discount module, zoo.tickets.discount is not allowed to require the zoo.tickets.delivery module.
+
+ A common technique is to introduce another module. That module contains the code that the other two modules share. Then the new modules without any cyclic dependencies. Notice the new module zoo.tickets.etech. We created new packages to put in that module. This allows the developers to put the common code in there and break the dependency. No more cyclic dependencies!
+
+### Failing to Compile with a Cyclic Dependency
+
+Java will not allow you to compile modules that have circular dependencies
+
+```java
+// Butterfly.java
+package zoo.butterfly;
+public class Butterfly {
+  private Caterpillar caterpillar;
+}
+ 
+// module-info.java
+module zoo.butterfly {
+   exports zoo.butterfly;
+   requires zoo.caterpillar;
+}
+```
+
+We can't compile this yet as we need to build zoo.caterpillar first. After all, our butterfly requires it. Now we look at zoo.caterpillar:
+
+```java
+// Caterpillar.java
+package zoo.caterpillar;
+public class Caterpillar {
+   Butterfly emergeCocoon() {
+      // logic omitted
+   }
+}
+ 
+// module-info.java
+module zoo.caterpillar {
+   exports zoo.caterpillar;
+   requires zoo.butterfly;
+}
+```
+
+We can't compile this yet as we need to build zoo.butterfly first.  This is our circular dependency problem at work.
+
+Java will still allow you to have a cyclic dependency between packages within a module. It enforces that you do not have a cyclic dependency between modules.
