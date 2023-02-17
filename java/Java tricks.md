@@ -271,6 +271,10 @@
     - [Selecting Resource Bundle Values](#selecting-resource-bundle-values)
   - [Formatting Messages](#formatting-messages)
   - [Properties Class](#properties-class)
+- [Concurrency](#concurrency)
+  - [Data races](#data-races)
+- [I/O](#io)
+- [JDBC](#jdbc)
 - [Modules](#modules)
   - [A Module](#a-module)
   - [Creating and Running a First Modular Program](#creating-and-running-a-first-modular-program)
@@ -302,10 +306,10 @@
     - [Creating Java Runtimes with jlink](#creating-java-runtimes-with-jlink)
     - [Reviewing Command-Line Options](#reviewing-command-line-options)
   - [Comparing Types of Modules](#comparing-types-of-modules)
-- [Concurrency](#concurrency)
-  - [Data races](#data-races)
-- [I/O](#io)
-- [JDBC](#jdbc)
+    - [Named Modules](#named-modules)
+    - [Automatic Modules](#automatic-modules)
+    - [Unnamed modules](#unnamed-modules)
+  - [Migrating an Application](#migrating-an-application)
 
 
 # OCP preparation
@@ -8853,6 +8857,52 @@ props.get("open");                               // 10am
 props.get("open", "The zoo will be open soon");  // DOES NOT COMPILE
 ```
 
+# Concurrency
+
+## Data races
+
+example from String class:
+
+The hash or hashIsZero fields are subject to a benign data race,
+making it crucial to ensure that any observable result of the
+calculation in this method stays correct under any possible read of
+these fields. Necessary restrictions to allow this to be correct
+without explicit memory fences or similar concurrency primitives is
+that we can ever only write to one of these two fields for a given
+String instance, and that the computation is idempotent and derived
+from immutable state
+
+```java
+
+public final class String
+    implements java.io.Serializable, Comparable<String>, CharSequence,
+               Constable, ConstantDesc {
+
+    private final byte[] value;
+    private int hash;
+    private boolean hashIsZero; // Default to false;
+
+public int hashCode() {
+    int h = hash;
+    if (h == 0 && !hashIsZero) {
+        h = isLatin1() ? StringLatin1.hashCode(value)
+                       : StringUTF16.hashCode(value);
+        if (h == 0) {
+            hashIsZero = true;
+        } else {
+            hash = h;
+        }
+    }
+    return h;
+}
+
+}
+```
+
+# I/O
+
+# JDBC
+
 # Modules
 
 The Java Platform Module System (JPMS) groups code at a higher level. The main purpose of a module is to provide groups of related packages that offer developers a particular set of functionality. It's like a JAR file, except a developer chooses which packages are accessible outside the module.
@@ -9883,48 +9933,76 @@ Options you need to know for the exam: jlink
 
 ## Comparing Types of Modules
 
-# Concurrency
+### Named Modules
 
-## Data races
+- A named module is one containing a `module-info.java` file.
+- named module has the name inside the module-info.java file 
+- `module-info.java` file appears in the root of the JAR alongside one or more packages. 
+- Unless otherwise specified, a module is a named module. 
+- Named modules appear on the module path rather than the classpath.
 
-example from String class:
+### Automatic Modules
 
-The hash or hashIsZero fields are subject to a benign data race,
-making it crucial to ensure that any observable result of the
-calculation in this method stays correct under any possible read of
-these fields. Necessary restrictions to allow this to be correct
-without explicit memory fences or similar concurrency primitives is
-that we can ever only write to one of these two fields for a given
-String instance, and that the computation is idempotent and derived
-from immutable state
+- An automatic module appears on the module path but does not contain a `module-info.java` file. 
+- It is simply a regular JAR file that is placed on the module path and gets treated as a module.
+- Java automatically determines the module name
+- The code referencing an automatic module treats it as if there is a `module-info.java` file present. It automatically exports all packages. 
 
-```java
+the algorithm in a list for determining the name of an automatic module:
 
-public final class String
-    implements java.io.Serializable, Comparable<String>, CharSequence,
-               Constable, ConstantDesc {
+- If the MANIFEST.MF specifies an `Automatic-Module-Name`, use that. Otherwise, proceed with the remaining rules.
+- Remove the file extension from the JAR name.
+- Remove any version information from the end of the name. A version is digits and dots with possible extra information at the end: for example, -1.0.0 or -1.0-RC.
+- Replace any remaining characters other than letters and numbers with dots.
+- Replace any sequences of dots with a single dot.
+- Remove the dot if it is the first or last character of the result.
 
-    private final byte[] value;
-    private int hash;
-    private boolean hashIsZero; // Default to false;
+<table>
+<thead>
+<tr>
+<th scope="col" class="left">#</th>
+<th scope="col" class="left">Description</th>
+<th scope="col" class="left">Example 1</th>
+<th scope="col" class="left">Example 2</th> </tr> </thead>
+<tbody>
+<tr>
+<td class="left">1</td>
+<td class="left">Beginning JAR name</td>
+<td class="left"><code>commons2-x-1.0.0-SNAPSHOT.jar</code></td>
+<td class="left"><code>mod_$-1.0.jar</code></td> </tr>
+<tr>
+<td class="left">2</td>
+<td class="left">Remove file extension</td>
+<td class="left"><code>commons2-x-1.0.0-SNAPSHOT</code></td>
+<td class="left"><code>mod_$-1.0</code></td> </tr>
+<tr>
+<td class="left">3</td>
+<td class="left">Remove version information</td>
+<td class="left"><code>commons2-x</code></td>
+<td class="left"><code>mod_$</code></td> </tr>
+<tr>
+<td class="left">4</td>
+<td class="left">Replace special characters</td>
+<td class="left"><code>commons2.x</code></td>
+<td class="left"><code>mod..</code></td> </tr>
+<tr>
+<td class="left">5</td>
+<td class="left">Replace sequence of dots</td>
+<td class="left"><code>commons2.x</code></td>
+<td class="left"><code>mod.</code></td> </tr>
+<tr>
+<td class="left">6</td>
+<td class="left">Remove leading/trailing dots (results in the automatic module name)</td>
+<td class="left"><code>commons2.x</code></td>
+<td class="left"><code>mod</code></td> </tr> </tbody> </table>
 
-public int hashCode() {
-    int h = hash;
-    if (h == 0 && !hashIsZero) {
-        h = isLatin1() ? StringLatin1.hashCode(value)
-                       : StringUTF16.hashCode(value);
-        if (h == 0) {
-            hashIsZero = true;
-        } else {
-            hash = h;
-        }
-    }
-    return h;
-}
+### Unnamed modules
 
-}
-```
+- An unnamed module appears on the classpath. 
+- Like an automatic module, it is a regular JAR. 
+- Unlike an automatic module, it is on the classpath rather than the module path. This means an unnamed module is treated like old code and a second-class citizen to modules.
+- An unnamed module does not usually contain a `module-info.java` file. If it happens to contain one, that file will be ignored since it is on the classpath.
+- Unnamed modules do not export any packages to named or automatic modules. 
+- The unnamed module can read from any JARs on the classpath or module path. You can think of an unnamed module as code that works the way Java worked before modules. 
 
-# I/O
-
-# JDBC
+## Migrating an Application
