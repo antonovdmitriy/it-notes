@@ -272,11 +272,19 @@
   - [Formatting Messages](#formatting-messages)
   - [Properties Class](#properties-class)
 - [Concurrency](#concurrency)
-  - [Thread Concurrency](#thread-concurrency)
-  - [Creating a Thread](#creating-a-thread)
-  - [Thread Types](#thread-types)
-  - [Managing a Thread's Life Cycle](#managing-a-threads-life-cycle)
-  - [Interrupting a Thread](#interrupting-a-thread)
+  - [Introducing Threads](#introducing-threads)
+    - [Thread Concurrency](#thread-concurrency)
+    - [Creating a Thread](#creating-a-thread)
+    - [Thread Types](#thread-types)
+    - [Managing a Thread's Life Cycle](#managing-a-threads-life-cycle)
+    - [Interrupting a Thread](#interrupting-a-thread)
+  - [Creating Threads with the Concurrency API](#creating-threads-with-the-concurrency-api)
+    - [Single-Thread Executor](#single-thread-executor)
+    - [Shutting Down a Thread Executor](#shutting-down-a-thread-executor)
+    - [Submitting Tasks](#submitting-tasks)
+    - [Waiting for Results](#waiting-for-results)
+    - [Introducing Callable](#introducing-callable)
+    - [Waiting for All Tasks to Finish](#waiting-for-all-tasks-to-finish)
   - [Data races](#data-races)
 - [I/O](#io)
 - [JDBC](#jdbc)
@@ -8868,7 +8876,9 @@ props.get("open", "The zoo will be open soon");  // DOES NOT COMPILE
 
 # Concurrency
 
-## Thread Concurrency
+## Introducing Threads
+
+### Thread Concurrency
 
 - **concurrency** - The property of executing multiple threads and processes at the same time  
 - Operating systems use a **thread scheduler** to determine which threads should be currently executing
@@ -8876,7 +8886,7 @@ props.get("open", "The zoo will be open soon");  // DOES NOT COMPILE
 -  A **thread priority** is a numeric value associated with a thread that is taken into consideration by the thread scheduler when determining which threads should currently be executing
 - A **context switch** is the process of storing a thread's current state and later restoring the state of the thread to continue execution
 
-## Creating a Thread
+### Creating a Thread
 
  to create a `Thread` and its associated task one of two ways in Java:
 - Provide a `Runnable` object or lambda expression to the Thread constructor.
@@ -8900,7 +8910,7 @@ new Thread(() -> System.out.print("Hello")).run();
 System.out.print("World");
 ```
 
-## Thread Types
+### Thread Types
 
 - A `system thread` is created by the Java Virtual Machine (JVM) and runs in the background of the application. For example, garbage collection is managed by a system thread created by the JVM.
 - a `user-defined thread` is one created by the application developer to accomplish a specific task. One  of user-defined threasd, which calls the main() method. 
@@ -8948,7 +8958,7 @@ public class Zoo {
 // Main method finished!
 ```
 
-## Managing a Thread's Life Cycle
+### Managing a Thread's Life Cycle
 
 ![](images/concurrency-thread-state.png)
 
@@ -9023,7 +9033,202 @@ public enum State {
     }
 ```    
 
-## Interrupting a Thread
+### Interrupting a Thread
+
+Calling `interrupt()` on a thread in the `TIMED_WAITING` or `WAITING` state causes the main() thread to become `RUNNABLE` again, triggering an `InterruptedException`. The thread may also move to a `BLOCKED` state if it needs to reacquire resources when it wakes up.
+
+Calling `interrupt()` on a thread already in a `RUNNABLE` state doesn't change the state. In fact, it only changes the behavior if the thread is periodically checking the `Thread.isInterrupted()` value state.
+
+```java
+public class CheckResultsWithSleepAndInterrupt {
+   private static int counter = 0;
+   public static void main(String[] a) {
+      final var mainThread = Thread.currentThread();
+      new Thread(() -> {
+         for(int i = 0; i < 1_000_000; i++) counter++;
+         mainThread.interrupt();
+      }).start();
+      while(counter < 1_000_000) {
+         System.out.println("Not reached yet");
+         try {
+            Thread.sleep(1_000);  // 1 SECOND
+         } catch (InterruptedException e) {
+            System.out.println("Interrupted!");
+         }
+      }
+      System.out.println("Reached: "+counter);
+   } }
+```
+
+## Creating Threads with the Concurrency API
+
+###  Single-Thread Executor
+
+```java
+Runnable printInventory = () -> System.out.println("Printing zoo inventory");
+Runnable printRecords = () -> {
+   for (int i = 0; i < 3; i++)
+      System.out.println("Printing record: " + i);
+};
+
+ExecutorService service = Executors.newSingleThreadExecutor();
+try {
+   System.out.println("begin");
+   service.execute(printInventory);
+   service.execute(printRecords);
+   service.execute(printInventory);
+   System.out.println("end");
+} finally {
+   service.shutdown();
+}
+```
+
+```
+begin
+Printing zoo inventory
+Printing record: 0
+Printing record: 1
+end
+Printing record: 2
+Printing zoo inventory
+```
+
+### Shutting Down a Thread Executor
+
+- Once you have finished using a thread executor, it is important that you call the `shutdown()` method. 
+- A thread executor creates a non-daemon thread on the first task that is executed, so failing to call `shutdown()` will result in your application never terminating.
+- The shutdown process for a thread executor involves first rejecting any new tasks submitted to the thread executor while continuing to execute any previously submitted tasks. 
+- During this time, calling `isShutdown()` will return `true`, while `isTerminated()` will return `false`. 
+- If a new task is submitted to the thread executor while it is shutting down, a `RejectedExecutionException` will be thrown. 
+- Once all active tasks have been completed, `isShutdown()` and `isTerminated()` will both return `true`
+- `shutdown()` does not stop any tasks that have already been submitted to the thread executor.
+
+- `ExecutorService` provides a method called `shutdownNow()`, which attempts to stop all running tasks and discards any that have not been started yet. It is not guaranteed to succeed because it is possible to create a thread that will never terminate, so any attempt to interrupt it may be ignored.
+- `ExecutorService` interface does not extend the `AutoCloseable` interface, so you cannot use a try-with-resources statement.
+
+### Submitting Tasks
+
+<table>
+<thead>
+<tr>
+<th scope="col" class="left">Method name</th>
+<th scope="col" class="left">Description</th> </tr> </thead>
+<tbody>
+<tr>
+<td class="left"><code>void <b>execute</b>(Runnable command)</code></td>
+<td class="left">Executes <code>Runnable</code> task at some point in future.</td> </tr>
+<tr>
+<td class="left"><code>Future&lt;?&gt; <b>submit</b>(Runnable task)</code></td>
+<td class="left">Executes <code>Runnable</code> task at some point in future and returns <code>Future</code> representing task.</td> </tr>
+<tr>
+<td class="left"><code>&lt;T&gt; Future&lt;T&gt; <b>submit</b>(Callable&lt;T&gt; task)</code></td>
+<td class="left">Executes <code>Callable</code> task at some point in future and returns <code>Future</code> representing pending results of task.</td> </tr>
+<tr>
+<td class="left"><code>&lt;T&gt; List&lt;Future&lt;T&gt;&gt; <b>invokeAll</b>(Collection&lt;? extends Callable&lt;T&gt;&gt; tasks)</code></td>
+<td class="left">Executes given tasks and waits for all tasks to complete. Returns <code>List</code> of <code>Future</code> instances in same order in which they were in original collection.</td> </tr>
+<tr>
+<td class="left"><code>&lt;T&gt; T <b>invokeAny</b>(Collection&lt;? extends Callable&lt;T&gt;&gt; tasks)</code></td>
+<td class="left">Executes given tasks and waits for at least one to complete.</td> </tr> </tbody> </table>
+
+### Waiting for Results
+
+```java
+Future<?> future = service.submit(() -> System.out.println("Hello"));
+```
+
+<table>
+<thead>
+<tr>
+<th scope="col" class="left">Method name</th>
+<th scope="col" class="left">Description</th> </tr> </thead>
+<tbody>
+<tr>
+<td class="left"><code>boolean <b>isDone</b>()</code></td>
+<td class="left">Returns <code>true</code> if task was completed, threw exception, or was cancelled.</td> </tr>
+<tr>
+<td class="left"><code>boolean <b>isCancelled</b>()</code></td>
+<td class="left">Returns <code>true</code> if task was cancelled before it completed normally.</td> </tr>
+<tr>
+<td class="left"><code>boolean <b>cancel</b>(boolean mayInterruptIfRunning)</code></td>
+<td class="left">Attempts to cancel execution of task and returns <code>true</code> if it was successfully cancelled or <code>false</code> if it could not be cancelled or is complete.</td> </tr>
+<tr>
+<td class="left"><code>V <b>get</b>()</code></td>
+<td class="left">Retrieves result of task, waiting endlessly if it is not yet available.</td> </tr>
+<tr>
+<td class="left"><code>V <b>get</b>(long timeout, TimeUnit unit)</code></td>
+<td class="left">Retrieves result of task, waiting specified amount of time. If result is not ready by time timeout is reached, checked <code>TimeoutException</code> will be thrown.</td> </tr> </tbody> </table>
+
+```java
+import java.util.concurrent.*;
+public class CheckResults {
+   private static int counter = 0;
+   public static void main(String[] unused) throws Exception {
+      ExecutorService service = Executors.newSingleThreadExecutor();
+      try {
+         Future<?> result = service.submit(() -> {
+            for(int i = 0; i < 1_000_000; i++) counter++;
+         });
+         result.get(10, TimeUnit.SECONDS); // Returns null for Runnable
+         System.out.println("Reached!");
+      } catch (TimeoutException e) {
+         System.out.println("Not reached in time");
+      } finally {
+         service.shutdown();
+      } } }
+```      
+
+ As `Future<V>` is a generic interface, the type `V` is determined by the return type of the `Runnable` method. Since the return type of `Runnable.run()` is void, the `get()` method always returns `null` when working with `Runnable` expressions
+
+<table>
+<thead>
+<tr>
+<th scope="col" class="left">Enum name</th>
+<th scope="col" class="left">Description</th> </tr> </thead>
+<tbody>
+<tr>
+<td class="left"><code>TimeUnit.NANOSECONDS</code></td>
+<td class="left">Time in one-billionths of a second (1/1,000,000,000)</td> </tr>
+<tr>
+<td class="left"><code>TimeUnit.MICROSECONDS</code></td>
+<td class="left">Time in one-millionths of a second (1/1,000,000)</td> </tr>
+<tr>
+<td class="left"><code>TimeUnit.MILLISECONDS</code></td>
+<td class="left">Time in one-thousandths of a second (1/1,000)</td> </tr>
+<tr>
+<td class="left"><code>TimeUnit.SECONDS</code></td>
+<td class="left">Time in seconds</td> </tr>
+<tr>
+<td class="left"><code>TimeUnit.MINUTES</code></td>
+<td class="left">Time in minutes</td> </tr>
+<tr>
+<td class="left"><code>TimeUnit.HOURS</code></td>
+<td class="left">Time in hours</td> </tr>
+<tr>
+<td class="left"><code>TimeUnit.DAYS</code></td>
+<td class="left">Time in days</td> </tr> </tbody> </table>
+
+### Introducing Callable
+
+- The `java.util.concurrent.Callable` functional interface is similar to `Runnable` except that its `call()` method returns a value and can throw a checked exception
+- Unlike `Runnable`, in which the `get()` methods always return `null`, the `get()` methods on a `Future` instance return the matching generic type (which could also be a `null` value).
+  
+```java
+@FunctionalInterface public interface Callable<V> {
+   V call() throws Exception;
+}
+```
+
+```java
+var service = Executors.newSingleThreadExecutor();
+try {
+   Future<Integer> result = service.submit(() -> 30 + 11);
+   System.out.println(result.get());   // 41
+} finally {
+   service.shutdown();
+}
+```
+
+### Waiting for All Tasks to Finish
 
 
 
