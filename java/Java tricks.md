@@ -272,6 +272,11 @@
   - [Formatting Messages](#formatting-messages)
   - [Properties Class](#properties-class)
 - [Concurrency](#concurrency)
+  - [Thread Concurrency](#thread-concurrency)
+  - [Creating a Thread](#creating-a-thread)
+  - [Thread Types](#thread-types)
+  - [Managing a Thread's Life Cycle](#managing-a-threads-life-cycle)
+  - [Interrupting a Thread](#interrupting-a-thread)
   - [Data races](#data-races)
 - [I/O](#io)
 - [JDBC](#jdbc)
@@ -6342,7 +6347,7 @@ List<?> list6 = new ArrayList<? extends A>(); // DOES NOT COMPILE
 }
 ````
 
-This method, third(), does not compile. <B extends A> says that you want to use B as a type parameter just for this method and that it needs to extend the A class. Coincidentally, B is also the name of a class. Well, it isn't a coincidence. It's an evil trick. Within the scope of the method, B can represent class A, B, or C, because all extend the A class. Since B no longer refers to the B class in the method, you can't instantiate it.
+This method, third(), does not compile. `<B extends A>` says that you want to use B as a type parameter just for this method and that it needs to extend the A class. Coincidentally, B is also the name of a class. Well, it isn't a coincidence. It's an evil trick. Within the scope of the method, B can represent class A, B, or C, because all extend the A class. Since B no longer refers to the B class in the method, you can't instantiate it.
 
 ```java
 void fourth(List<? super B> list) {} 
@@ -8862,6 +8867,165 @@ props.get("open", "The zoo will be open soon");  // DOES NOT COMPILE
 ```
 
 # Concurrency
+
+## Thread Concurrency
+
+- **concurrency** - The property of executing multiple threads and processes at the same time  
+- Operating systems use a **thread scheduler** to determine which threads should be currently executing
+- a **thread scheduler** may employ a round-robin schedule in which each available thread receives an equal number of CPU cycles with which to execute, with threads visited in a circular order.
+-  A **thread priority** is a numeric value associated with a thread that is taken into consideration by the thread scheduler when determining which threads should currently be executing
+- A **context switch** is the process of storing a thread's current state and later restoring the state of the thread to continue execution
+
+## Creating a Thread
+
+ to create a `Thread` and its associated task one of two ways in Java:
+- Provide a `Runnable` object or lambda expression to the Thread constructor.
+- Create a class that extends `Thread` and overrides the `run()` method.
+
+```java
+@FunctionalInterface public interface Runnable {
+   void run();
+}
+```
+
+to create and start a thread. 
+```java
+new Thread(() -> System.out.print("Hello")).start();
+System.out.print("World");
+```
+
+`run` method does not start a new thread. Just invoke runnable interface synchronously
+```java
+new Thread(() -> System.out.print("Hello")).run();
+System.out.print("World");
+```
+
+## Thread Types
+
+- A `system thread` is created by the Java Virtual Machine (JVM) and runs in the background of the application. For example, garbage collection is managed by a system thread created by the JVM.
+- a `user-defined thread` is one created by the application developer to accomplish a specific task. One  of user-defined threasd, which calls the main() method. 
+- A `daemon thread` is one that will not prevent the JVM from exiting when the program finishes. System and user-defined threads can both be created as daemon threads.
+- A Java application terminates when the only threads that are running are **daemon threads**. For example garbage collector thread.
+
+```java
+public class Zoo {
+   public static void pause() {                 // Defines the thread task
+      try {
+         Thread.sleep(10_000);                  // Wait for 10 seconds
+      } catch (InterruptedException e) {}
+      System.out.println("Thread finished!");
+   }
+   
+   public static void main(String[] unused) {
+      var job = new Thread(() -> pause());      // Create thread
+      job.start();                              // Start thread
+      System.out.println("Main method finished!");
+   } }
+
+// Main method finished!
+// --- 10 second wait ---
+// Thread finished!   
+```
+
+if we add `job.setDaemon(true);`
+
+```java
+public class Zoo {
+   public static void pause() {                 // Defines the thread task
+      try {
+         Thread.sleep(10_000);                  // Wait for 10 seconds
+      } catch (InterruptedException e) {}
+      System.out.println("Thread finished!");
+   }
+   
+   public static void main(String[] unused) {
+      var job = new Thread(() -> pause());      // Create thread
+      job.setDaemon(true);
+      job.start();                              // Start thread
+      System.out.println("Main method finished!");
+   } 
+}
+// Main method finished!
+```
+
+## Managing a Thread's Life Cycle
+
+![](images/concurrency-thread-state.png)
+
+Every thread is initialized with a `NEW` state. As soon as `start()` is called, the thread is moved to a `RUNNABLE` state. Does that mean it is actually running? Not exactly: it may be running, or it may not be. The `RUNNABLE` state just means the thread is able to be run. Once the work for the thread is completed or an uncaught exception is thrown, the thread state becomes `TERMINATED`, and no more work is performed.
+
+While in a `RUNNABLE` state, the thread may transition to one of three states where it pauses its work: `BLOCKED`, `WAITING`, or `TIMED_WAITING`. This figure includes common transitions between thread states, but there are other possibilities. For example, a thread in a `WAITING` state might be triggered by `notifyAll(`). Likewise, a thread that is interrupted by another thread will exit `TIMED_WAITING` and go straight back into `RUNNABLE`.
+
+```java
+public enum State {
+        /**
+         * Thread state for a thread which has not yet started.
+         */
+        NEW,
+
+        /**
+         * Thread state for a runnable thread.  A thread in the runnable
+         * state is executing in the Java virtual machine but it may
+         * be waiting for other resources from the operating system
+         * such as processor.
+         */
+        RUNNABLE,
+
+        /**
+         * Thread state for a thread blocked waiting for a monitor lock.
+         * A thread in the blocked state is waiting for a monitor lock
+         * to enter a synchronized block/method or
+         * reenter a synchronized block/method after calling
+         * {@link Object#wait() Object.wait}.
+         */
+        BLOCKED,
+
+        /**
+         * Thread state for a waiting thread.
+         * A thread is in the waiting state due to calling one of the
+         * following methods:
+         * <ul>
+         *   <li>{@link Object#wait() Object.wait} with no timeout</li>
+         *   <li>{@link #join() Thread.join} with no timeout</li>
+         *   <li>{@link LockSupport#park() LockSupport.park}</li>
+         * </ul>
+         *
+         * <p>A thread in the waiting state is waiting for another thread to
+         * perform a particular action.
+         *
+         * For example, a thread that has called {@code Object.wait()}
+         * on an object is waiting for another thread to call
+         * {@code Object.notify()} or {@code Object.notifyAll()} on
+         * that object. A thread that has called {@code Thread.join()}
+         * is waiting for a specified thread to terminate.
+         */
+        WAITING,
+
+        /**
+         * Thread state for a waiting thread with a specified waiting time.
+         * A thread is in the timed waiting state due to calling one of
+         * the following methods with a specified positive waiting time:
+         * <ul>
+         *   <li>{@link #sleep Thread.sleep}</li>
+         *   <li>{@link Object#wait(long) Object.wait} with timeout</li>
+         *   <li>{@link #join(long) Thread.join} with timeout</li>
+         *   <li>{@link LockSupport#parkNanos LockSupport.parkNanos}</li>
+         *   <li>{@link LockSupport#parkUntil LockSupport.parkUntil}</li>
+         * </ul>
+         */
+        TIMED_WAITING,
+
+        /**
+         * Thread state for a terminated thread.
+         * The thread has completed execution.
+         */
+        TERMINATED;
+    }
+```    
+
+## Interrupting a Thread
+
+
 
 ## Data races
 
