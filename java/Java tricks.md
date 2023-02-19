@@ -279,12 +279,26 @@
     - [Managing a Thread's Life Cycle](#managing-a-threads-life-cycle)
     - [Interrupting a Thread](#interrupting-a-thread)
   - [Creating Threads with the Concurrency API](#creating-threads-with-the-concurrency-api)
+    - [Executors](#executors)
     - [Single-Thread Executor](#single-thread-executor)
     - [Shutting Down a Thread Executor](#shutting-down-a-thread-executor)
     - [Submitting Tasks](#submitting-tasks)
     - [Waiting for Results](#waiting-for-results)
     - [Introducing Callable](#introducing-callable)
     - [Waiting for All Tasks to Finish](#waiting-for-all-tasks-to-finish)
+    - [Scheduling Tasks](#scheduling-tasks)
+  - [Writing Thread-Safe Code](#writing-thread-safe-code)
+    - [Accessing Data with volatile](#accessing-data-with-volatile)
+    - [Protecting Data with Atomic Classes](#protecting-data-with-atomic-classes)
+    - [synchronized Blocks](#synchronized-blocks)
+    - [Synchronizing on Methods](#synchronizing-on-methods)
+    - [Lock Framework](#lock-framework)
+      - [ReentrantLock](#reentrantlock)
+      - [ReentrantReadWriteLock](#reentrantreadwritelock)
+    - [CyclicBarrier](#cyclicbarrier)
+  - [Concurrent Collections](#concurrent-collections)
+  - [Identifying Threading Problems](#identifying-threading-problems)
+  - [Working with Parallel Streams](#working-with-parallel-streams)
   - [Data races](#data-races)
 - [I/O](#io)
 - [JDBC](#jdbc)
@@ -9062,6 +9076,32 @@ public class CheckResultsWithSleepAndInterrupt {
 
 ## Creating Threads with the Concurrency API
 
+### Executors
+
+- The difference between a single-thread and a pooled-thread executor is what happens when a task is already running. While a single-thread executor will wait for the thread to become available before running the next task, a pooled-thread executor can execute the next task concurrently. If the pool runs out of available threads, the task will be queued by the thread executor and wait to be completed.
+
+<table>
+<thead>
+<tr>
+<th scope="col" class="left">Method name</th>
+<th scope="col" class="left">Description</th> </tr> </thead>
+<tbody>
+<tr>
+<td class="left"><code>ExecutorService <b>newSingleThreadExecutor</b>()</code></td>
+<td class="left">Creates single-threaded executor that uses single worker thread operating off unbounded queue. Results are processed sequentially in order in which they are submitted.</td> </tr>
+<tr>
+<td class="left"><code>ScheduledExecutorService <b>newSingleThreadScheduledExecutor</b>()</code></td>
+<td class="left">Creates single-threaded executor that can schedule commands to run after given delay or to execute periodically.</td> </tr>
+<tr>
+<td class="left"><code>ExecutorService <b>newCachedThreadPool</b>()</code></td>
+<td class="left">Creates thread pool that creates new threads as needed but reuses previously constructed threads when they are available.</td> </tr>
+<tr>
+<td class="left"><code>ExecutorService <b>newFixedThreadPool</b>(int)</code></td>
+<td class="left">Creates thread pool that reuses fixed number of threads operating off shared unbounded queue.</td> </tr>
+<tr>
+<td class="left"><code>ScheduledExecutorService <b>newScheduledThreadPool</b>(int)</code></td>
+<td class="left">Creates thread pool that can schedule commands to run after given delay or execute periodically.</td> </tr> </tbody> </table>
+
 ###  Single-Thread Executor
 
 ```java
@@ -9230,6 +9270,357 @@ try {
 
 ### Waiting for All Tasks to Finish
 
+one solution is to call `get()` on each `Futur`e object returned by the `submit()` method. If we don't need the results of the tasks and are finished using our thread executor, there is a simpler approach
+
+```java
+ExecutorService service = Executors.newSingleThreadExecutor();
+try {
+   // Add tasks to the thread executor
+   …
+} finally {
+   service.shutdown();
+}
+service.awaitTermination(1, TimeUnit.MINUTES);
+ 
+// Check whether all tasks are finished
+if(service.isTerminated()) System.out.println("Finished!");
+else System.out.println("At least one task is still running");
+```
+
+### Scheduling Tasks
+
+- `ScheduledExecutorService`, which is a subinterface of `ExecutorService`
+
+```java
+ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
+```
+
+Each of these methods returns a `ScheduledFuture` object.
+
+<table>
+<thead>
+<tr>
+<th scope="col" class="left">Method name</th>
+<th scope="col" class="left">Description</th> </tr> </thead>
+<tbody>
+<tr>
+<td class="left"><code><b>schedule</b>(Callable&lt;V&gt; callable, long delay, TimeUnit unit)</code></td>
+<td class="left">Creates and executes <code>Callable</code> task after given delay</td> </tr>
+<tr>
+<td class="left"><code><b>schedule</b>(Runnable command, long delay, TimeUnit unit)</code></td>
+<td class="left">Creates and executes <code>Runnable</code> task after given delay</td> </tr>
+<tr>
+<td class="left"><code><b>scheduleAtFixedRate</b>(Runnable command, long initialDelay, long period, TimeUnit unit)</code></td>
+<td class="left">Creates and executes <code>Runnable</code> task after given initial delay, creating new task every period value that passes</td> </tr>
+<tr>
+<td class="left"><code><b>scheduleWithFixedDelay</b>(Runnable command, long initialDelay, long delay, TimeUnit unit)</code></td>
+<td class="left">Creates and executes <code>Runnable</code> task after given initial delay and subsequently with given delay between termination of one execution and commencement of next</td> </tr> </tbody> </table>
+
+```java
+ScheduledExecutorService service
+   = Executors.newSingleThreadScheduledExecutor();
+Runnable task1 = () -> System.out.println("Hello Zoo");
+Callable<String> task2 = () -> "Monkey";
+ScheduledFuture<?> r1 = service.schedule(task1, 10, TimeUnit.SECONDS);
+ScheduledFuture<?> r2 = service.schedule(task2, 8, TimeUnit.MINUTES);
+```
+
+- if the `ScheduledExecutorService` is shut down by the time the scheduled task execution time is reached, then these tasks will be discarded.
+
+- The `scheduleAtFixedRate()` method creates a new task and submits it to the executor every period, regardless of whether the previous task finished. Method is useful for tasks that need to be run at specific intervals, such as checking the health of the animals once a day. Even if it takes two hours to examine an animal on Monday, this doesn't mean that Tuesday's exam should start any later in the day.
+- `scheduleWithFixedDelay()` method creates a new task only after the previous task has finished. For example, if a task runs at 12:00 and takes five minutes to finish, with a period between executions of two minutes, the next task will start at 12:07. Method is useful for processes that you want to happen repeatedly but whose specific time is unimportant. For example, imagine that we have a zoo cafeteria worker who periodically restocks the salad bar throughout the day. The process can take 20 minutes or more, since it requires the worker to haul a large number of items from the back room. Once the worker has filled the salad bar with fresh food, they don't need to check at some specific time, just after enough time has passed for it to become low on stock again.
+
+
+```java
+// executes a Runnable task every minute, following an initial five-minute delay:
+service.scheduleAtFixedRate(command, 5, 1, TimeUnit.MINUTES);
+```
+
+```java
+service.scheduleWithFixedDelay(task1, 0, 2, TimeUnit.MINUTES);
+```
+
+## Writing Thread-Safe Code
+
+- **Thread-safety** is the property of an object that guarantees safe execution by multiple threads at the same time
+- unexpected result of two tasks executing at the same time is referred to as a **race condition**.
+
+
+```java
+import java.util.concurrent.*;
+public class SheepManager {
+   private int sheepCount = 0;
+   private void incrementAndReport() {
+      System.out.print((++sheepCount)+" ");
+   }
+   public static void main(String[] args) {
+      ExecutorService service = Executors.newFixedThreadPool(20);
+      try {
+         SheepManager manager = new SheepManager();
+         for(int i = 0; i < 10; i++)
+            service.submit(() -> manager.incrementAndReport());
+      } finally {
+         service.shutdown();
+      } } }
+```
+
+```
+1 2 3 4 5 6 7 8 9 10
+1 9 8 7 3 6 6 2 4 5
+1 8 7 3 2 6 5 4 2 9
+```
+
+![](images/concurrenc_thread_safe_1.png)
+
+### Accessing Data with volatile
+
+- The `volatile` keyword is used to guarantee that access to data within memory is consistent.
+- The volatile attribute ensures that only one thread is modifying a variable at one time and that data read among multiple threads is consistent.
+- Does volatile provide thread-safety? Not exactly. 
+
+```java
+private volatile int sheepCount = 0;
+private void incrementAndReport() {
+   System.out.print((++sheepCount)+" ");
+}
+```
+
+```
+2 6 1 7 5 3 2 9 4 8
+```
+
+- The reason this code is not thread-safe is that `++sheepCount` is still two distinct operations. Put another way, if the increment operator represents the expression `sheepCount = sheepCount + 1`, then each read and write operation is thread-safe, but the combined operation is not
+- increment operator ++ is not thread-safe, even when volatile is used. It is not thread-safe because the operation is not atomic, carrying out two tasks, read and write, that can be interrupted by other threads.
+
+### Protecting Data with Atomic Classes
+
+**Atomic** is the property of an operation to be carried out as a single unit of execution without any interference from another thread.
+
+![](images/concurrenc_thread_safe_2.png)
+
+<table>
+<thead>
+<tr>
+<th scope="col" class="left">Class name</th>
+<th scope="col" class="left">Description</th> </tr> </thead>
+<tbody>
+<tr>
+<td class="left"><code>AtomicBoolean</code></td>
+<td class="left">A <code>boolean</code> value that may be updated atomically</td> </tr>
+<tr>
+<td class="left"><code>AtomicInteger</code></td>
+<td class="left">An <code>int</code> value that may be updated atomically</td> </tr>
+<tr>
+<td class="left"><code>AtomicLong</code></td>
+<td class="left">A <code>long</code> value that may be updated atomically</td> </tr> </tbody> </table>
+
+```java
+private AtomicInteger sheepCount = new AtomicInteger(0);
+private void incrementAndReport() {
+   System.out.print(sheepCount.incrementAndGet()+" ");
+}
+```
+
+```
+2 3 1 4 5 6 7 8 9 10
+1 4 3 2 5 6 7 8 9 10
+1 4 3 5 6 2 7 8 10 9
+```
+
+<table>
+<thead>
+<tr>
+<th scope="col" class="left">Method</th>
+<th scope="col" class="left">Description</th> </tr> </thead>
+<tbody>
+<tr>
+<td class="left"><code>get()</code></td>
+<td class="left">Retrieves current value</td> </tr>
+<tr>
+<td class="left"><code>set(<i>type</i> newValue)</code></td>
+<td class="left">Sets given value, equivalent to assignment <code>=</code> operator</td> </tr>
+<tr>
+<td class="left"><code>getAndSet(<i>type</i> newValue)</code></td>
+<td class="left">Atomically sets new value and returns old value</td> </tr>
+<tr>
+<td class="left"><code>incrementAndGet()</code></td>
+<td class="left">For numeric classes, atomic pre-increment operation equivalent to <code>++value</code></td> </tr>
+<tr>
+<td class="left"><code>getAndIncrement()</code></td>
+<td class="left">For numeric classes, atomic post-increment operation equivalent to <code>value++</code></td> </tr>
+<tr>
+<td class="left"><code>decrementAndGet()</code></td>
+<td class="left">For numeric classes, atomic pre-decrement operation equivalent to <code>--value</code></td> </tr>
+<tr>
+<td class="left"><code>getAndDecrement()</code></td>
+<td class="left">For numeric classes, atomic post-decrement operation equivalent to <code>value--</code></td> </tr> </tbody> </table>
+
+
+### synchronized Blocks
+
+- common technique is to use a **monitor** to synchronize access. A **monitor**, also called a lock, is a structure that supports mutual exclusion, which is the property that at most one thread is executing a particular segment of code at a given time.
+- In Java, any `Object` can be used as a **monitor**, along with the synchronized keyword
+
+```java
+var manager = new SheepManager();
+synchronized(manager) {
+   // Work to be completed by one thread at a time
+}
+```
+
+- Each thread that arrives will first check if any threads are already running the block. If the lock is not available, the thread will transition to a BLOCKED state until it can “acquire the lock.” If the lock is available (or the thread already holds the lock), the single thread will enter the block, preventing all other threads from entering. Once the thread finishes executing the block, it will release the lock, allowing one of the waiting threads to proceed.
+- To synchronize access across multiple threads, each thread must have access to the same Object. If each thread synchronizes on different objects, the code is not thread-safe.
+
+```java
+import java.util.concurrent.*;
+public class SheepManager {
+   private int sheepCount = 0;
+   private void incrementAndReport() {
+      synchronized(this) {
+         System.out.print((++sheepCount)+" ");
+      }
+   }
+   public static void main(String[] args) {
+      ExecutorService service = Executors.newFixedThreadPool(20);
+      try {
+         var manager = new SheepManager();
+         for(int i = 0; i < 10; i++)
+            service.submit(() -> manager.incrementAndReport());
+      } finally {
+         service.shutdown();
+      } } }
+```
+
+```
+1 2 3 4 5 6 7 8 9 10
+```
+
+also works as well
+
+```java
+private final Object herd = new Object();
+private void incrementAndReport() {
+   synchronized(herd) {
+      System.out.print((++sheepCount)+" ");
+   }
+}
+```
+
+### Synchronizing on Methods
+
+two method definitions are equivalent:
+```java
+void sing() {
+   synchronized(this) {
+      System.out.print("La la la!");
+   }
+}
+synchronized void sing() {
+   System.out.print("La la la!");
+}
+```
+
+You can use static synchronization if you need to order thread access across all instances rather than a single instance.
+```java
+static void dance() {
+   synchronized(SheepManager.class) {
+      System.out.print("Time to dance!");
+   }
+}
+static synchronized void dance() {
+   System.out.print("Time to dance!");
+}
+```
+
+### Lock Framework
+
+A synchronized block supports only a limited set of functionality. For example, what if we want to check whether a lock is available and, if it is not, perform some other task? Furthermore, if the lock is never available and we synchronize on it, we might wait forever.
+
+The Concurrency API includes the `Lock` interface, which is conceptually similar to using the synchronized keyword but with a lot more bells and whistles. Instead of synchronizing on any `Object`, though, we can “lock” only on an object that implements the `Lock` interface.
+
+#### ReentrantLock
+
+
+
+
+-  at most one thread is allowed to hold a lock at any given time.
+- Wile certainly not required, it is a good practice to use a try/finally block with Lock instances. Doing so ensures that any acquired locks are properly released.
+- The ReentrantLock class includes a constructor that takes a single boolean and sets a “fairness” parameter. If the parameter is set to true, the lock will usually be granted to each thread in the order in which it was requested. It is false by default when using the no-argument constructor. In practice, you should enable fairness only when ordering is absolutely required, as it could lead to a significant slowdown.
+- Ability to request a lock without blocking.
+- Ability to request a lock while blocking for a specified amount of time.
+
+These two implementations are conceptually equivalent. 
+
+```java
+// Implementation #1 with a synchronized block
+Object object = new Object();
+synchronized(object) {
+   // Protected code
+}
+ 
+// Implementation #2 with a Lock
+Lock lock = new ReentrantLock();
+try {
+   lock.lock();
+   // Protected code
+} finally {
+   lock.unlock();
+}
+```
+
+ If you attempt to release a lock that you do not have, you will get an exception at runtime.
+
+ ```java
+Lock lock = new ReentrantLock();
+lock.unlock(); // IllegalMonitorStateException
+```
+
+<table>
+<thead>
+<tr>
+<th scope="col" class="left">Method</th>
+<th scope="col" class="left">Description</th> </tr> </thead>
+<tbody>
+<tr>
+<td class="left"><code>void <b>lock</b>()</code></td>
+<td class="left">Requests lock and blocks until lock is acquired.</td> </tr>
+<tr>
+<td class="left"><code>void <b>unlock</b>()</code></td>
+<td class="left">Releases lock.</td> </tr>
+<tr>
+<td class="left"><code>boolean <b>tryLock</b>()</code></td>
+<td class="left">Requests lock and returns immediately. Returns <code>boolean</code> indicating whether lock was successfully acquired.</td> </tr>
+<tr>
+<td class="left"><code>boolean <b>tryLock</b>(long timeout, TimeUnit unit)</code></td>
+<td class="left">Requests lock and blocks for specified time or until lock is acquired. Returns <code>boolean</code> indicating whether lock was successfully acquired.</td> </tr> </tbody> </table>
+
+
+The ReentrantLock class maintains a counter of the number of times a lock has been successfully granted to a thread. To release the lock for other threads to use, unlock() must be called the same number of times the lock was granted.
+
+```java
+Lock lock = new ReentrantLock();
+if(lock.tryLock()) {
+   try {
+      lock.lock();
+      System.out.println("Lock obtained, entering protected code");
+   } finally {
+      lock.unlock();
+   } }
+
+// only one unlocking. It's a lock forever.
+```   
+
+#### ReentrantReadWriteLock
+
+- includes separate locks for reading and writing data and is useful on data structures where reads are far more common than writes. For example, if you have a thousand threads reading data but only one thread writing data, this class can help you maximize concurrent access.
+
+### CyclicBarrier
+
+## Concurrent Collections
+
+## Identifying Threading Problems
+
+## Working with Parallel Streams
 
 
 ## Data races
@@ -9271,6 +9662,8 @@ public int hashCode() {
 
 }
 ```
+
+
 
 # I/O
 
