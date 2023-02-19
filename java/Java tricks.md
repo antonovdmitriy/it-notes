@@ -297,6 +297,9 @@
       - [ReentrantReadWriteLock](#reentrantreadwritelock)
     - [CyclicBarrier](#cyclicbarrier)
   - [Concurrent Collections](#concurrent-collections)
+    - [Memory Consistency Errors](#memory-consistency-errors)
+    - [Working with Concurrent Classes](#working-with-concurrent-classes)
+    - [Obtaining Synchronized Collections](#obtaining-synchronized-collections)
   - [Identifying Threading Problems](#identifying-threading-problems)
   - [Working with Parallel Streams](#working-with-parallel-streams)
   - [Data races](#data-races)
@@ -9703,6 +9706,110 @@ Adding lions
 ```
 
 ## Concurrent Collections
+
+- If the collection is immutable (and contains immutable objects), the concurrent collections are not necessary. Immutable objects can be accessed by any number of threads and do not require synchronization. By definition, they do not change, so there is no chance of a memory consistency error.
+
+### Memory Consistency Errors
+
+ - **memory consistency error** occurs when two threads have inconsistent views of what should be the same data. Conceptually, we want writes on one thread to be available to another thread if it accesses the concurrent collection after the write has occurred.
+- When two threads try to modify the same nonconcurrent collection, the JVM may throw a `ConcurrentModificationException` at runtime.
+-  In fact, it can happen with a single thread.
+
+```java
+var foodData = new HashMap<String, Integer>();
+foodData.put("penguin", 1);
+foodData.put("flamingo", 2);
+for(String key: foodData.keySet())
+   foodData.remove(key); // ConcurrentModificationException
+```
+
+iterator on `keySet()` is not properly updated after the first element is removed.
+
+to fix
+
+```java
+var foodData = new ConcurrentHashMap<String, Integer>();
+```
+
+- `ConcurrentHashMap` is ordering read/write access such that all access to the class is consistent.
+- the iterator created by `keySet()` is updated as soon as an object is removed from the Map.
+
+### Working with Concurrent Classes
+
+- When you see a class with Skip in the name, just think “sorted concurrent” collections
+- The CopyOnWrite classes create a copy of the collection any time a reference is added, removed, or changed in the collection and then update the original collection reference to point to the copy. These classes are commonly used to ensure an iterator doesn't see modifications to the collection.
+- The CopyOnWrite classes can use a lot of memory, since a new collection structure is created any time the collection is modified. Therefore, they are commonly used in multithreaded environment situations where reads are far more common than writes.
+
+<table>
+<thead>
+<tr>
+<th scope="col" class="left">Class name</th>
+<th scope="col" class="left">Java Collections interfaces</th>
+<th scope="col" class="left">Sorted?</th>
+<th scope="col" class="left">Blocking?</th> </tr> </thead>
+<tbody>
+<tr>
+<td class="left"><code>ConcurrentHashMap</code></td>
+<td class="left"><code>Map</code> <br> <code>ConcurrentMap</code></td>
+<td><span class="center">No</span></td>
+<td><span class="center">No</span></td> </tr>
+<tr>
+<td class="left"><code>ConcurrentLinkedQueue</code></td>
+<td class="left"><code>Queue</code></td>
+<td><span class="center">No</span></td>
+<td><span class="center">No</span></td> </tr>
+<tr>
+<td class="left"><code>ConcurrentSkipListMap</code></td>
+<td class="left"><code>Map</code> <br> <code>SortedMap</code> <br> <code>NavigableMap</code> <br> <code>ConcurrentMap</code> <br> <code>ConcurrentNavigableMap</code></td>
+<td><span class="center">Yes</span></td>
+<td><span class="center">No</span></td> </tr>
+<tr>
+<td class="left"><code>ConcurrentSkipListSet</code></td>
+<td class="left"><code>Set</code> <br> <code>SortedSet</code> <br> <code>NavigableSet</code></td>
+<td><span class="center">Yes</span></td>
+<td><span class="center">No</span></td> </tr>
+<tr>
+<td class="left"><code>CopyOnWriteArrayList</code></td>
+<td class="left"><code>List</code></td>
+<td><span class="center">No</span></td>
+<td><span class="center">No</span></td> </tr>
+<tr>
+<td class="left"><code>CopyOnWriteArraySet</code></td>
+<td class="left"><code>Set</code></td>
+<td><span class="center">No</span></td>
+<td><span class="center">No</span></td> </tr>
+<tr>
+<td class="left"><code>LinkedBlockingQueue</code></td>
+<td class="left"><code>Queue</code> <br> <code>BlockingQueue</code></td>
+<td><span class="center">No</span></td>
+<td><span class="center">Yes</span></td> </tr> </tbody> </table>
+
+```java
+List<Integer> favNumbers = new CopyOnWriteArrayList<>(List.of(4, 3, 42));
+for (var n : favNumbers) {
+   System.out.print(n + " ");                      // 4 3 42
+   favNumbers.add(n+1);
+}
+System.out.println();
+System.out.println("Size: " + favNumbers.size());  // Size: 6
+```
+
+ Alternatively, if we had used a regular `ArrayList` object, a `ConcurrentModificationException` would have been thrown at runtime.
+
+### Obtaining Synchronized Collections
+
+Synchronized Collections methods
+
+```java
+synchronizedCollection(Collection<T> c)
+synchronizedList(List<T> list)
+synchronizedMap(Map<K,V> m)
+synchronizedNavigableMap(NavigableMap<K,V> m)
+synchronizedNavigableSet(NavigableSet<T> s)
+synchronizedSet(Set<T> s)
+synchronizedSortedMap(SortedMap<K,V> m)
+synchronizedSortedSet(SortedSet<T> s)
+```
 
 ## Identifying Threading Problems
 
