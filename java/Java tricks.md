@@ -316,6 +316,10 @@
       - [Avoiding stateful streams](#avoiding-stateful-streams)
   - [Data races](#data-races)
 - [I/O](#io)
+  - [Referencing Files and Directories](#referencing-files-and-directories)
+  - [Operating on File and Path](#operating-on-file-and-path)
+  - [Interacting with NIO.2 Paths](#interacting-with-nio2-paths)
+    - [Viewing the Path](#viewing-the-path)
 - [JDBC](#jdbc)
 - [Modules](#modules)
   - [A Module](#a-module)
@@ -10177,6 +10181,294 @@ public int hashCode() {
 
 
 # I/O
+
+## Referencing Files and Directories
+
+- system property to retrieve the local separator character for the current environment:
+```java
+  System.out.print(System.getProperty("file.separator"));
+  ```
+- While the I/O APIs do not support symbolic links, NIO.2 includes full support for creating, detecting, and navigating symbolic links within the file system.
+- `File` or `Path` can represent a file or a directory.
+- `java.io.File` is the I/O class, while `Files` is an NIO.2 helper class. `Files` operates on `Path` instances, not `java.io.File`
+ instances
+
+```java
+File zooFile1 = new File("/home/tiger/data/stripes.txt");
+File zooFile2 = new File("/home/tiger", "data/stripes.txt");
+ 
+File parent = new File("/home/tiger");
+File zooFile3 = new File(parent, "data/stripes.txt");
+ 
+System.out.println(zooFile1.exists());
+```
+
+- `Path` is an interface, we can't create an instance directly
+
+```java
+Path zooPath1 = Path.of("/home/tiger/data/stripes.txt");
+Path zooPath2 = Path.of("/home", "tiger", "data", "stripes.txt");
+ 
+Path zooPath3 = Paths.get("/home/tiger/data/stripes.txt");
+Path zooPath4 = Paths.get("/home", "tiger", "data", "stripes.txt");
+ 
+System.out.println(Files.exists(zooPath1));
+```
+
+```java
+File file = new File("rabbit");
+Path nowPath = file.toPath();
+File backToFile = nowPath.toFile();
+```
+
+```java
+Path zooPath1 = FileSystems.getDefault()
+   .getPath("/home/tiger/data/stripes.txt");
+Path zooPath2 = FileSystems.getDefault()
+   .getPath("/home", "tiger", "data", "stripes.txt");
+```
+
+<table>
+<thead>
+<tr>
+<th scope="col" class="left">Creates</th>
+<th scope="col" class="left">Declared in</th>
+<th scope="col" class="left">Method or Constructor</th> </tr> </thead>
+<tbody>
+<tr>
+<td class="left"><code>File</code></td>
+<td class="left"><code>File</code></td>
+<td class="left"><code>public <b>File</b>(String pathname)</code> <br> <code>public <b>File</b>(File parent, String child)</code> <br> <code>public <b>File</b>(String parent, String child)</code></td> </tr>
+<tr>
+<td class="left"><code>File</code></td>
+<td class="left"><code>Path</code></td>
+<td class="left"><code>public default File <b>toFile</b>()</code></td> </tr>
+<tr>
+<td class="left"><code>Path</code></td>
+<td class="left"><code>File</code></td>
+<td class="left"><code>public Path <b>toPath</b>()</code></td> </tr>
+<tr>
+<td class="left"><code>Path</code></td>
+<td class="left"><code>Path</code></td>
+<td class="left"><code>public static Path <b>of</b>(String first, String… more)</code> <br> <code>public static Path <b>of</b>(URI uri)</code></td> </tr>
+<tr>
+<td class="left"><code>Path</code></td>
+<td class="left"><code>Paths</code></td>
+<td class="left"><code>public static Path <b>get</b>(String first, String… more)</code> <br> <code>public static Path <b>get</b>(URI uri)</code></td> </tr>
+<tr>
+<td class="left"><code>Path</code></td>
+<td class="left"><code>FileSystem</code></td>
+<td class="left"><code>public Path <b>getPath</b>(String first, String… more)</code></td> </tr>
+<tr>
+<td class="left"><code>FileSystem</code></td>
+<td class="left"><code>FileSystems</code></td>
+<td class="left"><code>public static FileSystem <b>getDefault</b>()</code></td> </tr> </tbody> </table>
+
+## Operating on File and Path
+
+<table>
+<thead>
+<tr>
+<th scope="col" class="left">Description</th>
+<th scope="col" class="left">I/O file instance method</th>
+<th scope="col" class="left">NIO.2 path instance method</th> </tr> </thead>
+<tbody>
+<tr>
+<td class="left">Gets name of file/directory</td>
+<td class="left"><code>getName()</code></td>
+<td class="left"><code>getFileName()</code></td> </tr>
+<tr>
+<td class="left">Retrieves parent directory or <code>null</code> if there is none</td>
+<td class="left"><code>getParent()</code></td>
+<td class="left"><code>getParent()</code></td> </tr>
+<tr>
+<td class="left">Checks if file/directory is absolute path</td>
+<td class="left"><code>isAbsolute()</code></td>
+<td class="left"><code>isAbsolute()</code></td> </tr> </tbody> </table>
+
+<table>
+<thead>
+<tr>
+<th scope="col" class="left">Description</th>
+<th scope="col" class="left">I/O file instance method</th>
+<th scope="col" class="left">NIO.2 files static method</th> </tr> </thead>
+<tbody>
+<tr>
+<td class="left">Deletes file/directory</td>
+<td class="left"><code>delete()</code></td>
+<td class="left"><code>deleteIfExists(Path p) throws IOException</code></td> </tr>
+<tr>
+<td class="left">Checks if file/directory exists</td>
+<td class="left"><code>exists()</code></td>
+<td class="left"><code>exists(Path p, LinkOption… o)</code></td> </tr>
+<tr>
+<td class="left">Retrieves absolute path of file/directory</td>
+<td class="left"><code>getAbsolutePath()</code></td>
+<td class="left"><code>toAbsolutePath()</code></td> </tr>
+<tr>
+<td class="left">Checks if resource is directory</td>
+<td class="left"><code>isDirectory()</code></td>
+<td class="left"><code>isDirectory(Path p, LinkOption… o)</code></td> </tr>
+<tr>
+<td class="left">Checks if resource is file</td>
+<td class="left"><code>isFile()</code></td>
+<td class="left"><code>isRegularFile(Path p, LinkOption… o)</code></td> </tr>
+<tr>
+<td class="left">Returns the time the file was last modified</td>
+<td class="left"><code>lastModified()</code></td>
+<td class="left"><code>getLastModifiedTime(Path p, LinkOption… o) throws IOException</code></td> </tr>
+<tr>
+<td class="left">Retrieves number of bytes in file</td>
+<td class="left"><code>length()</code></td>
+<td class="left"><code>size(Path p) throws IOException</code></td> </tr>
+<tr>
+<td class="left">Lists contents of directory</td>
+<td class="left"><code>listFiles()</code></td>
+<td class="left"><code>list(Path p) throws IOException</code></td> </tr>
+<tr>
+<td class="left">Creates directory</td>
+<td class="left"><code>mkdir()</code></td>
+<td class="left"><code>createDirectory(Path p, FileAttribute… a) throws IOException</code></td> </tr>
+<tr>
+<td class="left">Creates directory including any nonexistent parent directories</td>
+<td class="left"><code>mkdirs()</code></td>
+<td class="left"><code>createDirectories(Path p, FileAttribute… a) throws IOException</code></td> </tr>
+<tr>
+<td class="left">Renames file/directory denoted</td>
+<td class="left"><code>renameTo(File dest)</code></td>
+<td class="left"><code>move(Path src, Path dest, CopyOption… o) throws IOException</code></td> </tr> </tbody> </table>
+
+```java
+public static void io() {
+   var file = new File("C:\\data\\zoo.txt");
+   if (file.exists()) {
+      System.out.println("Absolute Path: " + file.getAbsolutePath());
+      System.out.println("Is Directory: " + file.isDirectory());
+      System.out.println("Parent Path: " + file.getParent());
+      if (file.isFile()) {
+         System.out.println("Size: " + file.length());
+         System.out.println("Last Modified: " + file.lastModified());
+      } else {
+         for (File subfile : file.listFiles()) {
+            System.out.println("   " + subfile.getName());
+      } } } }
+```
+
+```
+Absolute Path: C:\data\zoo.txt
+Is Directory: false
+Parent Path: C:\data
+Size: 12382
+Last Modified: 1650610000000
+```
+
+```
+Absolute Path: C:\data
+Is Directory: true
+Parent Path: C:\
+   employees.txt
+   zoo.txt
+   zoo-backup.txt
+```
+
+```java
+public static void nio() throws IOException {
+   var path = Path.of("C:\\data\\zoo.txt");
+   if (Files.exists(path)) {
+      System.out.println("Absolute Path: " + path.toAbsolutePath());
+      System.out.println("Is Directory: " + Files.isDirectory(path));
+      System.out.println("Parent Path: " + path.getParent());
+      if (Files.isRegularFile(path)) {
+         System.out.println("Size: " + Files.size(path));
+         System.out.println("Last Modified: " 
+            + Files.getLastModifiedTime(path));
+      } else {
+         try (Stream<Path> stream = Files.list(path)) {
+            stream.forEach(p -> 
+               System.out.println("   " + p.getName()));
+      } } } }
+```
+
+ Common NIO.2 method arguments
+<table>
+<thead>
+<tr>
+<th scope="col" class="left">Enum type</th>
+<th scope="col" class="left">Interface inherited</th>
+<th scope="col" class="left">Enum value</th>
+<th scope="col" class="left">Details</th> </tr> </thead>
+<tbody>
+<tr>
+<td class="left"><code>LinkOption</code></td>
+<td class="left"><code>CopyOption</code> <br> <code>OpenOption</code></td>
+<td class="left"><code>NOFOLLOW_LINKS</code></td>
+<td class="left">Do not follow symbolic links.</td> </tr>
+<tr>
+<td class="left" rowspan="3"><code>StandardCopyOption</code></td>
+<td class="left" rowspan="3"><code>CopyOption</code></td>
+<td class="left"><code>ATOMIC_MOVE</code></td>
+<td class="left">Move file as atomic file system operation.</td> </tr>
+<tr>
+<td class="left"><code>COPY_ATTRIBUTES</code></td>
+<td class="left">Copy existing attributes to new file.</td> </tr>
+<tr>
+<td class="left"><code>REPLACE_EXISTING</code></td>
+<td class="left">Overwrite file if it already exists.</td> </tr>
+<tr>
+<td class="left" rowspan="6"><code>StandardOpenOption</code></td>
+<td class="left" rowspan="6"><code>OpenOption</code></td>
+<td class="left"><code>APPEND</code></td>
+<td class="left">If file is already open for write, append to the end.</td> </tr>
+<tr>
+<td class="left"><code>CREATE</code></td>
+<td class="left">Create new file if it does not exist.</td> </tr>
+<tr>
+<td class="left"><code>CREATE_NEW</code></td>
+<td class="left">Create new file only if it does not exist; fail otherwise.</td> </tr>
+<tr>
+<td class="left"><code>READ</code></td>
+<td class="left">Open for read access.</td> </tr>
+<tr>
+<td class="left"><code>TRUNCATE_EXISTING</code></td>
+<td class="left">If file is already open for write, erase file and append to beginning.</td> </tr>
+<tr>
+<td class="left"><code>WRITE</code></td>
+<td class="left">Open for write access.</td> </tr>
+<tr>
+<td class="left"><code>FileVisitOption</code></td>
+<td class="left">N/A</td>
+<td class="left"><code>FOLLOW_LINKS</code></td>
+<td class="left">Follow symbolic links.</td> </tr> </tbody> </table>
+
+```java
+Path path = Paths.get("schedule.xml");
+boolean exists = Files.exists(path, LinkOption.NOFOLLOW_LINKS);
+```
+
+```java
+void copy(Path source, Path target) throws IOException {
+   Files.move(source, target,
+      LinkOption.NOFOLLOW_LINKS,
+      StandardCopyOption.ATOMIC_MOVE);
+}
+```
+
+## Interacting with NIO.2 Paths
+
+- `Path` instances are immutable.
+```java
+Path p = Path.of("whale");
+p.resolve("krill");
+System.out.println(p);  // whale
+```
+
+```java
+Path.of("/zoo/../home").getParent().normalize().toAbsolutePath();
+```
+
+### Viewing the Path
+
+
 
 # JDBC
 
