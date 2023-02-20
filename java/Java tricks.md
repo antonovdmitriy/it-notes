@@ -301,6 +301,11 @@
     - [Working with Concurrent Classes](#working-with-concurrent-classes)
     - [Obtaining Synchronized Collections](#obtaining-synchronized-collections)
   - [Identifying Threading Problems](#identifying-threading-problems)
+    - [Liveness](#liveness)
+      - [Deadlock](#deadlock)
+      - [Starvation](#starvation)
+      - [Livelock](#livelock)
+    - [Managing Race Conditions](#managing-race-conditions)
   - [Working with Parallel Streams](#working-with-parallel-streams)
   - [Data races](#data-races)
 - [I/O](#io)
@@ -9813,7 +9818,91 @@ synchronizedSortedSet(SortedSet<T> s)
 
 ## Identifying Threading Problems
 
+### Liveness
+
+- **Liveness** is the ability of an application to be able to execute in a timely manner. 
+- Liveness problems are those in which the application becomes unresponsive or is in some kind of “stuck” state. 
+- liveness problems are often the result of a thread entering a `BLOCKING` or `WAITING` state forever, or repeatedly entering/exiting these states.
+
+#### Deadlock
+
+- **Deadlock** occurs when two or more threads are blocked forever, each waiting on the other
+
+```java
+import java.util.concurrent.*;
+class Food {}
+class Water {}
+public record Fox(String name) {
+   public void eatAndDrink(Food food, Water water) {
+      synchronized(food) {
+         System.out.println(name() + " Got Food!");
+         move();
+         synchronized(water) {
+            System.out.println(name() + " Got Water!");
+         } } }
+   public void drinkAndEat(Food food, Water water) {
+      synchronized(water) {
+         System.out.println(name() + " Got Water!");
+         move();
+         synchronized(food) {
+            System.out.println(name() + " Got Food!");
+         } } }
+   public void move() {
+      try { Thread.sleep(100); } catch (InterruptedException e) {}
+   }
+   public static void main(String[] args) {
+      // Create participants and resources
+      var foxy = new Fox("Foxy");
+      var tails = new Fox("Tails");
+      var food = new Food();
+      var water = new Water();
+      // Process data
+      var service = Executors.newScheduledThreadPool(10);
+      try {
+         service.submit(() -> foxy.eatAndDrink(food,water));
+         service.submit(() -> tails.drinkAndEat(food,water));
+      } finally {
+         service.shutdown();
+      } 
+   }
+}
+```      
+
+```
+Foxy Got Food!
+Tails Got Water!  ...   and forever hangs out
+```
+
+#### Starvation
+
+**Starvation** occurs when a single thread is denied access to a shared resource or lock. The thread is still active, but it is unable to complete its work as a result of other threads constantly taking the resource that it is trying to access.
+
+#### Livelock
+
+- **Livelock** occurs when two or more threads are conceptually blocked forever, although they are each still active and trying to complete their task. Livelock is a special case of resource starvation in which two or more threads actively try to acquire a set of locks, are unable to do so, and restart part of the process.
+- Livelock is often a result of two threads trying to resolve a deadlock. 
+- In practice, livelock is often a difficult issue to detect. Threads in a livelock state appear active and able to respond to requests, even when they are stuck in an endless cycle.
+
+### Managing Race Conditions
+
+A **race condition** is an undesirable result that occurs when two tasks that should be completed sequentially are completed at the same time
+
+Examples:
+1. like above change shared variable without atomic or synchronization
+   
+2. Imagine that two zoo patrons, Olivia and Sophia, are signing up for an account on the zoo's new visitor website. Both of them want to use the same username, ZooFan, and each sends a request to create the account at the same time
+
+   Possible Outcomes for This Race Condition: 
+
+   - Both users are able to create accounts with the username ZooFan.
+   - Neither user is able to create an account with the username ZooFan, and an error message is returned to both users.
+   - One user is able to create an account with the username ZooFan, while the other user receives an error message
+
 ## Working with Parallel Streams
+
+ - A **serial stream** is a stream in which the results are ordered, with only one entry being processed at a time.
+- A **parallel stream** is capable of processing results concurrently, using multiple threads. 
+-  The number of threads available in a parallel stream is proportional to the number of available CPUs in your environment.
 
 
 ## Data races
