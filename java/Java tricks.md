@@ -318,8 +318,24 @@
 - [I/O](#io)
   - [Referencing Files and Directories](#referencing-files-and-directories)
   - [Operating on File and Path](#operating-on-file-and-path)
-  - [Interacting with NIO.2 Paths](#interacting-with-nio2-paths)
-    - [Viewing the Path](#viewing-the-path)
+    - [Interacting with NIO.2 Paths](#interacting-with-nio2-paths)
+      - [Viewing the Path](#viewing-the-path)
+      - [Creating Part of the Path](#creating-part-of-the-path)
+      - [Accessing Path Elements](#accessing-path-elements)
+      - [Resolving Paths](#resolving-paths)
+      - [Relativizing a Path](#relativizing-a-path)
+      - [Normalizing a Path](#normalizing-a-path)
+      - [Retrieving the Real File System Path](#retrieving-the-real-file-system-path)
+    - [Creating, Moving, and Deleting Files and Directories](#creating-moving-and-deleting-files-and-directories)
+      - [Making Directories](#making-directories)
+      - [Copying Files](#copying-files)
+      - [Copying Files with I/O Streams](#copying-files-with-io-streams)
+      - [Copying Files into a Directory](#copying-files-into-a-directory)
+      - [Moving or Renaming Paths with move()](#moving-or-renaming-paths-with-move)
+      - [Performing an Atomic Move](#performing-an-atomic-move)
+      - [Deleting a File](#deleting-a-file)
+      - [Comparing Files](#comparing-files)
+  - [I/O Streams](#io-streams)
 - [JDBC](#jdbc)
 - [Modules](#modules)
   - [A Module](#a-module)
@@ -10453,7 +10469,7 @@ void copy(Path source, Path target) throws IOException {
 }
 ```
 
-## Interacting with NIO.2 Paths
+### Interacting with NIO.2 Paths
 
 - `Path` instances are immutable.
 ```java
@@ -10466,7 +10482,407 @@ System.out.println(p);  // whale
 Path.of("/zoo/../home").getParent().normalize().toAbsolutePath();
 ```
 
-### Viewing the Path
+<table>
+<thead>
+<tr>
+<th scope="col" class="left">Description</th>
+<th scope="col" class="left">Method or constructor</th> </tr> </thead>
+<tbody>
+<tr>
+<td class="left">File path as string</td>
+<td class="left">
+<pre id="c14-code-0041"><code>public String <b>toString</b>()</code>
+</pre></td> </tr>
+<tr>
+<td class="left">Single segment</td>
+<td class="left">
+<pre id="c14-code-0042"><code>public Path <b>getName</b>(int index)</code>
+</pre></td> </tr>
+<tr>
+<td class="left">Number of segments</td>
+<td class="left">
+<pre id="c14-code-0043"><code>public int <b>getNameCount</b>()</code>
+</pre></td> </tr>
+<tr>
+<td class="left">Segments in range</td>
+<td class="left">
+<pre id="c14-code-0044"><code>public Path <b>subpath</b>(int beginIndex, int endIndex)</code>
+</pre></td> </tr>
+<tr>
+<td class="left">Final segment</td>
+<td class="left">
+<pre id="c14-code-0045"><code>public Path <b>getFileName</b>()</code>
+</pre></td> </tr>
+<tr>
+<td class="left">Immediate parent</td>
+<td class="left">
+<pre id="c14-code-0046"><code>public Path <b>getParent</b>()</code>
+</pre></td> </tr>
+<tr>
+<td class="left">Top-level segment</td>
+<td class="left">
+<pre id="c14-code-0047"><code>public Path <b>getRoot</b>()</code>
+</pre></td> </tr>
+<tr>
+<td class="left">Concatenate paths</td>
+<td class="left">
+<pre id="c14-code-0048"><code>public Path <b>resolve</b>(String p) </code>
+<code>public Path <b>resolve</b>(Path p)</code>
+</pre></td> </tr>
+<tr>
+<td class="left">Construct path to one provided</td>
+<td class="left">
+<pre id="c14-code-0049"><code>public Path <b>relativize</b>(Path p)</code>
+</pre></td> </tr>
+<tr>
+<td class="left">Remove redundant parts of path</td>
+<td class="left">
+<pre id="c14-code-0050"><code>public Path <b>normalize</b>()</code>
+</pre></td> </tr>
+<tr>
+<td class="left">Follow symbolic links to find path on file system</td>
+<td class="left">
+<pre id="c14-code-0051"><code>public Path <b>toRealPath</b>()</code>
+</pre></td> </tr> </tbody> </table>
+
+#### Viewing the Path
+
+```java
+Path path = Paths.get("/land/hippo/harry.happy");
+System.out.println("The Path Name is: " + path);
+for(int i=0; i<path.getNameCount(); i++)
+   System.out.println("   Element " + i + " is: " + path.getName(i));
+```
+
+```
+The Path Name is: /land/hippo/harry.happy
+   Element 0 is: land
+   Element 1 is: hippo
+   Element 2 is: harry.happy
+```
+
+```java
+var p = Path.of("/");
+System.out.print(p.getNameCount()); // 0
+System.out.print(p.getName(0));     // IllegalArgumentException
+```
+
+#### Creating Part of the Path
+
+The `Path` interface includes the `subpath()` method to select portions of a path. It takes two parameters: an inclusive beginIndex and an exclusive endIndex. This should sound familiar as it is how String's `substring()`
+
+```java
+var p = Paths.get("/mammal/omnivore/raccoon.image");
+System.out.println("Path is: " + p);
+for (int i = 0; i < p.getNameCount(); i++) {
+   System.out.println("   Element " + i + " is: " + p.getName(i));
+}
+System.out.println();
+System.out.println("subpath(0,3): " + p.subpath(0, 3));
+System.out.println("subpath(1,2): " + p.subpath(1, 2));
+System.out.println("subpath(1,3): " + p.subpath(1, 3));
+```
+
+```
+Path is: /mammal/omnivore/raccoon.image
+   Element 0 is: mammal
+   Element 1 is: omnivore
+   Element 2 is: raccoon.image
+ 
+subpath(0,3): mammal/omnivore/raccoon.image
+subpath(1,2): omnivore
+subpath(1,3): omnivore/raccoon.image
+```
+
+```java
+var q = p.subpath(0, 4); // IllegalArgumentException
+var x = p.subpath(1, 1); // IllegalArgumentException
+```
+
+#### Accessing Path Elements
+
+```java
+public void printPathInformation(Path path) {
+   System.out.println("Filename is: " + path.getFileName());
+   System.out.println("   Root is: " + path.getRoot());
+   Path currentParent = path;
+   while((currentParent = currentParent.getParent()) != null)
+      System.out.println("   Current parent is: " + currentParent);
+   System.out.println();
+}
+```
+
+```java
+printPathInformation(Path.of("zoo"));
+printPathInformation(Path.of("/zoo/armadillo/shells.txt"));
+printPathInformation(Path.of("./armadillo/../shells.txt"));
+```
+
+```
+Filename is: zoo
+   Root is: null
+ 
+Filename is: shells.txt
+   Root is: /
+   Current parent is: /zoo/armadillo
+   Current parent is: /zoo
+   Current parent is: /
+ 
+Filename is: shells.txt
+   Root is: null
+   Current parent is: ./armadillo/..
+   Current parent is: ./armadillo
+   Current parent is: .
+```
+
+#### Resolving Paths
+
+```java
+Path path1 = Path.of("/cats/../panther");
+Path path2 = Path.of("food");
+System.out.println(path1.resolve(path2)); // /cats/../panther/food
+``
+
+```java
+Path path3 = Path.of("/turkey/food");
+System.out.println(path3.resolve("/tiger/cage")); // /tiger/cage
+```
+
+#### Relativizing a Path
+
+```java
+var path1 = Path.of("fish.txt");
+var path2 = Path.of("friendly/birds.txt");
+System.out.println(path1.relativize(path2));
+System.out.println(path2.relativize(path1));
+// ../friendly/birds.txt
+// ../../fish.txt
+```
+
+```java
+Path path3 = Paths.get("E:\\habitat");
+Path path4 = Paths.get("E:\\sanctuary\\raven\\poe.txt");
+System.out.println(path3.relativize(path4));
+System.out.println(path4.relativize(path3));
+// ..\sanctuary\raven\poe.txt
+// ..\..\..\habitat
+```
+
+```java
+Path path1 = Paths.get("/primate/chimpanzee");
+Path path2 = Paths.get("bananas.txt");
+path1.relativize(path2); // IllegalArgumentException
+```
+
+```java
+Path path3 = Paths.get("C:\\primate\\chimpanzee");
+Path path4 = Paths.get("D:\\storage\\bananas.txt");
+path3.relativize(path4); // IllegalArgumentException
+```
+
+#### Normalizing a Path
+
+```java
+var p1 = Path.of("./armadillo/../shells.txt");
+System.out.println(p1.normalize()); // shells.txt
+ 
+var p2 = Path.of("/cats/../panther/food");
+System.out.println(p2.normalize()); // /panther/food
+ 
+var p3 = Path.of("../../fish.txt");
+System.out.println(p3.normalize()); // ../../fish.txt
+```
+
+```java
+var p1 = Paths.get("/pony/../weather.txt");
+var p2 = Paths.get("/weather.txt");
+System.out.println(p1.equals(p2)); // false
+System.out.println(p1.normalize().equals(p2.normalize())); // true
+```
+
+#### Retrieving the Real File System Path
+
+we have a file system in which we have a symbolic link from `/zebra` to `/horse`. What do you think the following will print, given a current working directory of `/horse/schedule`
+
+```java
+System.out.println(Paths.get("/zebra/food.txt").toRealPath()); // /horse/food.txt
+System.out.println(Paths.get(".././food.txt").toRealPath());   // /horse/food.txt
+```
+
+```java
+System.out.println(Paths.get(".").toRealPath());
+```
+
+### Creating, Moving, and Deleting Files and Directories
+
+#### Making Directories
+
+To create a directory, we use these `Files` methods:
+```java
+public static Path createDirectory(Path dir, FileAttribute<?>… attrs) throws IOException
+ 
+public static Path createDirectories(Path dir, FileAttribute<?>… attrs) throws IOException
+```
+
+- The `createDirectory()` method will create a directory and throw an exception if it already exists or if the paths leading up to the directory do not exist. 
+- The `createDirectories()` method creates the target directory along with any nonexistent parent directories leading up to the path. If all of the directories already exist,` createDirectories()` will simply complete without doing anything. This is useful in situations where you want to ensure a directory exists and create it if it does not.
+
+```java
+Files.createDirectory(Path.of("/bison/field"));
+Files.createDirectories(Path.of("/bison/field/pasture/green"));
+```
+
+#### Copying Files
+
+```java
+public static Path copy(Path source, Path target, CopyOption… options) throws IOException
+```
+
+```java
+Files.copy(Paths.get("/panda/bamboo.txt"), Paths.get("/panda-save/bamboo.txt"));
+ 
+Files.copy(Paths.get("/turtle"), Paths.get("/turtleCopy"));
+```
+
+When directories are copied, the copy is shallow. A **shallow copy** means that the files and subdirectories within the directory are not copied. A **deep copy** means that the entire tree is copied, including all of its content and subdirectories.
+
+ deep copy typically requires recursion
+```java
+public void copyPath(Path source, Path target) {
+   try {
+      Files.copy(source, target);
+      if(Files.isDirectory(source))
+         try (Stream<Path> s = Files.list(source)) {
+            s.forEach(p -> copyPath(p,
+               target.resolve(p.getFileName())));
+         }
+   } catch(IOException e) {
+      // Handle exception
+   }
+}
+```
+
+the JVM will not follow symbolic links when using the list() method.
+
+By default, if the target already exists, the `copy()` method will throw an exception. You can change this behavior by providing the `StandardCopyOption` enum value `REPLACE_EXISTING` to the method
+
+```java
+Files.copy(Paths.get("book.txt"), Paths.get("movie.txt"),
+   StandardCopyOption.REPLACE_EXISTING);
+```
+
+#### Copying Files with I/O Streams
+
+```java
+public static long copy(InputStream in, Path target,
+   CopyOption… options) throws IOException
+ 
+public static long copy(Path source, OutputStream out)
+   throws IOException
+```
+
+```java
+try (var is = new FileInputStream("source-data.txt")) {
+   // Write I/O stream data to a file
+   Files.copy(is, Paths.get("/mammals/wolf.txt"));
+}
+ 
+Files.copy(Paths.get("/fish/clown.xsl"), System.out);
+```
+
+#### Copying Files into a Directory
+
+```java
+var file = Paths.get("food.txt");
+var directory = Paths.get("/enclosure");
+Files.copy(file, directory);
+```
+
+The command tries to create a new file named /enclosure. Since the path /enclosure already exists, an exception is thrown at runtime.
+
+On the other hand, if the directory did not exist, the process would create a new file with the contents of food.txt, but the file would be called /enclosure.
+
+```java
+var file = Paths.get("food.txt");
+var directory = Paths.get("/enclosure/food.txt");
+Files.copy(file, directory);
+```
+
+#### Moving or Renaming Paths with move()
+
+```java
+public static Path move(Path source, Path target,
+   CopyOption… options) throws IOException
+```
+
+```java
+Files.move(Path.of("C:\\zoo"), Path.of("C:\\zoo-new")); // rename
+ 
+Files.move(Path.of("C:\\user\\addresses.txt"),
+   Path.of("C:\\zoo-new\\addresses2.txt"));   // move
+```
+
+- Like `copy()`, `move()` requires `REPLACE_EXISTING` to overwrite the target if it exists; otherwise, it will throw an exception. 
+- like `copy()`, `move()` will not put a file in a directory if the source is a file and the target is a directory. Instead, it will create a new file with the name of the directory.
+
+#### Performing an Atomic Move
+
+```java
+Files.move(Path.of("mouse.txt"), Path.of("gerbil.txt"), StandardCopyOption.ATOMIC_MOVE);
+```
+
+- any process monitoring the file system never sees an incomplete or partially written file. 
+- If the file system does not support this feature, an `AtomicMoveNotSupportedException` will be thrown.
+
+#### Deleting a File
+
+```java
+public static void delete(Path path) throws IOException
+public static boolean deleteIfExists(Path path) throws IOException
+```
+
+- To delete a directory, it must be empty. 
+- Both of these methods throw an exception if operated on a nonempty directory. 
+- if the path is a symbolic link, the symbolic link will be deleted, not the path that the symbolic link points to.
+-  The `delete()` method throws an exception if the path does not exist
+- the `deleteIfExists()` method returns `true` if the delete was successful or false otherwise.
+
+```java
+Files.delete(Paths.get("/vulture/feathers.txt"));
+Files.deleteIfExists(Paths.get("/pigeon"));
+```
+
+#### Comparing Files 
+
+-  `isSameFile()` method takes two `Path` objects as input, resolves all path symbols, and follows symbolic links. 
+-  Despite the name, the method can also be used to determine whether two `Path` objects refer to the same directory.
+
+```java
+System.out.println(Files.isSameFile(
+   Path.of("/animals/cobra"),
+   Path.of("/animals/snake")));
+ 
+ 
+System.out.println(Files.isSameFile(
+   Path.of("/animals/monkey/ears.png"),
+   Path.of("/animals/wolf/ears.png")));
+```
+
+Since snake is a symbolic link to cobra, the first example outputs `true`. In the second example, the paths refer to different files, so `false` is printed.
+
+The `mismatch()` method was introduced in Java 12. It takes two `Path` objects as input. The method returns `-1` if the files are the same; otherwise, it returns the index of the first position in the file that differs.
+
+```java
+System.out.println(Files.mismatch(
+   Path.of("/animals/monkey.txt"),
+   Path.of("/animals/wolf.txt")));
+```
+
+Suppose `monkey.txt` contains the name Harold and `wolf.txt` contains the name Howler. The previous code prints `1` in that case because the second position is different, and we use zero-based indexing in Java. 
+
+Method is symmetric and returns the same result regardless of the order of the parameters.
+
+##  I/O Streams
 
 
 
