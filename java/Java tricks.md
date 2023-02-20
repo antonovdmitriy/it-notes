@@ -307,6 +307,13 @@
       - [Livelock](#livelock)
     - [Managing Race Conditions](#managing-race-conditions)
   - [Working with Parallel Streams](#working-with-parallel-streams)
+    - [Parallel Decomposition](#parallel-decomposition)
+    - [Unordered stream](#unordered-stream)
+    - [Parallel reduction](#parallel-reduction)
+      - [Combining Results with reduce()](#combining-results-with-reduce)
+      - [Combining Results with collect()](#combining-results-with-collect)
+      - [Requirements for Parallel Reduction with collect()](#requirements-for-parallel-reduction-with-collect)
+      - [Avoiding stateful streams](#avoiding-stateful-streams)
   - [Data races](#data-races)
 - [I/O](#io)
 - [JDBC](#jdbc)
@@ -9902,7 +9909,229 @@ Examples:
 
  - A **serial stream** is a stream in which the results are ordered, with only one entry being processed at a time.
 - A **parallel stream** is capable of processing results concurrently, using multiple threads. 
--  The number of threads available in a parallel stream is proportional to the number of available CPUs in your environment.
+- The number of threads available in a parallel stream is proportional to the number of available CPUs in your environment.
+- `Stream` interface includes a method `isParallel()` that can be used to test whether the instance of a stream supports parallel processing
+-  `map()` and `forEach()` operations on a parallel stream are equivalent to submitting multiple `Runnable` lambda expressions to a pooled thread executor and then waiting for the results.
+- operations that consider order, such as `findFirst()`, `limit()`, and `skip()` order is still preserved, but performance may suffer on a parallel stream as a result of a parallel processing task being forced to coordinate all of its threads in a synchronized-like fashion. On the plus side, the results of ordered operations on a parallel stream will be consistent with a serial stream. For example, calling `skip(5).limit(2).findFirst()` will return the same result on ordered serial and parallel streams.
+
+
+```java
+Collection<Integer> collection = List.of(1,2);
+ 
+Stream<Integer> p1 = collection.stream().parallel();
+Stream<Integer> p2 = collection.parallelStream();
+```
+
+### Parallel Decomposition
+
+**parallel decomposition** is the process of taking a task, breaking it into smaller pieces that can be performed concurrently, and then reassembling the results.
+
+```java
+private static int doWork(int input) {
+   try {
+      Thread.sleep(5000);
+   } catch (InterruptedException e) {}
+   return input;
+}
+```
+
+with serial stream 
+
+```java
+long start = System.currentTimeMillis();
+List.of(1,2,3,4,5)
+   .stream()
+   .map(w -> doWork(w))
+   .forEach(s -> System.out.print(s + " "));
+System.out.println();
+var timeTaken = (System.currentTimeMillis()-start)/1000;
+System.out.println("Time: "+timeTaken+" seconds");
+```
+
+```
+1 2 3 4 5
+Time: 25 seconds
+```
+
+with parallel stream 
+
+
+```java
+long start = System.currentTimeMillis();
+List.of(1,2,3,4,5)
+   .parallelStream()
+   .map(w -> doWork(w))
+   .forEach(s -> System.out.print(s + " "));
+System.out.println();
+var timeTaken = (System.currentTimeMillis()-start)/1000;
+System.out.println("Time: "+timeTaken+" seconds");
+```
+
+```
+3 2 1 5 4
+Time: 5 seconds
+```
+
+with ordering
+
+```java
+long start = System.currentTimeMillis();
+List.of(1,2,3,4,5)
+   .parallelStream()
+   .map(w -> doWork(w))
+   .forEachOrdered(s -> System.out.print(s + " "));
+System.out.println();
+var timeTaken = (System.currentTimeMillis()-start)/1000;
+System.out.println("Time: "+timeTaken+" seconds");
+```
+
+```
+1 2 3 4 5
+Time: 5 seconds
+```
+While we've lost some of the performance gains of using a parallel stream, our `map()` operation can still take advantage of the parallel stream.
+
+### Unordered stream
+
+- All of the streams are considered ordered by default. 
+- It is possible to create an unordered stream from an ordered stream, similar to how you create a parallel stream from a serial stream.
+
+```java
+ List.of(1,2,3,4,5,6).stream().unordered();
+ ```
+
+- This method does not reorder the elements; it just tells the JVM that if an order-based stream operation is applied, the order can be ignored. For example, calling `skip(5)` on an unordered stream will skip any 5 elements, not necessarily the first 5 required on an ordered stream.
+- For serial streams, using an unordered version has no effect. But on parallel streams, the results can greatly improve performance.
+```java
+    List.of(1,2,3,4,5,6).stream().unordered().parallel();
+```
+
+### Parallel reduction
+
+- A **parallel reduction** is a reduction operation applied to a parallel stream. The results for parallel reductions can differ from what you expect when working with serial streams.
+
+#### Combining Results with reduce()
+
+```java
+<U> U reduce(U identity,
+   BiFunction<U,? super T,U> accumulator,
+   BinaryOperator<U> combiner)
+```
+
+```java
+System.out.println(List.of('w', 'o', 'l', 'f')
+   .parallelStream()
+   .reduce("",
+      (s1,c) -> s1 + c,
+      (s2,s3) -> s2 + s3)); // wolf
+```      
+
+ - in a serial stream, wolf is built one character at a time. In a parallel stream, the intermediate values `wo` and `lf` are created and then combined.
+- make sure that the accumulator and combiner produce the same result regardless of the order they are called in.
+
+```java
+System.out.println(List.of(1,2,3,4,5,6)
+   .parallelStream()
+   .reduce(0, (a, b) -> (a - b))); // PROBLEMATIC ACCUMULATOR. 
+   // It may output -21, 3, or some other value.
+```
+
+```java
+System.out.println(List.of("w","o","l","f")
+   .parallelStream()
+   .reduce("X", String::concat)); // XwXoXlXf
+```   
+
+As part of the parallel process, the identity is applied to multiple elements in the stream, resulting in very unexpected data.
+
+Although the one- and two-argument versions of reduce() support parallel processing, it is recommended that you use the three-argument version of reduce() when working with parallel streams. Providing an explicit combiner method allows the JVM to partition the operations in the stream more efficiently.
+
+#### Combining Results with collect()
+
+```java
+<R> R collect(Supplier<R> supplier,
+   BiConsumer<R, ? super T> accumulator,
+   BiConsumer<R, R> combiner)
+```   
+
+```java
+Stream<String> stream = Stream.of("w", "o", "l", "f").parallel();
+SortedSet<String> set = stream.collect(ConcurrentSkipListSet::new,
+   Set::add,
+   Set::addAll);
+System.out.println(set);  // [f, l, o, w]
+```
+
+Recall that elements in a `ConcurrentSkipListSet` are sorted according to their natural ordering. You should use a concurrent collection to combine the results, ensuring that the results of concurrent threads do not cause a ConcurrentModificationException.
+
+#### Requirements for Parallel Reduction with collect()
+
+- The stream is parallel.
+- The parameter of the `collect()` operation has the `Characteristics.CONCURRENT` characteristic.
+- Either the stream is unordered or the collector has the characteristic `Characteristics.UNORDERED`.
+
+```java
+parallelStream.collect(Collectors.toSet());  // Not a parallel reduction
+```
+
+while `Collectors.toSet()` does have the `UNORDERED` characteristic, it does not have the `CONCURRENT` characteristic.
+
+The `Collectors` class includes two sets of static methods for retrieving collectors, `toConcurrentMap()` and `groupingByConcurrent()`, both of which are `UNORDERED` and `CONCURRENT`. These methods produce `Collector` instances capable of performing parallel reductions efficiently. Like their nonconcurrent counterparts, there are overloaded versions that take additional arguments.
+
+```java
+Stream<String> ohMy = Stream.of("lions", "tigers", "bears").parallel();
+ConcurrentMap<Integer, String> map = ohMy
+   .collect(Collectors.toConcurrentMap(String::length,
+      k -> k,
+      (s1, s2) -> s1 + "," + s2));
+System.out.println(map);             // {5=lions,bears, 6=tigers}
+System.out.println(map.getClass());  // java.util.concurrent.ConcurrentHashMap
+```
+
+```java
+var ohMy = Stream.of("lions", "tigers", "bears").parallel();
+ConcurrentMap<Integer, List<String>> map = ohMy.collect(
+   Collectors.groupingByConcurrent(String::length));
+System.out.println(map);             // {5=[lions, bears], 6=[tigers]}
+```
+
+#### Avoiding stateful streams
+
+- Side effects can appear in parallel streams if your lambda expressions are stateful. 
+- A stateful lambda expression is one whose result depends on any state that might change during the execution of a pipeline. 
+
+```java
+public List<Integer> addValues(IntStream source) {
+   var data = Collections.synchronizedList(new ArrayList<Integer>());
+   source.filter(s -> s % 2 == 0)
+      .forEach(i -> { data.add(i); }); // STATEFUL: DON'T DO THIS!
+   return data;
+}
+```
+
+```java
+var list = addValues(IntStream.range(1, 11));
+System.out.print(list);                 // [2, 4, 6, 8, 10]
+```
+
+```java
+var list = addValues(IntStream.range(1, 11).parallel());
+System.out.print(list);                 // [6, 8, 10, 2, 4]
+```
+
+to fix rewrite as stateless
+
+```java
+public List<Integer> addValuesBetter(IntStream source) {
+   return source.filter(s -> s % 2 == 0)
+      .boxed()
+      .collect(Collectors.toList());
+}
+```
+
+- This method processes the stream and then collects all the results into a new list. It produces the same ordered result on both serial and parallel streams. 
+- In fact, they should be avoided in serial streams since doing so limits the code's ability to someday take advantage of parallelization.
+
 
 
 ## Data races
