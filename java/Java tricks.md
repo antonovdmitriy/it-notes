@@ -12226,6 +12226,77 @@ try (var ps = conn.prepareStatement(sql);
 Exception in thread "main" java.sql.SQLException: Column not found: total
 ```
 
+```java
+var sql = "SELECT count(*) FROM exhibits";
+ 
+try (var ps = conn.prepareStatement(sql);
+   var rs = ps.executeQuery()) {
+ 
+   rs.getInt(1); // SQLException
+}
+```
+
+### Getting Data for a Column
+
+<table>
+<thead>
+<tr>
+<th scope="col" class="left">Method</th>
+<th scope="col" class="left">Return type</th> </tr> </thead>
+<tbody>
+<tr>
+<td class="left"><code>getBoolean</code></td>
+<td class="left"><code>boolean</code></td> </tr>
+<tr>
+<td class="left"><code>getDouble</code></td>
+<td class="left"><code>double</code></td> </tr>
+<tr>
+<td class="left"><code>getInt</code></td>
+<td class="left"><code>int</code></td> </tr>
+<tr>
+<td class="left"><code>getLong</code></td>
+<td class="left"><code>long</code></td> </tr>
+<tr>
+<td class="left"><code>getObject</code></td>
+<td class="left"><code>Object</code></td> </tr>
+<tr>
+<td class="left"><code>getString</code></td>
+<td class="left"><code>String</code></td> </tr> </tbody> </table>
+
+```java
+var sql = "SELECT id, name FROM exhibits";
+try (var ps = conn.prepareStatement(sql);
+   var rs = ps.executeQuery()) {
+   while (rs.next()) {
+      Object idField = rs.getObject("id");
+      Object nameField = rs.getObject("name");
+      if (idField instanceof Integer id)
+         System.out.println(id);
+      if (nameField instanceof String name)
+         System.out.println(name);
+   }
+}
+```
+
+### Using Bind Variables
+
+```java
+ var sql = "SELECT id FROM exhibits WHERE name = ?";
+
+ try (var ps = conn.prepareStatement(sql)) {
+    ps.setString(1, "Zebra");
+
+    try (var rs = ps.executeQuery()) {
+       while (rs.next()) {
+          int id = rs.getInt("id");
+          System.out.println(id);
+       }
+    }
+ }
+```
+
+## Calling a CallableStatement
+
 
 
 # Modules
