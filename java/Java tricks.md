@@ -381,6 +381,13 @@
     - [Getting Data for a Column](#getting-data-for-a-column)
     - [Using Bind Variables](#using-bind-variables)
   - [Calling a CallableStatement](#calling-a-callablestatement)
+    - [Calling a Procedure without Parameters](#calling-a-procedure-without-parameters)
+    - [Passing an IN Parameter](#passing-an-in-parameter)
+    - [Returning an OUT Parameter](#returning-an-out-parameter)
+    - [Working with an INOUT Parameter](#working-with-an-inout-parameter)
+    - [Comparing Callable Statement Parameters](#comparing-callable-statement-parameters)
+    - [Using Additional Options](#using-additional-options)
+  - [Controlling Data with Transactions](#controlling-data-with-transactions)
 - [Modules](#modules)
   - [A Module](#a-module)
   - [Creating and Running a First Modular Program](#creating-and-running-a-first-modular-program)
@@ -12312,6 +12319,152 @@ try (var ps = conn.prepareStatement(sql);
 ```
 
 ## Calling a CallableStatement
+
+- A stored procedure is code that is compiled in advance and stored in the database. 
+- Stored procedures are commonly written in a database-specific variant of SQL, which varies among database software providers.
+- Using a stored procedure reduces network round trips. 
+
+for test examples
+<table>
+<thead>
+<tr>
+<th scope="col" class="left">Name</th>
+<th scope="col" class="left">Parameter name</th>
+<th scope="col" class="left">Parameter type</th>
+<th scope="col" class="left">Description</th> </tr> </thead>
+<tbody>
+<tr>
+<td class="left"><code>read_e_names()</code></td>
+<td class="left">n/a</td>
+<td class="left">n/a</td>
+<td class="left">Returns all rows in <code>names</code> table that have name beginning with <code>e</code> or <code>E</code></td> </tr>
+<tr>
+<td class="left"><code>read_names_by_letter()</code></td>
+<td class="left"><code>prefix</code></td>
+<td class="left"><code>IN</code></td>
+<td class="left">Returns all rows in <code>names</code> table that have name beginning with specified parameter (case insensitive)</td> </tr>
+<tr>
+<td class="left"><code>magic_number()</code></td>
+<td class="left"><code>num</code></td>
+<td class="left"><code>OUT</code></td>
+<td class="left">Returns number <code>42</code></td> </tr>
+<tr>
+<td class="left"><code>double_number()</code></td>
+<td class="left"><code>num</code></td>
+<td class="left"><code>INOUT</code></td>
+<td class="left">Multiplies parameter by two and returns that number</td> </tr> </tbody> </table>
+
+### Calling a Procedure without Parameters
+
+```java
+ String sql = "{call read_e_names()}";
+ try (CallableStatement cs = conn.prepareCall(sql);
+    ResultSet rs = cs.executeQuery()) {
+
+    while (rs.next()) {
+       System.out.println(rs.getString(3));
+    }
+ }
+```
+
+### Passing an IN Parameter
+
+```java
+ var sql = "{call read_names_by_letter(?)}";
+ try (var cs = conn.prepareCall(sql)) {
+    cs.setString("prefix", "Z");
+
+    try (var rs = cs.executeQuery()) {
+       while (rs.next()) {
+          System.out.println(rs.getString(3));
+       }
+    }
+ }
+```
+
+```java
+cs.setString(1, "Z");
+cs.setString("prefix", "Z");
+```
+
+### Returning an OUT Parameter
+
+```java
+ var sql = "{?= call magic_number(?) }";
+ try (var cs = conn.prepareCall(sql)) {
+    cs.registerOutParameter(1, Types.INTEGER);
+    cs.execute();
+    System.out.println(cs.getInt("num"));
+ }
+```
+
+### Working with an INOUT Parameter
+
+```java
+ var sql = "{call double_number(?)}";
+ try (var cs = conn.prepareCall(sql)) {
+    cs.setInt(1, 8);
+    cs.registerOutParameter(1, Types.INTEGER);
+    cs.execute();
+    System.out.println(cs.getInt("num"));
+ }
+```
+
+### Comparing Callable Statement Parameters
+
+<table>
+<thead>
+<tr>
+<th scope="col" class="left">Parameter type</th>
+<th scope="col" class="left"><code>IN</code></th>
+<th scope="col" class="left"><code>OUT</code></th>
+<th scope="col" class="left"><code>INOUT</code></th> </tr> </thead>
+<tbody>
+<tr>
+<td class="left">Used for input</td>
+<td class="left">Yes</td>
+<td class="left">No</td>
+<td class="left">Yes</td> </tr>
+<tr>
+<td class="left">Used for output</td>
+<td class="left">No</td>
+<td class="left">Yes</td>
+<td class="left">Yes</td> </tr>
+<tr>
+<td class="left">Must set parameter value</td>
+<td class="left">Yes</td>
+<td class="left">No</td>
+<td class="left">Yes</td> </tr>
+<tr>
+<td class="left">Must call <code>registerOutParameter()</code></td>
+<td class="left">No</td>
+<td class="left">Yes</td>
+<td class="left">Yes</td> </tr>
+<tr>
+<td class="left">Can include <code>?=</code></td>
+<td class="left">No</td>
+<td class="left">Yes</td>
+<td class="left">Yes</td> </tr> </tbody> </table>
+
+### Using Additional Options
+
+There are three ResultSet integer type values:
+- `ResultSet.TYPE_FORWARD_ONLY`: Can go through the ResultSet only one row at a time
+- `ResultSet.TYPE_SCROLL_INSENSITIVE`: Can go through the ResultSet in any order but will not see changes made to the underlying database table
+- `ResultSet.TYPE_SCROLL_SENSITIVE`: Can go through the ResultSet in any order and will see changes made to the underlying database table
+
+There are two ResultSet integer concurrency mode values:
+- `ResultSet.CONCUR_READ_ONLY`: The ResultSet cannot be updated.
+- `ResultSet.CONCUR_UPDATABLE`: The ResultSet can be updated.
+
+These options are integer values, not enum values, which means you pass both as additional parameters after the SQL.
+
+```java
+conn.prepareCall(sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+conn.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE,  ResultSet.CONCUR_UPDATABLE);
+```
+
+## Controlling Data with Transactions
 
 
 
