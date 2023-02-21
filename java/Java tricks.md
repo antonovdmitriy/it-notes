@@ -341,6 +341,10 @@
     - [Using I/O Streams](#using-io-streams)
     - [Reading and Writing Files](#reading-and-writing-files)
     - [Serializing Data](#serializing-data)
+      - [SerialVersionUID](#serialversionuid)
+      - [Ensuring That a Class Is Serializable](#ensuring-that-a-class-is-serializable)
+  - [Interacting with Users](#interacting-with-users)
+      - [Storing Data with ObjectOutputStream and ObjectInputStream](#storing-data-with-objectoutputstream-and-objectinputstream)
 - [JDBC](#jdbc)
 - [Modules](#modules)
   - [A Module](#a-module)
@@ -11022,7 +11026,7 @@ void copyStream(InputStream in, OutputStream out) throws IOException {
 
 Equivalent methods exist on `Reader` and `Writer`, but they use char rather than `byte`, making the equivalent copyStream() method very similar.
 
-### Reading and Writing Files
+## Reading and Writing Files
 
 ```java
 void copyTextFile(File src, File dest) throws IOException {
@@ -11227,8 +11231,135 @@ Common Files NIO.2 read and write methods
 <td class="left"><code>public static void <b>write</b>(Path path, List&lt;String&gt; list)</code></td>
 <td class="left">Writes list of lines (technically, any <code>Iterable</code> of <code>CharSequence</code>, but you don't need to know that for the exam)</td> </tr> </tbody> </table>
 
-### Serializing Data
+## Serializing Data
 
+- **Serialization** is the process of converting an in-memory object to a byte stream. 
+- **Deserialization** is the process of converting from a byte stream into an object
+
+- To serialize an object using the I/O API, the object must implement the `java.io.Serializable` interface. 
+- `Serializable` interface is a marker interface, which means it does not have any methods. 
+- any field that is marked `transient` will not be saved to an I/O stream when the class is serialized.
+- Marking static fields transient has little effect on serialization. Other than the `serialVersionUID`, only the instance members of a class are serialized.  
+  
+```java
+import java.io.Serializable;
+public class Gorilla implements Serializable {
+   private static final long serialVersionUID = 1L;
+   private String name;
+   private int age;
+   private Boolean friendly;
+   private transient String favoriteFood;
+ 
+   // Constructors/Getters/Setters/toString() omitted
+}
+```
+
+### SerialVersionUID
+
+- a good practice to declare a `static serialVersionUID` variable in every class that implements `Serializable`. The version is stored with each object as part of serialization. 
+- every time the class structure changes, this value is updated or incremented.
+- The idea is a class could have been serialized with an older version of the class and deserialized with a newer version of the class.
+The `serialVersionUID` helps inform the JVM that the stored data may not match the new class definition. If an older version of the class is encountered during deserialization, a `java.io.InvalidClassException` may be thrown. Alternatively, some APIs support converting data between versions.
+
+### Ensuring That a Class Is Serializable
+
+- Any process attempting to serialize an object will throw a `NotSerializableException` if the class does not implement the `Serializable` interface properly.
+- The class must be marked `Serializable`.
+- Every instance member of the class must be serializable, marked transient, or have a null value at the time of serialization.
+
+```java
+public class Cat implements Serializable {
+   private Tail tail = new Tail();
+}
+ 
+public class Tail implements Serializable {
+   private Fur fur = new Fur();
+}
+ 
+public class Fur {} // oops, not serializable
+```
+
+```java
+public class Tail implements Serializable {
+   private transient Fur fur = new Fur();
+}
+ 
+public class Fur implements Serializable {}
+```
+
+We could also make our `tail` or `fur` instance members null, although this would make `Cat` serializable only for particular instances, rather than all instances.
+
+```java
+  record Record(String name) {} // not serializable
+```
+
+```java
+record Record(String name) implements Serializable {}
+```
+
+ Deserialization Creation Process:
+- When you deserialize an object, the constructor of the serialized class, along with any instance initializers, is not called when the object is created. 
+- Java will call the no-arg constructor of the first non-serializable parent class it can find in the class hierarchy. 
+- any static or transient fields are ignored
+
+## Interacting with Users
+
+
+
+
+#### Storing Data with ObjectOutputStream and ObjectInputStream
+
+```java
+// ObjectInputStream
+public Object readObject() throws IOException, ClassNotFoundException
+ 
+// ObjectOutputStream
+public void writeObject(Object obj) throws IOException
+```
+
+```java
+var gorillas = new ArrayList<Gorilla>();
+gorillas.add(new Gorilla("Grodd", 5, false));
+gorillas.add(new Gorilla("Ishmael", 8, true));
+File dataFile = new File("gorilla.data");
+ 
+saveToFile(gorillas, dataFile);
+var gorillasFromDisk = readFromFile(dataFile);
+System.out.print(gorillasFromDisk);
+```
+
+```java
+void saveToFile(List<Gorilla> gorillas, File dataFile)
+      throws IOException {
+   try (var out = new ObjectOutputStream(
+           new BufferedOutputStream(
+              new FileOutputStream(dataFile)))) {
+      for (Gorilla gorilla : gorillas)
+         out.writeObject(gorilla);
+   }
+}
+```
+
+```java
+List<Gorilla> readFromFile(File dataFile) throws IOException,
+      ClassNotFoundException {
+   var gorillas = new ArrayList<Gorilla>();
+   try (var in = new ObjectInputStream(
+           new BufferedInputStream(
+              new FileInputStream(dataFile)))) {
+      while (true) {  // dangerous
+         var object = in.readObject();
+         if (object instanceof Gorilla g)
+            gorillas.add(g);
+      }
+   } catch (EOFException e) {
+      // File end reached
+   }
+   return gorillas;
+}
+```
+
+If your program happens to know the number of objects in the I/O stream, you can call `readObject()` a fixed number of times, rather than using an infinite loop.
 
 
 # JDBC
