@@ -337,6 +337,10 @@
       - [Comparing Files](#comparing-files)
   - [I/O Streams](#io-streams)
     - [Character encoding](#character-encoding)
+    - [Line separator](#line-separator)
+    - [Using I/O Streams](#using-io-streams)
+    - [Reading and Writing Files](#reading-and-writing-files)
+    - [Serializing Data](#serializing-data)
 - [JDBC](#jdbc)
 - [Modules](#modules)
   - [A Module](#a-module)
@@ -10912,6 +10916,62 @@ new ObjectInputStream(new FileOutputStream("z.txt")); // DOES NOT COMPILE
 new BufferedInputStream(new InputStream());        // DOES NOT COMPILE
 ```
 
+<table>
+<thead>
+<tr>
+<th scope="col" class="left">Class name</th>
+<th scope="col" class="left">Low/High level</th>
+<th scope="col" class="left">Description</th> </tr> </thead>
+<tbody>
+<tr>
+<td class="left"><code>FileInputStream</code></td>
+<td class="left">Low</td>
+<td class="left">Reads file data as bytes</td> </tr>
+<tr>
+<td class="left"><code>FileOutputStream</code></td>
+<td class="left">Low</td>
+<td class="left">Writes file data as bytes</td> </tr>
+<tr>
+<td class="left"><code>FileReader</code></td>
+<td class="left">Low</td>
+<td class="left">Reads file data as characters</td> </tr>
+<tr>
+<td class="left"><code>FileWriter</code></td>
+<td class="left">Low</td>
+<td class="left">Writes file data as characters</td> </tr>
+<tr>
+<td class="left"><code>BufferedInputStream</code></td>
+<td class="left">High</td>
+<td class="left">Reads byte data from existing <code>InputStream</code> in buffered manner, which improves efficiency and performance</td> </tr>
+<tr>
+<td class="left"><code>BufferedOutputStream</code></td>
+<td class="left">High</td>
+<td class="left">Writes byte data to existing <code>OutputStream</code> in buffered manner, which improves efficiency and performance</td> </tr>
+<tr>
+<td class="left"><code>BufferedReader</code></td>
+<td class="left">High</td>
+<td class="left">Reads character data from existing <code>Reader</code> in buffered manner, which improves efficiency and performance</td> </tr>
+<tr>
+<td class="left"><code>BufferedWriter</code></td>
+<td class="left">High</td>
+<td class="left">Writes character data to existing <code>Writer</code> in buffered manner, which improves efficiency and performance</td> </tr>
+<tr>
+<td class="left"><code>ObjectInputStream</code></td>
+<td class="left">High</td>
+<td class="left">Deserializes primitive Java data types and graphs of Java objects from existing <code>InputStream</code></td> </tr>
+<tr>
+<td class="left"><code>ObjectOutputStream</code></td>
+<td class="left">High</td>
+<td class="left">Serializes primitive Java data types and graphs of Java objects to existing <code>OutputStream</code></td> </tr>
+<tr>
+<td class="left"><code>PrintStream</code></td>
+<td class="left">High</td>
+<td class="left">Writes formatted representations of Java objects to binary stream</td> </tr>
+<tr>
+<td class="left"><code>PrintWriter</code></td>
+<td class="left">High</td>
+<td class="left">Writes formatted representations of Java objects to character stream</td> </tr> </tbody> </table>
+
 ### Character encoding
 
 ```java
@@ -10919,6 +10979,257 @@ Charset usAsciiCharset = Charset.forName("US-ASCII");
 Charset utf8Charset = Charset.forName("UTF-8");
 Charset utf16Charset = Charset.forName("UTF-16");
 ```
+
+### Line separator
+
+The line separator is `\n` or `\r\n`, depending on your operating system. 
+
+```java
+System.getProperty("line.separator");
+System.lineSeparator();
+```
+
+### Using I/O Streams
+
+```java
+void copyStream(InputStream in, OutputStream out) throws IOException {
+   int b;
+   while ((b = in.read()) != -1) {
+      out.write(b);
+   }
+}
+ 
+void copyStream(Reader in, Writer out) throws IOException {
+   int b;
+   while ((b = in.read()) != -1) {
+      out.write(b);
+   }
+}
+```
+
+```java
+void copyStream(InputStream in, OutputStream out) throws IOException {
+   int batchSize = 1024;
+   var buffer = new byte[batchSize];
+   int lengthRead;
+   while ((lengthRead = in.read(buffer, 0, batchSize))> 0) {
+      out.write(buffer, 0, lengthRead);
+      out.flush();
+   }
+```
+
+`flush()` method to reduce the amount of data lost if the application terminates unexpectedly. When data is written to an output stream, the underlying operating system does not guarantee that the data will make it to the file system immediately. The `flush()` method requests that all accumulated data be written immediately to disk. It is not without cost, though. Each time it is used, it may cause a noticeable delay in the application, especially for large files. Unless the data that you are writing is extremely critical, the `flush()` method should be used only intermittently.
+
+Equivalent methods exist on `Reader` and `Writer`, but they use char rather than `byte`, making the equivalent copyStream() method very similar.
+
+### Reading and Writing Files
+
+```java
+void copyTextFile(File src, File dest) throws IOException {
+   try (var reader = new BufferedReader(new FileReader(src));
+      var writer = new BufferedWriter(new FileWriter(dest))) {
+      String line = null;
+      while ((line = reader.readLine()) != null) {
+         writer.write(line);
+         writer.newLine();
+      } } }
+```
+
+ - If the destination file already exists, this implementation will overwrite it. 
+ - We can pass an optional `boolean` second parameter to `FileWriter` for an append flag if we want to change this behavior.
+
+imagine that we wanted byte data instead of characters. We would need to choose different high-level classes: `BufferedInputStream`, `BufferedOutputStream`, `FileInputStream`, and `FileOuputStream`. We would call `readAllBytes()` instead of `readLine()` and store the result in a `byte[]` instead of a `String`. Finally, we wouldn't need to handle new lines since the data is binary.
+
+We can do a little better than `BufferedOutputStream` and `BufferedWriter` by using a `PrintStream` and `PrintWriter`
+
+```java
+void copyTextFile(File src, File dest) throws IOException {
+   try (var reader = new BufferedReader(new FileReader(src));
+      var writer = new PrintWriter(new FileWriter(dest))) {
+      String line = null;
+      while ((line = reader.readLine()) != null)
+          writer.println(line);
+      }
+}
+```
+
+Using `Files`
+
+```java
+private void copyPathAsString(Path input, Path output) throws IOException {
+   String string = Files.readString(input);
+   Files.writeString(output, string);
+}
+private void copyPathAsBytes(Path input, Path output) throws IOException {
+    byte[] bytes = Files.readAllBytes(input);
+    Files.write(output, bytes);
+}
+private void copyPathAsLines(Path input, Path output) throws IOException {
+   List<String> lines = Files.readAllLines(input);
+   Files.write(output, lines);
+}
+```
+
+Be aware that the entire file is read at once for all three of these, thereby storing all of the contents of the file in memory at the same time. If the file is significantly large, you may trigger an `OutOfMemoryError` when trying to load all of it into memory. 
+Luckily, there is an alternative.
+
+```java
+private void readLazily(Path path) throws IOException {
+   try (Stream<String> s = Files.lines(path)) {
+      s.forEach(System.out::println);
+   }
+}
+```
+
+Now the contents of the file are read and processed lazily, which means that only a small portion of the file is stored in memory at any given time. 
+
+```java
+try (var s = Files.lines(path)) {
+   s.filter(f -> f.startsWith("WARN:"))
+      .map(f -> f.substring(5))
+      .forEach(System.out::println);
+}
+```
+
+```
+INFO:Server starting
+DEBUG:Processes available = 10
+WARN:No database could be detected
+DEBUG:Processes available reset to 0
+WARN:Performing manual recovery
+INFO:Server successfully started
+```
+
+```
+No database could be detected
+Performing manual recovery
+```
+
+```java
+Files.readAllLines(Paths.get("birds.txt")).forEach(System.out::println); // all lines in memory
+Files.lines(Paths.get("birds.txt")).forEach(System.out::println); // lazy by line
+```
+
+```java
+Files.readAllLines(Paths.get("birds.txt"))
+      .filter(s -> s.length()> 2)  // DOES NOT COMPILE. List not Stream
+      .forEach(System.out::println);
+```
+
+```java
+private void copyPath(Path input, Path output) throws IOException {
+   try (var reader = Files.newBufferedReader(input);
+        var writer = Files.newBufferedWriter(output)) {
+ 
+      String line = null;
+      while ((line = reader.readLine()) != null)
+         writer.write(line);
+         writer.newLine();
+      } } }
+```
+
+Common I/O read and write methods
+<table>
+<thead>
+<tr>
+<th scope="col" class="left">Class</th>
+<th scope="col" class="left">Method name</th>
+<th scope="col" class="left">Description</th> </tr> </thead>
+<tbody>
+<tr>
+<td class="left">All input streams</td>
+<td class="left"><code>public int <b>read</b>()</code></td>
+<td class="left">Reads single byte or returns <code>-1</code> if no bytes available.</td> </tr>
+<tr>
+<td class="left"><code>InputStream</code></td>
+<td class="left"><code>public int <b>read</b>(byte[] b)</code></td>
+<td class="left" rowspan="2">Reads values into buffer. Returns number of bytes or characters read.</td> </tr>
+<tr>
+<td class="left"><code>Reader</code></td>
+<td class="left"><code>public int <b>read</b>(char[] c)</code></td> </tr>
+<tr>
+<td class="left"><code>InputStream</code></td>
+<td class="left"><code>public int <b>read</b>(byte[] b, int offset, int length)</code></td>
+<td class="left" rowspan="2">Reads up to <code>length</code> values into buffer starting from position <code>offset</code>. Returns number of bytes or characters read.</td> </tr>
+<tr>
+<td class="left"><code>Reader</code></td>
+<td class="left"><code>public int <b>read</b>(char[] c, int offset, int length)</code></td> </tr>
+<tr>
+<td class="left">All output streams</td>
+<td class="left"><code>public void <b>write</b>(int b)</code></td>
+<td class="left">Writes single byte.</td> </tr>
+<tr>
+<td class="left"><code>OutputStream</code></td>
+<td class="left"><code>public void <b>write</b>(byte[] b)</code></td>
+<td class="left" rowspan="2">Writes array of values into stream.</td> </tr>
+<tr>
+<td class="left"><code>Writer</code></td>
+<td class="left"><code>public void <b>write</b>(char[] c)</code></td> </tr>
+<tr>
+<td class="left"><code>OutputStream</code></td>
+<td class="left"><code>public void <b>write</b>(byte[] b, int offset, int length)</code></td>
+<td class="left" rowspan="2">Writes <code>length</code> values from array into stream, starting with <code>offset</code> index.</td> </tr>
+<tr>
+<td class="left"><code>Writer</code></td>
+<td class="left"><code>public void <b>write</b>(char[] c, int offset, int length)</code></td> </tr>
+<tr>
+<td class="left"><code>BufferedInputStream</code></td>
+<td class="left"><code>public byte[] <b>readAllBytes</b>()</code></td>
+<td class="left">Reads data in bytes.</td> </tr>
+<tr>
+<td class="left"><code>BufferedReader</code></td>
+<td class="left"><code>public String <b>readLine</b>()</code></td>
+<td class="left">Reads line of data.</td> </tr>
+<tr>
+<td class="left"><code>BufferedWriter</code></td>
+<td class="left"><code>public void <b>write</b>(String line)</code></td>
+<td class="left">Writes line of data.</td> </tr>
+<tr>
+<td class="left"><code>BufferedWriter</code></td>
+<td class="left"><code>public void <b>newLine</b>()</code></td>
+<td class="left">Writes new line.</td> </tr>
+<tr>
+<td class="left">All output streams</td>
+<td class="left"><code>public void <b>flush</b>()</code></td>
+<td class="left">Flushes buffered data through stream.</td> </tr>
+<tr>
+<td class="left">All streams</td>
+<td class="left"><code>public void <b>close</b>()</code></td>
+<td class="left">Closes stream and releases resources.</td> </tr> </tbody> </table>
+
+Common Files NIO.2 read and write methods
+
+<table>
+<thead>
+<tr>
+<th scope="col" class="left">Method Name</th>
+<th scope="col" class="left">Description</th> </tr> </thead>
+<tbody>
+<tr>
+<td class="left"><code>public static byte[] <b>readAllBytes</b>()</code></td>
+<td class="left">Reads all data as bytes</td> </tr>
+<tr>
+<td class="left"><code>public static String <b>readString</b>()</code></td>
+<td class="left">Reads all data into <code>String</code></td> </tr>
+<tr>
+<td class="left"><code>public static List&lt;String&gt; <b>readAllLines</b>()</code></td>
+<td class="left">Read all data into <code>List</code></td> </tr>
+<tr>
+<td class="left"><code>public static Stream&lt;String&gt; <b>lines</b>()</code></td>
+<td class="left">Lazily reads data</td> </tr>
+<tr>
+<td class="left"><code>public static void <b>write</b>(Path path, byte[] bytes)</code></td>
+<td class="left">Writes array of bytes</td> </tr>
+<tr>
+<td class="left"><code>public static void <b>writeString</b>(Path path, String string)</code></td>
+<td class="left">Writes <code>String</code></td> </tr>
+<tr>
+<td class="left"><code>public static void <b>write</b>(Path path, List&lt;String&gt; list)</code></td>
+<td class="left">Writes list of lines (technically, any <code>Iterable</code> of <code>CharSequence</code>, but you don't need to know that for the exam)</td> </tr> </tbody> </table>
+
+### Serializing Data
+
+
 
 # JDBC
 
