@@ -339,12 +339,31 @@
     - [Character encoding](#character-encoding)
     - [Line separator](#line-separator)
     - [Using I/O Streams](#using-io-streams)
-    - [Reading and Writing Files](#reading-and-writing-files)
-    - [Serializing Data](#serializing-data)
-      - [SerialVersionUID](#serialversionuid)
-      - [Ensuring That a Class Is Serializable](#ensuring-that-a-class-is-serializable)
-  - [Interacting with Users](#interacting-with-users)
+  - [Reading and Writing Files](#reading-and-writing-files)
+  - [Serializing Data](#serializing-data)
+    - [SerialVersionUID](#serialversionuid)
+    - [Ensuring That a Class Is Serializable](#ensuring-that-a-class-is-serializable)
       - [Storing Data with ObjectOutputStream and ObjectInputStream](#storing-data-with-objectoutputstream-and-objectinputstream)
+  - [Interacting with Users](#interacting-with-users)
+    - [Reading Input as an I/O Stream](#reading-input-as-an-io-stream)
+    - [Console](#console)
+  - [Working with Advanced APIs](#working-with-advanced-apis)
+    - [Manipulating Input Streams](#manipulating-input-streams)
+      - [Marking Data](#marking-data)
+      - [Skipping Data](#skipping-data)
+      - [Manipulation APIs](#manipulation-apis)
+    - [Discovering File Attributes](#discovering-file-attributes)
+      - [Checking for Symbolic Links](#checking-for-symbolic-links)
+      - [Checking File Accessibility](#checking-file-accessibility)
+      - [Attribute and View Types](#attribute-and-view-types)
+      - [Retrieving Attributes](#retrieving-attributes)
+      - [Modifying Attributes](#modifying-attributes)
+    - [Traversing a Directory Tree](#traversing-a-directory-tree)
+      - [Walking a Directory](#walking-a-directory)
+      - [Applying a Depth Limit](#applying-a-depth-limit)
+      - [Avoiding Circular Paths](#avoiding-circular-paths)
+    - [Searching a Directory](#searching-a-directory)
+  - [Review of Key APIs](#review-of-key-apis)
 - [JDBC](#jdbc)
 - [Modules](#modules)
   - [A Module](#a-module)
@@ -11302,47 +11321,6 @@ record Record(String name) implements Serializable {}
 - Java will call the no-arg constructor of the first non-serializable parent class it can find in the class hierarchy. 
 - any static or transient fields are ignored
 
-## Interacting with Users
-
-- we never created or closed `System.out`, `System.err`, and `System.in` when we used them. Because these are static objects, the System streams are shared by the entire application. 
-
-### Reading Input as an I/O Stream
-
-
-
-When executed, this application first fetches text from the user until the user presses the Enter key. It then outputs the text the user entered to the screen.
-
-```java
-var reader = new BufferedReader(new InputStreamReader(System.in));
-String userInput = reader.readLine();
-System.out.println("You entered: " + userInput);
-```
-
-```java
-var reader = new BufferedReader(new InputStreamReader(System.in));
-try (reader) {}
-String data = reader.readLine(); // IOException
-```
-
-### Acquiring Input with Console
-
-- The `Console` class is a singleton because it is accessible only from a factory method and only one instance of it is created by the JVM.
-- The `Console` object may not be available, depending on where the code is being called. If it is not available, System.console() returns null. 
-  
-```java
-Console c = new Console();  // DOES NOT COMPILE
-```
-
-```java
-Console console = System.console();
-if (console != null) {
-   String userInput = console.readLine();
-   console.writer().println("You entered: " + userInput);
-} else {
-   System.err.println("Console not available");
-}
-```
-
 #### Storing Data with ObjectOutputStream and ObjectInputStream
 
 ```java
@@ -11397,6 +11375,439 @@ List<Gorilla> readFromFile(File dataFile) throws IOException,
 
 If your program happens to know the number of objects in the I/O stream, you can call `readObject()` a fixed number of times, rather than using an infinite loop.
 
+## Interacting with Users
+
+- we never created or closed `System.out`, `System.err`, and `System.in` when we used them. Because these are static objects, the System streams are shared by the entire application. 
+
+### Reading Input as an I/O Stream
+
+When executed, this application first fetches text from the user until the user presses the Enter key. It then outputs the text the user entered to the screen.
+
+```java
+var reader = new BufferedReader(new InputStreamReader(System.in));
+String userInput = reader.readLine();
+System.out.println("You entered: " + userInput);
+```
+
+```java
+var reader = new BufferedReader(new InputStreamReader(System.in));
+try (reader) {}
+String data = reader.readLine(); // IOException
+```
+
+### Console
+
+- The `Console` class is a singleton because it is accessible only from a factory method and only one instance of it is created by the JVM.
+- The `Console` object may not be available, depending on where the code is being called. If it is not available, System.console() returns null. 
+  
+```java
+Console c = new Console();  // DOES NOT COMPILE
+```
+
+```java
+Console console = System.console();
+if (console != null) {
+   String userInput = console.readLine();
+   console.writer().println("You entered: " + userInput);
+} else {
+   System.err.println("Console not available");
+}
+```
+
+Accessing these classes is analogous to calling `System.in` and `System.out` directly,
+```java
+public Reader reader()
+public PrintWriter writer()
+```
+
+```java
+// PrintStream
+public PrintStream format(String format, Object… args)
+public PrintStream format(Locale loc, String format, Object… args)
+ 
+// PrintWriter
+public PrintWriter format(String format, Object… args)
+public PrintWriter format(Locale loc, String format, Object… args)
+```
+
+```java
+Console console = System.console();
+if (console == null) {
+   throw new RuntimeException("Console not available");
+} else {
+   console.writer().println("Welcome to Our Zoo!");
+   console.format("It has %d animals and employs %d people", 391, 25);
+   console.writer().println();
+   console.printf("The zoo spans %5.1f acres", 128.91);
+}
+```
+
+```
+Welcome to Our Zoo!
+It has 391 animals and employs 25 people
+The zoo spans 128.9 acres.
+```
+
+```java
+Console console = System.console();
+console.writer().format(new Locale("fr", "CA"), "Hello World");
+```
+
+```java
+public String readLine()
+public String readLine(String fmt, Object… args)
+ 
+public char[] readPassword()
+public char[] readPassword(String fmt, Object… args)
+```
+
+Like using `System.in` with a `BufferedReader`, the `Console readLine()` method reads input until the user presses the Enter key. 
+
+The `readPassword()` methods are similar to the `readLine()` method, with two important differences:
+- The text the user types is not echoed back and displayed on the screen as they are typing. This feature improves security by not showing the password on the screen if someone happens to be sitting next to you
+- The data is returned as a char[] instead of a String. This feature involves preventing passwords from entering the String pool.
+
+```java
+Console console = System.console();
+if (console == null) {
+   throw new RuntimeException("Console not available");
+} else {
+   String name = console.readLine("Please enter your name: ");
+   console.writer().format("Hi %s", name);
+   console.writer().println();
+ 
+   console.format("What is your address? ");
+   String address = console.readLine();
+ 
+   char[] password = console.readPassword("Enter a password "
+      + "between %d and %d characters: ", 5, 10);
+   char[] verify = console.readPassword("Enter the password again: ");
+   console.printf("Passwords "
+      + (Arrays.equals(password, verify) ? "match" : "do not match"));
+}
+```
+```
+Please enter your name: Max
+Hi Max
+What is your address? Spoonerville
+Enter a password between 5 and 10 characters:
+Enter the password again:
+Passwords match
+```
+
+## Working with Advanced APIs
+
+### Manipulating Input Streams
+
+```java
+// InputStream and Reader
+public boolean markSupported()
+public void mark(int readLimit)
+public void reset() throws IOException
+public long skip(long n) throws IOException
+```
+
+- `mark()` and `reset()` methods return an I/O stream to an earlier position. Before calling either of these methods, you should call the` markSupported()` method, which returns true only if `mark()` is supported. 
+- The skip() method is pretty simple; it basically reads data from the I/O stream and discards the contents.
+- actuality `mark()` and `reset()` are not putting the data back into the I/O stream but are storing the data in a temporary buffer in memory to be read again. Therefore, you should not call the `mark()` operation with too large a value, as this could take up a lot of memory.
+
+#### Marking Data
+
+```java
+// we have an InputStream instance whose next values are LION.
+public void readData(InputStream is) throws IOException {
+   System.out.print((char) is.read());     // L
+   if (is.markSupported()) {
+      is.mark(100); // Marks up to 100 bytes
+      System.out.print((char) is.read());  // I
+      System.out.print((char) is.read());  // O
+      is.reset(); // Resets stream to position before I
+   }
+   System.out.print((char) is.read());     // I
+   System.out.print((char) is.read());     // O
+   System.out.print((char) is.read());     // N
+}
+```
+
+#### Skipping Data
+
+```java
+// we have an InputStream instance whose next values are TIGERS
+System.out.print ((char)is.read()); // T
+is.skip(2);  // Skips I and G
+is.read();   // Reads E but doesn't output it
+System.out.print((char)is.read());  // R
+System.out.print((char)is.read());  // S
+```
+
+#### Manipulation APIs
+
+<table>
+<thead>
+<tr>
+<th scope="col" class="left">Method name</th>
+<th scope="col" class="left">Description</th> </tr> </thead>
+<tbody>
+<tr>
+<td class="left"><code>public boolean <b>markSupported</b>()</code></td>
+<td class="left">Returns <code>true</code> if stream class supports <code>mark()</code></td> </tr>
+<tr>
+<td class="left"><code>public <b>mark</b>(int readLimit)</code></td>
+<td class="left">Marks current position in stream</td> </tr>
+<tr>
+<td class="left"><code>public void <b>reset</b>()</code></td>
+<td class="left">Attempts to reset stream to <code>mark()</code> position</td> </tr>
+<tr>
+<td class="left"><code>public long <b>skip</b>(long n)</code></td>
+<td class="left">Reads and discards specified number of characters</td> </tr> </tbody> </table>
+
+### Discovering File Attributes
+
+#### Checking for Symbolic Links
+
+```java
+System.out.print(Files.isDirectory(Paths.get("/canine/fur.jpg")));
+System.out.print(Files.isSymbolicLink(Paths.get("/canine/coyote")));
+System.out.print(Files.isRegularFile(Paths.get("/canine/types.txt")));
+```
+
+#### Checking File Accessibility
+
+```java
+System.out.print(Files.isHidden(Paths.get("/walrus.txt")));
+System.out.print(Files.isReadable(Paths.get("/seal/baby.png")));
+System.out.print(Files.isWritable(Paths.get("dolphin.txt")));
+System.out.print(Files.isExecutable(Paths.get("whale.png")));
+```
+
+#### Attribute and View Types
+
+- NIO.2 includes two methods for working with attributes in a single method call:
+1. a read-only attributes method 
+2. an updatable view method. We can both read and write attributes with the same object.
+- For each method, you need to provide a file system type object, which tells the NIO.2 method which type of view you are requesting. 
+  
+The attributes and view types
+<table>
+<thead>
+<tr>
+<th scope="col" class="left">Attributes interface</th>
+<th scope="col" class="left">View interface</th>
+<th scope="col" class="left">Description</th> </tr> </thead>
+<tbody>
+<tr>
+<td class="left"><code>BasicFileAttributes</code></td>
+<td class="left"><code>BasicFileAttributeView</code></td>
+<td class="left">Basic set of attributes supported by all file systems</td> </tr>
+<tr>
+<td class="left"><code>DosFileAttributes</code></td>
+<td class="left"><code>DosFileAttributeView</code></td>
+<td class="left">Basic set of attributes along with those supported by DOS/Windows-based systems</td> </tr>
+<tr>
+<td class="left"><code>PosixFileAttributes</code></td>
+<td class="left"><code>PosixFileAttributeView</code></td>
+<td class="left">Basic set of attributes along with those supported by POSIX systems, such as Unix, Linux, Mac, etc.</td> </tr> </tbody> </table>
+
+#### Retrieving Attributes
+
+`Files` class includes the following method to read attributes of a class in a read-only capacity
+```java
+public static <A extends BasicFileAttributes> A readAttributes(
+   Path path,
+   Class<A> type,
+   LinkOption… options) throws IOException
+```
+
+```java
+var path = Paths.get("/turtles/sea.txt");
+BasicFileAttributes data = Files.readAttributes(path,
+   BasicFileAttributes.class);
+ 
+System.out.println("Is a directory? " + data.isDirectory());
+System.out.println("Is a regular file? " + data.isRegularFile());
+System.out.println("Is a symbolic link? " + data.isSymbolicLink());
+System.out.println("Size (in bytes): " + data.size());
+System.out.println("Last modified: " + data.lastModifiedTime());
+```
+
+ The advantage of using this method, though, is that all of the attributes are retrieved at once for some operating systems.
+
+#### Modifying Attributes
+
+The following `Files` method returns an updatable view:
+```java
+public static <V extends FileAttributeView> V getFileAttributeView(
+   Path path,
+   Class<V> type,
+   LinkOption… options)
+```   
+
+```java
+// Read file attributes
+var path = Paths.get("/turtles/sea.txt");
+BasicFileAttributeView view = Files.getFileAttributeView(path,
+   BasicFileAttributeView.class);
+BasicFileAttributes attributes = view.readAttributes();
+ 
+// Modify file last modified time
+FileTime lastModifiedTime = FileTime.fromMillis(
+   attributes.lastModifiedTime().toMillis() + 10_000);
+view.setTimes(lastModifiedTime, null, null);
+```
+
+```java
+// BasicFileAttributeView instance method
+public void setTimes(FileTime lastModifiedTime, FileTime lastAccessTime, FileTime createTime)  
+```
+
+This method allows us to pass null for any date/time value that we do not want to modify. In our sample code, only the last modified date/time is changed.
+
+Not all file attributes can be modified with a view. For example, you cannot set a property that changes a file into a directory. Likewise, you cannot change the size of the object without modifying its contents.
+
+### Traversing a Directory Tree
+
+- `Files.list()` method is useful, it traverses the contents of only a single directory.
+
+Two common strategies are associated with walking a directory tree: 
+- **depth-first search** 
+  - traverses the structure from the root to an arbitrary leaf and then navigates back up toward the root, traversing fully any paths it skipped along the way. 
+  - The search depth is the distance from the root to current node. 
+  - To prevent endless searching, Java includes a search depth that is used to limit how many levels (or hops) from the root the search is allowed to go.
+- **breadth-first search**.
+   - starts at the root and processes all elements of each particular depth before proceeding to the next depth level. 
+   - The results are ordered by depth, with all nodes at depth 1 read before all nodes at depth 2, and so on. 
+   - While a breadth-first search tends to be balanced and predictable, it also requires more memory since a list of visited nodes must be maintained.
+
+NIO.2 Stream API methods use **depth-first** searching with a depth limit, which can be optionally changed.
+
+#### Walking a Directory
+
+- The Files class includes two methods for walking the directory tree using a depth-first search.
+- stream methods, `walk()` uses lazy evaluation and evaluates a `Path` only as it gets to it. Even if the directory tree includes hundreds or thousands of files, the memory required to process a directory tree is low
+- The first `walk()` method relies on a default maximum depth of Integer.MAX_VALUE  
+- the overloaded version allows the user to set a maximum depth.
+
+```java
+public static Stream<Path> walk(Path start,
+   FileVisitOption… options) throws IOException
+ 
+public static Stream<Path> walk(Path start, int maxDepth,
+   FileVisitOption… options) throws IOException
+```
+
+```java
+private long getSize(Path p) {
+   try {
+      return  Files.size(p);
+   } catch (IOException e) {
+      throw new UncheckedIOException(e);
+   }
+}
+ 
+public long getPathSize(Path source) throws IOException {
+   try (var s = Files.walk(source)) {
+      return s.parallel()
+            .filter(p -> !Files.isDirectory(p))
+            .mapToLong(this::getSize)
+            .sum();
+   }
+}
+```
+
+```java
+var size = getPathSize(Path.of("/fox/data"));
+System.out.format("Total Size: %.2f megabytes", (size/1000000.0));
+```
+
+```
+Total Size: 15.30 megabytes 
+```
+
+#### Applying a Depth Limit
+
+```java
+  try (var s = Files.walk(source, 5)) {
+```
+
+This new version checks for files only within 5 steps of the starting node. A depth value of 0 indicates the current path itself. Since the method calculates values only on files, you'd have to set a depth limit of at least 1 to get a nonzero result when this method is applied to a directory tree.
+
+#### Avoiding Circular Paths
+
+ `walk()` method is different in that it does not follow symbolic links by default and requires the `FOLLOW_LINKS` option to be enabled. We can alter our getPathSize() method to enable following symbolic links by adding the `FileVisitOption`
+
+```java
+  try (var s = Files.walk(source,
+          FileVisitOption.FOLLOW_LINKS)) {
+```
+
+Be aware that when the `FOLLOW_LINKS` option is used, the walk() method will track all of the paths it has visited, throwing a `FileSystemLoopException` if a path is visited twice.
+
+
+### Searching a Directory
+
+```java
+public static Stream<Path> find(Path start,
+   int maxDepth,
+   BiPredicate<Path, BasicFileAttributes> matcher,
+   FileVisitOption… options) throws IOException
+```
+
+ Like `walk()`, `find()` also supports the `FOLLOW_LINK` option.
+
+```java
+Path path = Paths.get("/bigcats");
+long minSize = 1_000;
+try (var s = Files.find(path, 10,
+      (p, a) -> a.isRegularFile()
+         && p.toString().endsWith(".java")
+         && a.size() > minSize)) {
+   s.forEach(System.out::println);
+}
+```
+
+## Review of Key APIs
+
+<table>
+<thead>
+<tr>
+<th scope="col" class="left">Class</th>
+<th scope="col" class="left">Purpose</th> </tr> </thead>
+<tbody>
+<tr>
+<td class="left"><code>File</code></td>
+<td class="left">I/O representation of location in file system</td> </tr>
+<tr>
+<td class="left"><code>Files</code></td>
+<td class="left">Helper methods for working with <code>Path</code></td> </tr>
+<tr>
+<td class="left"><code>Path</code></td>
+<td class="left">NIO.2 representation of location in file system</td> </tr>
+<tr>
+<td class="left"><code>Paths</code></td>
+<td class="left">Contains factory methods to get <code>Path</code></td> </tr>
+<tr>
+<td class="left"><code>URI</code></td>
+<td class="left">Uniform resource identifier for files, URLs, etc.</td> </tr>
+<tr>
+<td class="left"><code>FileSystem</code></td>
+<td class="left">NIO.2 representation of file system</td> </tr>
+<tr>
+<td class="left"><code>FileSystems</code></td>
+<td class="left">Contains factory methods to get <code>FileSystem</code></td> </tr>
+<tr>
+<td class="left"><code>InputStream</code></td>
+<td class="left">Superclass for reading files based on bytes</td> </tr>
+<tr>
+<td class="left"><code>OuputStream</code></td>
+<td class="left">Superclass for writing files based on bytes</td> </tr>
+<tr>
+<td class="left"><code>Reader</code></td>
+<td class="left">Superclass for reading files based on characters</td> </tr>
+<tr>
+<td class="left"><code>Writer</code></td>
+<td class="left">Superclass for writing files based on characters</td> </tr> </tbody> </table>
+
+![](images/io_1.png)
 
 # JDBC
 
