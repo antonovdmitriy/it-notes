@@ -336,6 +336,7 @@
       - [Deleting a File](#deleting-a-file)
       - [Comparing Files](#comparing-files)
   - [I/O Streams](#io-streams)
+    - [Character encoding](#character-encoding)
 - [JDBC](#jdbc)
 - [Modules](#modules)
   - [A Module](#a-module)
@@ -10884,7 +10885,40 @@ Method is symmetric and returns the same result regardless of the order of the p
 
 ##  I/O Streams
 
+The `java.io` API defines two sets of I/O stream classes for reading and writing I/O streams: 
+- byte I/O streams 
+- character I/O streams. 
 
+- Byte I/O streams read/write binary data (0s and 1s) and have class names that end in `InputStream` or `OutputStream`.
+- Character I/O streams read/write text data and have class names that end in `Reader` or `Writer`.
+- Most `InputStream` classes have a corresponding `OutputStream` class
+- most `Reader` classes have a corresponding `Writer` class. 
+- There are exceptions to this rule. `PrintWriter` has no accompanying `PrintReader` class. Likewise, the `PrintStream` is an `OutputStream` that has no corresponding `InputStream` class. It also does not have Output in its name. 
+- A **low-level stream** connects directly with the source of the data, such as a file, an array, or a String
+- a **high-level stream** is built on top of another I/O stream using wrapping. Wrapping is the process by which an instance is passed to the constructor of another class, and operations on the resulting instance are filtered and applied to the original instance.
+
+```java
+try (var ois = new ObjectInputStream(
+      new BufferedInputStream(
+         new FileInputStream("zoo-data.txt")))) {
+   System.out.print(ois.readObject());
+}
+```
+
+```java
+new BufferedInputStream(new FileReader("z.txt"));  // DOES NOT COMPILE
+new BufferedWriter(new FileOutputStream("z.txt")); // DOES NOT COMPILE
+new ObjectInputStream(new FileOutputStream("z.txt")); // DOES NOT COMPILE
+new BufferedInputStream(new InputStream());        // DOES NOT COMPILE
+```
+
+### Character encoding
+
+```java
+Charset usAsciiCharset = Charset.forName("US-ASCII");
+Charset utf8Charset = Charset.forName("UTF-8");
+Charset utf16Charset = Charset.forName("UTF-16");
+```
 
 # JDBC
 
