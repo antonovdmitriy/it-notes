@@ -11304,8 +11304,44 @@ record Record(String name) implements Serializable {}
 
 ## Interacting with Users
 
+- we never created or closed `System.out`, `System.err`, and `System.in` when we used them. Because these are static objects, the System streams are shared by the entire application. 
+
+### Reading Input as an I/O Stream
 
 
+
+When executed, this application first fetches text from the user until the user presses the Enter key. It then outputs the text the user entered to the screen.
+
+```java
+var reader = new BufferedReader(new InputStreamReader(System.in));
+String userInput = reader.readLine();
+System.out.println("You entered: " + userInput);
+```
+
+```java
+var reader = new BufferedReader(new InputStreamReader(System.in));
+try (reader) {}
+String data = reader.readLine(); // IOException
+```
+
+### Acquiring Input with Console
+
+- The `Console` class is a singleton because it is accessible only from a factory method and only one instance of it is created by the JVM.
+- The `Console` object may not be available, depending on where the code is being called. If it is not available, System.console() returns null. 
+  
+```java
+Console c = new Console();  // DOES NOT COMPILE
+```
+
+```java
+Console console = System.console();
+if (console != null) {
+   String userInput = console.readLine();
+   console.writer().println("You entered: " + userInput);
+} else {
+   System.err.println("Console not available");
+}
+```
 
 #### Storing Data with ObjectOutputStream and ObjectInputStream
 
