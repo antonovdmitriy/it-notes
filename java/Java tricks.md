@@ -11811,6 +11811,423 @@ try (var s = Files.find(path, 10,
 
 # JDBC
 
+Main interfaces in JDBC:
+`Driver`: Establishes a connection to the database
+`Connection`: Sends commands to a database
+`PreparedStatement`: Executes a SQL query
+`CallableStatement`: Executes commands stored in the database
+`ResultSet`: Reads the results of a query
+
+![](images/jdbc_1.png)
+
+```java
+public class MyFirstDatabaseConnection {
+   public static void main(String[] args) throws SQLException {
+      String url = "jdbc:hsqldb:file:zoo";
+      try (Connection conn = DriverManager.getConnection(url);
+         PreparedStatement ps = conn.prepareStatement(
+            "SELECT name FROM exhibits");
+         ResultSet rs = ps.executeQuery()) {
+         while (rs.next())
+            System.out.println(rs.getString(1));
+      } } }
+```
+
+the JDBC classes are all in the module `java.sql`
+
+if you do want to use JDBC code with modules, remember to update your `module-info` file
+```java
+  requires java.sql;
+```
+
+## Connecting to a Database
+
+```
+protocol:vendor_name:database_specific_connection_details
+```
+
+```
+jdbc:postgresql://localhost/zoo
+jdbc:oracle:thin:@123.123.123.123:1521:zoo
+jdbc:mysql://localhost:3306
+jdbc:mysql://localhost:3306/zoo?profileSQL=true
+```
+
+main ways to get a Connection: 
+- DriverManager 
+- DataSource
+
+```java
+import java.sql.*;
+public class TestConnect {
+   public static void main(String[] args) throws SQLException {
+      try (Connection conn =
+         DriverManager.getConnection("jdbc:hsqldb:file:zoo")) {
+         System.out.println(conn);
+      } } }
+```      
+
+```java
+import java.sql.*;
+public class TestExternal {
+   public static void main(String[] args) throws SQLException {
+      try (Connection conn = DriverManager.getConnection(
+         "jdbc:postgresql://localhost:5432/ocp-book",
+         "username",
+         "Password20182")) {
+         System.out.println(conn);
+      } } }
+```      
+
+## Working with a PreparedStatement
+
+ - A `Statement` and a `PreparedStatement` are similar to each other, except that a `PreparedStatement` takes parameters, while a `Statement` does not. 
+ - A `Statement` just executes whatever SQL query you give it.
+
+While it is possible to run SQL directly with `Statement`, you shouldn't. `PreparedStatement` is far superior for the following reasons:
+
+- Performance: In most programs, you run similar queries multiple times. When you use `PreparedStatement`, the database software often devises a plan to run the query well and remembers it.
+- Security: You are protected against an attack called SQL injection when using a `PreparedStatement` correctly.
+- Readability: It's nice not to have to deal with string concatenation in building a query string with lots of parameters.
+- Future use: Even if your query is being run only once or doesn't have any parameters, you should still use a `PreparedStatement`. That way, future editors of the code won't add a variable and have to remember to change to `PreparedStatement` then.
+
+### Obtaining a PreparedStatement
+
+Getting a PreparedStatement from a `Connection`
+```java
+try (PreparedStatement ps = conn.prepareStatement("SELECT * FROM exhibits")) {
+   // work with ps
+}
+```
+
+```java
+try (var ps = conn.prepareStatement()) { // DOES NOT COMPILE
+}
+```
+
+### Executing a PreparedStatement
+
+#### Modifying Data with executeUpdate()
+
+```java
+ var insertSql = "INSERT INTO exhibits VALUES(10, 'Deer', 3)";
+ var updateSql = "UPDATE exhibits SET name = '' " +
+    "WHERE name = 'None'";
+ var deleteSql = "DELETE FROM exhibits WHERE id = 10";
+
+ try (var ps = conn.prepareStatement(insertSql)) {
+    int result = ps.executeUpdate();
+    System.out.println(result); // 1
+ }
+
+ try (var ps = conn.prepareStatement(updateSql)) {
+    int result = ps.executeUpdate();
+    System.out.println(result); // 0
+ }
+
+ try (var ps = conn.prepareStatement(deleteSql)) {
+    int result = ps.executeUpdate();
+    System.out.println(result); // 1
+ }
+```
+
+#### Reading Data with executeQuery()
+
+```java
+var sql = "SELECT * FROM exhibits";
+try (var ps = conn.prepareStatement(sql);
+   ResultSet rs = ps.executeQuery() ) {
+   // work with rs
+}
+```
+
+#### Processing Data with execute()
+
+method called `execute()` that can run either a query or an update. It returns a `boolean` so that we know whether there is a `ResultSet`. That way, we can call the proper method to get more detail. 
+
+```java
+boolean isResultSet = ps.execute();
+if (isResultSet) {
+   try (ResultSet rs = ps.getResultSet()) {
+      System.out.println("ran a query");
+   }
+} else {
+   int result = ps.getUpdateCount();
+   System.out.println("ran an update");
+}
+```
+
+#### Using the Correct Method
+
+```java
+var sql = "SELECT * FROM names";
+try (var ps = conn.prepareStatement(sql)) {
+ 
+   var result = ps.executeUpdate();
+}
+```
+
+```
+Exception in thread "main" java.sql.SQLException: 
+statement does not generate a row count
+```
+
+We also get a `SQLException` when using `executeQuery()` with SQL that changes the database.
+```
+Exception in thread "main" java.sql.SQLException: 
+statement does not generate a result set
+```
+ ## Reviewing PreparedStatement Methods
+
+ SQL runnable by the execute method
+<table>
+<thead>
+<tr>
+<th scope="col" class="left">Method</th>
+<th scope="col" class="left"><code>DELETE</code></th>
+<th scope="col" class="left"><code>INSERT</code></th>
+<th scope="col" class="left"><code>SELECT</code></th>
+<th scope="col" class="left"><code>UPDATE</code></th> </tr> </thead>
+<tbody>
+<tr>
+<td class="left"><code>ps.execute()</code></td>
+<td class="left">Yes</td>
+<td class="left">Yes</td>
+<td class="left">Yes</td>
+<td class="left">Yes</td> </tr>
+<tr>
+<td class="left"><code>ps.executeQuery()</code></td>
+<td class="left">No</td>
+<td class="left">No</td>
+<td class="left">Yes</td>
+<td class="left">No</td> </tr>
+<tr>
+<td class="left"><code>ps.executeUpdate()</code></td>
+<td class="left">Yes</td>
+<td class="left">Yes</td>
+<td class="left">No</td>
+<td class="left">Yes</td> </tr> </tbody> </table>
+
+ Return types of execute methods
+<table>
+<thead>
+<tr>
+<th scope="col" class="left">Method</th>
+<th scope="col" class="left">Return type</th>
+<th scope="col" class="left">What is returned for <code>SELECT</code></th>
+<th scope="col" class="left">What is returned for <code>DELETE/INSERT/UPDATE</code></th> </tr> </thead>
+<tbody>
+<tr>
+<td class="left"><code>ps.execute()</code></td>
+<td class="left"><code>boolean</code></td>
+<td class="left"><code>true</code></td>
+<td class="left"><code>false</code></td> </tr>
+<tr>
+<td class="left"><code>ps.executeQuery()</code></td>
+<td class="left"><code>ResultSet</code></td>
+<td class="left">Rows and columns returned</td>
+<td class="left">n/a</td> </tr>
+<tr>
+<td class="left"><code>ps.executeUpdate()</code></td>
+<td class="left"><code>int</code></td>
+<td class="left">n/a</td>
+<td class="left">Number of rows added/changed/removed</td> </tr> </tbody> </table>
+
+### Working with Parameters
+
+ the bind variables are counted starting with 1 rather than 0.
+
+```java
+ public static void register(Connection conn, int key,
+    int type, String name) throws SQLException {
+
+    String sql = "INSERT INTO names VALUES(?, ?, ?)";
+
+    try (PreparedStatement ps = conn.prepareStatement(sql)) {
+       ps.setInt(1, key);
+       ps.setString(3, name);
+       ps.setInt(2, type);
+       ps.executeUpdate();
+    }
+ }
+```
+
+```java
+var sql = "INSERT INTO names VALUES(?, ?, ?)";
+try (var ps = conn.prepareStatement(sql)) {
+   ps.setInt(1, key);
+   ps.setInt(2, type);
+   // missing the set for parameter number 3
+   ps.executeUpdate();
+}
+```
+
+```
+Exception in thread "main" java.sql.SQLException: Parameter not set
+```
+
+```java
+var sql = "INSERT INTO names VALUES(?, ?)";
+try (var ps = conn.prepareStatement(sql)) {
+   ps.setInt(1, key);
+   ps.setInt(2, type);
+   ps.setString(3, name);
+   ps.executeUpdate();
+}
+```
+
+```
+Exception in thread "main" java.sql.SQLException:
+row column count mismatch in statement [INSERT INTO names VALUES(?, ?)]
+```
+
+ PreparedStatement methods
+<table>
+<thead>
+<tr>
+<th scope="col" class="left">Method</th>
+<th scope="col" class="left">Parameter type</th>
+<th scope="col" class="left">Example database type</th> </tr> </thead>
+<tbody>
+<tr>
+<td class="left"><code>setBoolean</code></td>
+<td class="left"><code>boolean</code></td>
+<td class="left"><code>BOOLEAN</code></td> </tr>
+<tr>
+<td class="left"><code>setDouble</code></td>
+<td class="left"><code>double</code></td>
+<td class="left"><code>DOUBLE</code></td> </tr>
+<tr>
+<td class="left"><code>setInt</code></td>
+<td class="left"><code>int</code></td>
+<td class="left"><code>INTEGER</code></td> </tr>
+<tr>
+<td class="left"><code>setLong</code></td>
+<td class="left"><code>long</code></td>
+<td class="left"><code>BIGINT</code></td> </tr>
+<tr>
+<td class="left"><code>setNull</code></td>
+<td class="left"><code>int</code></td>
+<td class="left">Any type</td> </tr>
+<tr>
+<td class="left"><code>setObject</code></td>
+<td class="left"><code>Object</code></td>
+<td class="left">Any type</td> </tr>
+<tr>
+<td class="left"><code>setString</code></td>
+<td class="left"><code>String</code></td>
+<td class="left"><code>CHAR</code>, <code>VARCHAR</code></td> </tr> </tbody> </table>
+
+```java
+String sql = "INSERT INTO names VALUES(?, ?, ?)";
+try (PreparedStatement ps = conn.prepareStatement(sql)) {
+   ps.setObject(1, key);
+   ps.setObject(2, type);
+   ps.setObject(3, name);
+   ps.executeUpdate();
+}
+```
+
+### Updating Multiple Records
+
+```java
+var sql = "INSERT INTO names VALUES(?, ?, ?)";
+ 
+try (var ps = conn.prepareStatement(sql)) {
+ 
+   ps.setInt(1, 20);
+   ps.setInt(2, 1);
+   ps.setString(3, "Ester");
+   ps.executeUpdate();
+ 
+   ps.setInt(1, 21);
+   ps.setString(3, "Elias");
+   ps.executeUpdate();
+}
+```
+
+```java
+public static void register(Connection conn, int firstKey, int type, String… names) throws SQLException {
+   var sql = "INSERT INTO names VALUES(?, ?, ?)";
+   var nextIndex = firstKey;
+   try (var ps = conn.prepareStatement(sql)) {
+      ps.setInt(2, type);
+      for(var name: names) {
+         ps.setInt(1, nextIndex);
+         ps.setString(3, name);
+         ps.addBatch();
+         nextIndex++;
+      }
+      int[] result = ps.executeBatch();
+      System.out.println(Arrays.toString(result));
+   }
+}
+
+ register(conn, 100, 1,  "Elias", "Ester");
+
+ //   [1, 1]
+```       
+
+## Getting Data from a ResultSet
+
+### Reading a ResultSet
+
+```java
+ String sql = "SELECT id, name FROM exhibits";
+ var idToNameMap = new HashMap<Integer, String>();
+
+ try (var ps = conn.prepareStatement(sql);
+    ResultSet rs = ps.executeQuery()) {
+
+    while (rs.next()) {
+       int id = rs.getInt("id");
+       String name = rs.getString("name");
+       idToNameMap.put(id, name);
+    }
+    System.out.println(idToNameMap);
+ }
+```
+
+```java
+int id = rs.getInt(1);
+String name = rs.getString(2);
+```
+
+```java
+// only one row
+var sql = "SELECT count(*) FROM exhibits";
+ 
+try (var ps = conn.prepareStatement(sql);
+   var rs = ps.executeQuery()) {
+ 
+   if (rs.next()) {
+      int count = rs.getInt(1);
+      System.out.println(count);
+   }
+}
+```
+
+If a query didn't return any rows, it would throw a `SQLException`, so the if statement checks that it is safe to call.
+
+```java
+var sql = "SELECT count(*) AS count FROM exhibits";
+ 
+try (var ps = conn.prepareStatement(sql);
+   var rs = ps.executeQuery()) {
+ 
+   if (rs.next()) {
+      var count = rs.getInt("total");
+      System.out.println(count);
+   }
+}
+```
+
+```
+Exception in thread "main" java.sql.SQLException: Column not found: total
+```
+
+
+
 # Modules
 
 The Java Platform Module System (JPMS) groups code at a higher level. The main purpose of a module is to provide groups of related packages that offer developers a particular set of functionality. It's like a JAR file, except a developer chooses which packages are accessible outside the module.
