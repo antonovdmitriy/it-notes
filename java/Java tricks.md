@@ -988,7 +988,9 @@ Post-decrement	`z--`	Decreases the value by 1 and returns the **original** value
 ```java
 int a = 2, b = 4, c = 2;
 System.out.println(a ˃ 2 ? --c : b++); // 4
-System.out.println(b = (a!=c ? a : b++)); // 5  first decrement but return old value. b is already 6, but then result of ternary assign to b. And this result of ternary is 5 (old value of b)
+System.out.println(b = (a!=c ? a : b++)); // 5  first decrement but return old value. 
+//b is already 6, but then result of ternary assign to b. 
+// And this result of ternary is 5 (old value of b)
 ```
 
 ```java
@@ -10735,7 +10737,7 @@ Filename is: shells.txt
 Path path1 = Path.of("/cats/../panther");
 Path path2 = Path.of("food");
 System.out.println(path1.resolve(path2)); // /cats/../panther/food
-``
+```
 
 ```java
 Path path3 = Path.of("/turkey/food");
