@@ -6,7 +6,8 @@
 - [Compile and Run](#compile-and-run)
   - [Create Jar via CLI](#create-jar-via-cli)
 - [Main arguments tricks](#main-arguments-tricks)
-- [Import packages tricks](#import-packages-tricks)
+- [Import packages](#import-packages)
+  - [Static import](#static-import)
 - [Initializing class](#initializing-class)
   - [Constructor](#constructor)
   - [this](#this)
@@ -89,7 +90,6 @@
   - [Varargs](#varargs)
 - [Access modifiers](#access-modifiers-1)
 - [Static](#static)
-- [Static import](#static-import)
 - [Autoboxing](#autoboxing)
 - [Overloading](#overloading)
   - [Rules](#rules)
@@ -518,7 +518,7 @@ single file source code - compile and launch with one command and pass parameter
 java Zoo.java Bronx Zoo
 ```
 
-# Import packages tricks
+# Import packages
 
 The import statement doesn't bring in child packages, fields, or methods; it imports only classes directly under the package
 
@@ -533,6 +533,36 @@ if it will be that , then it's compile error
 ```java
 import java.util.*;
 import java.sql.*;  // causes Date declaration to not compile
+```
+
+
+## Static import
+
+```java
+import java.util.List;
+import static java.util.Arrays.asList;         
+public class ZooParking {
+   public static void main(String[] args) {
+      List<String> list = asList("one", "two"); // No Arrays. prefix
+   }
+}
+```
+
+
+```java
+import static java.util.Arrays;       // DOES NOT COMPILE
+import static java.util.Arrays.asList;
+static import java.util.Arrays.*;     // DOES NOT COMPILE
+public class BadZooParking {
+   public static void main(String[] args) {
+      Arrays.asList("one");           // DOES NOT COMPILE
+   }
+}
+```
+
+```java
+import static zoo.A.TYPE;
+import static zoo.B.TYPE;     // DOES NOT COMPILE
 ```
 
 
@@ -1069,6 +1099,12 @@ short capybara = (short)mouse * hamster;      // DOES NOT COMPILE
 short capybara = 1 + (short)(mouse * hamster);  // DOES NOT COMPILE
 ```
 
+```java
+double lion = 2;
+long tiger = (long)lion + 1.0f; // DOES NOT COMPILE.  
+// all right expression is float and then without casting to long
+```
+
 > compiler doesn't require casting when working with literal values that fit into the data type
 
 ```java
@@ -1343,6 +1379,7 @@ switch(animal) {
 }
 ``` 
 
+if break is not invokes, all branches invokes after current including default
 ```java
 public void printSeason(int month) {
    switch(month) {
@@ -1353,7 +1390,27 @@ public void printSeason(int month) {
       case 10, 11, 12: System.out.print("Fall");
    } 
 }
+
+printSeason(2);
+
+// WinterSpringUnknownSummerFall
 ```
+
+```java
+ String instrument = "violin";
+ final String CELLO = "cello";
+ String viola = "viola";
+ int p = -1;
+ switch(instrument) {
+    case "bass" : break;
+    case CELLO : p++;
+    default: p++;
+    case "VIOLIN": p++;
+    case "viola" : ++p; break;
+ }
+ System.out.print(p); // 2
+```
+
 
 In case we can write only constants and values which known in compile time
 ```java
@@ -2815,35 +2872,6 @@ Snake s = new Snake();
 System.out.println(s.hiss); 
 s = null;
 System.out.println(s.hiss);
-```
-
-# Static import
-
-```java
-import java.util.List;
-import static java.util.Arrays.asList;          // static import
-public class ZooParking {
-   public static void main(String[] args) {
-      List<String> list = asList("one", "two"); // No Arrays. prefix
-   }
-}
-```
-
-
-```java
-import static java.util.Arrays;       // DOES NOT COMPILE
-import static java.util.Arrays.asList;
-static import java.util.Arrays.*;     // DOES NOT COMPILE
-public class BadZooParking {
-   public static void main(String[] args) {
-      Arrays.asList("one");           // DOES NOT COMPILE
-   }
-}
-```
-
-```java
-import static zoo.A.TYPE;
-import static zoo.B.TYPE;     // DOES NOT COMPILE
 ```
 
 # Autoboxing
@@ -13108,7 +13136,7 @@ Single tour: null
 
 - A service provider is the implementation of a service provider interface. 
 - at runtime it is possible to have multiple implementation classes or modules.
-
+- service provider is allowed to provide only one service provider implementation
 
 ```java
 // TourImpl.java
