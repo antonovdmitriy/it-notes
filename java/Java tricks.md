@@ -591,7 +591,7 @@ private class BlueTang {} // DOES NOT COMPILE
 
 - A class can contain many overloaded constructors, provided the signature for each is distinct.
 - The compiler inserts a default no-argument constructor if no constructors are declared.
-- If a constructor calls this(), then it must be the first line of the constructor. Comments aren't considered statements and are allowed anywhere.
+- If a constructor calls `this()`, then it must be the first line of the constructor. Comments aren't considered statements and are allowed anywhere.
 - Java does not allow cyclic constructor calls.
 
 ```java
@@ -5600,6 +5600,17 @@ public void push(E e)
 public E pop()
 // Get first element
 public E peek()
+```
+
+```java
+var greetings = new ArrayDeque˂String˃();
+greetings.offerLast("hello");
+greetings.offerLast("hi");
+greetings.offerFirst("ola");
+greetings.pop();
+greetings.peek();
+while (greetings.peek() != null)
+System.out.print(greetings.pop());     // hellohi
 ```
 
 ## Maps
