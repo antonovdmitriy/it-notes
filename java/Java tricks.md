@@ -1828,6 +1828,8 @@ System.out.println("abcabc".replace("a", "A")); // AbcAbc
 
 ## strip and trim
 
+- The `strip()` method does everything that `trim()` does, but it supports Unicode.
+
 ```java
 public String strip()
 public String stripLeading()
