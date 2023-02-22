@@ -388,6 +388,10 @@
     - [Comparing Callable Statement Parameters](#comparing-callable-statement-parameters)
     - [Using Additional Options](#using-additional-options)
   - [Controlling Data with Transactions](#controlling-data-with-transactions)
+    - [Committing and Rolling Back](#committing-and-rolling-back)
+    - [Bookmarking with Savepoints](#bookmarking-with-savepoints)
+    - [Reviewing Transaction APIs](#reviewing-transaction-apis)
+  - [Closing Database Resources](#closing-database-resources)
 - [Modules](#modules)
   - [A Module](#a-module)
   - [Creating and Running a First Modular Program](#creating-and-running-a-first-modular-program)
@@ -12466,7 +12470,120 @@ conn.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE,  ResultSet.CONCUR_
 
 ## Controlling Data with Transactions
 
+### Committing and Rolling Back
 
+ `setAutoCommit(true)` will automatically trigger a commit when you are not already in autocommit mode. 
+
+
+```java
+public static void main(String[] args) throws SQLException {
+     try (Connection conn = 
+        DriverManager.getConnection("jdbc:hsqldb:file:zoo")) {
+
+        conn.setAutoCommit(false);
+
+       var elephantRowsUpdated = updateRow(conn, 5, "African Elephant");
+       var zebraRowsUpdated = updateRow(conn, -5, "Zebra");
+ 
+       if (! elephantRowsUpdated || ! zebraRowsUpdated)
+          conn.rollback();
+       else {
+          String selectSql = """
+             SELECT COUNT(*) 
+             FROM exhibits 
+             WHERE num:acres <= 0""";
+          try (PreparedStatement ps = conn.prepareStatement(selectSql);
+             ResultSet rs = ps.executeQuery()) {
+ 
+             rs.next();
+             int count = rs.getInt(1);
+             if (count == 0)
+                conn.commit();
+             else
+                conn.rollback();
+          } } } }
+
+ private static boolean updateRow(Connection conn, int numToAdd, String name) throws SQLException {
+    String updateSql = """
+       UPDATE exhibits 
+       SET num:acres = num:acres + ? 
+       WHERE name = ?""";
+
+    try (PreparedStatement ps = conn.prepareStatement(updateSql)) {
+       ps.setInt(1, numToAdd);
+       ps.setString(2, name);
+       return ps.executeUpdate()> 0;
+    } 
+   }
+```
+
+### Bookmarking with Savepoints
+
+```java
+ conn.setAutoCommit(false);
+ Savepoint sp1 = conn.setSavepoint();
+ // database code
+ Savepoint sp2 = conn.setSavepoint("second savepoint");
+ // database code
+ conn.rollback(sp2);
+ // database code
+ conn.rollback(sp1);
+```
+
+### Reviewing Transaction APIs
+
+<table>
+<thead>
+<tr>
+<th scope="col" class="left">Method</th>
+<th scope="col" class="left">Description</th> </tr> </thead>
+<tbody>
+<tr>
+<td class="left"><code>setAutoCommit(boolean b)</code></td>
+<td class="left">Sets mode for whether to commit right away</td> </tr>
+<tr>
+<td class="left"><code>commit()</code></td>
+<td class="left">Saves data in database</td> </tr>
+<tr>
+<td class="left"><code>rollback()</code></td>
+<td class="left">Gets rid of statements already made</td> </tr>
+<tr>
+<td class="left"><code>rollback(Savepoint sp)</code></td>
+<td class="left">Goes back to state at <code>Savepoint</code></td> </tr>
+<tr>
+<td class="left"><code>setSavepoint()</code></td>
+<td class="left">Creates bookmark</td> </tr>
+<tr>
+<td class="left"><code>setSavepoint(String name)</code></td>
+<td class="left">Creates bookmark with name</td> </tr> </tbody> </table>
+
+## Closing Database Resources
+
+- The resources need to be closed in a specific order. The `ResultSet` is closed first, followed by the `PreparedStatement` (or `CallableStatement`) and then the `Connection`.
+- Closing a `Connection` also closes `PreparedStatement` (or `CallableStatement`) and `ResultSet`.
+- Closing a `PreparedStatement` (or `CallableStatement`) also closes the `ResultSet`.
+- There's another way to close a `ResultSet`. JDBC automatically closes a `ResultSet` when you run another SQL statement from the same `Statement`. This could be a `PreparedStatement` or a `CallableStatement`.
+
+```java
+       var sql = "SELECT not_a_column FROM names";
+       var url = "jdbc:hsqldb:zoo";
+       try (var conn = DriverManager.getConnection(url);
+          var ps = conn.prepareStatement(sql);
+          var rs = ps.executeQuery()) {
+          while (rs.next())
+             System.out.println(rs.getString(1));
+       } catch (SQLException e) {
+          System.out.println(e.getMessage());
+          System.out.println(e.getSQLState());
+          System.out.println(e.getErrorCode()); 
+   }
+```
+
+```
+Column 'NOT_A_COLUMN' is either not in any table …
+42X04
+30000
+```
 
 # Modules
 
