@@ -2929,15 +2929,6 @@ result = (byte)(long)aw;
 
 ---
 
-Long aw = 12434L;
-long a = 34234;
-Byte result;
-
-result = (byte)a;
-result = (byte)(long)aw;
-
----
-
 Byte aw = 124;
 byte a = 3;
 
