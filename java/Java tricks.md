@@ -1855,7 +1855,7 @@ public String stripIndent()
 ```
 
 - The `indent()` method adds the same number of blank spaces to the beginning of each line if you pass a positive number. If you pass a negative number, it tries to remove that number of whitespace characters from the beginning of the line. If you pass zero, the indentation will not change.
-- `indent()` also normalizes whitespace characters. What does normalizing whitespace mean, you ask? First, a line break is added to the end of the string if not already there. Second, any line breaks are converted to the \n format. Regardless of whether your operating system uses \r\n (Windows) or\n (Mac/Unix), Java will standardize on \n for you.
+- `indent()` also normalizes whitespace characters. First, a line break is added to the end of the string if not already there. Second, any line breaks are converted to the \n format. Regardless of whether your operating system uses \r\n (Windows) or\n (Mac/Unix), Java will standardize on \n for you.
 - The `stripIndent()` method is useful when a String was built with concatenation rather than using a text block. It gets rid of all incidental whitespace. This means that all non-blank lines are shifted left so the same number of whitespace characters are removed from each line and the first character that remains is not blank. Like indent(), \r\n is turned into \n. However, the stripIndent() method does not add a trailing line break if it is missing.
 
 <table>
@@ -2135,7 +2135,7 @@ var y = new String("Hello World");
 System.out.println(x == y); // false
 ```
 
-The intern() method will use an object in the string pool if one is present.
+`intern()` method will use an object in the string pool if one is present.
 
 ```java
 public String intern()
@@ -2563,13 +2563,17 @@ with `Period` is more reusable
 public static void main(String[] args) {
    var start = LocalDate.of(2022, Month.JANUARY, 1);
    var end = LocalDate.of(2022, Month.MARCH, 30);
-   performAnimalEnrichment(start, end);
+   var period = Period.ofMonths(1); // create a period
+   performAnimalEnrichment(start, end, period);
 }
-private static void performAnimalEnrichment(LocalDate start, LocalDate end) {
+
+private static void performAnimalEnrichment(LocalDate start, LocalDate end,
+   Period period) { // uses the generic period
+ 
    var upTo = start;
-   while (upTo.isBefore(end)) { // check if still before end
+   while (upTo.isBefore(end)) {
       System.out.println("give new toy: " + upTo);
-      upTo = upTo.plusMonths(1); // add a month
+      upTo = upTo.plus(period); // adds the period
 } }
 ```
 
