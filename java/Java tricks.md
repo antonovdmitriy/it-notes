@@ -38,6 +38,7 @@
 - [Cycles](#cycles)
   - [do while](#do-while)
   - [for](#for)
+  - [Examples](#examples)
 - [Labels](#labels)
 - [Strings](#strings)
   - [String concatenation](#string-concatenation)
@@ -100,7 +101,7 @@
   - [Class initialization](#class-initialization)
   - [Overriding](#overriding)
     - [Rules](#rules-1)
-    - [Examples](#examples)
+    - [Examples](#examples-1)
   - [Calling the parent version of an overridden method](#calling-the-parent-version-of-an-overridden-method)
   - [Redeclaring private methods](#redeclaring-private-methods)
   - [static method hiding](#static-method-hiding)
@@ -202,7 +203,7 @@
     - [Upper-Bounded Wildcards](#upper-bounded-wildcards)
       - [Upper+bounded and interfaces](#upperbounded-and-interfaces)
   - [Lower-Bounded Wildcards](#lower-bounded-wildcards)
-  - [Examples](#examples-1)
+  - [Examples](#examples-2)
   - [Naming conventions](#naming-conventions)
 - [Optional](#optional)
   - [Optional methods](#optional-methods)
@@ -226,7 +227,7 @@
       - [flatMap](#flatmap)
     - [Sorting](#sorting)
     - [Taking a Peek](#taking-a-peek)
-  - [Examples](#examples-2)
+  - [Examples](#examples-3)
   - [Primitive Streams](#primitive-streams)
     - [Create primitive stream](#create-primitive-stream)
     - [Mapping Streams](#mapping-streams)
@@ -240,7 +241,7 @@
   - [Checked Exceptions](#checked-exceptions)
   - [Unchecked exceptions](#unchecked-exceptions)
   - [Error and Throwable](#error-and-throwable)
-  - [Examples](#examples-3)
+  - [Examples](#examples-4)
   - [Calling Methods That Throw Exceptions](#calling-methods-that-throw-exceptions)
   - [Overriding Methods with Exceptions](#overriding-methods-with-exceptions)
   - [Printing an Exception](#printing-an-exception)
@@ -1597,6 +1598,22 @@ for(long y = 0, int z = 4; x < 5; x++)  // DOES NOT COMPILE
 int x = 0;
 for(int x = 4; x < 5; x++)   // DOES NOT COMPILE
    System.out.print(x + " ");
+```
+
+## Examples
+
+```java
+private void countAttendees() {
+   int participants = 4, animals = 2, performers = -1;
+
+   while((participants = participants+1) ˂ 10) {}
+   do {} while (animals++ ˂= 1);
+   for( ; performers˂2; performers+=2) {}
+
+   System.out.println(participants);   // 10
+   System.out.println(animals);        // 3
+   System.out.println(performers);     // 3
+}
 ```
 
 # Labels
@@ -3119,9 +3136,9 @@ public class Beetle extends Insect {
 
 ## Constructor
 
-- The first line of every constructor is a call to a parent constructor using super() or an overloaded constructor using this().
-- If the constructor does not contain a this() or super() reference, then the compiler automatically inserts super() with no arguments as the first line of the constructor.
-- If a constructor calls super(), then it must be the first line of the constructor.
+- The first line of every constructor is a call to a parent constructor using `super()` or an overloaded constructor using `this()`.
+- If the constructor does not contain a `this()` or `super()` reference, then the compiler automatically inserts `super()` with no arguments as the first line of the constructor.
+- If a constructor calls `super()`, then it must be the first line of the constructor.
 
 ```java
 public class Animal {
@@ -5930,7 +5947,7 @@ public class Duck implements Comparable<Duck> {
    private String name;
    private int weight;
 
-     // Assume getters/setters/constructors provided
+     // Assume getters/setters/#s provided
 
    public String toString() { return name; }
 
