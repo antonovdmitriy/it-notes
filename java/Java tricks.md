@@ -4514,6 +4514,26 @@ public void processData() {
 }
 ```
 
+```java
+public class Zebra {
+   private int x = 24;
+   public int hunt() {
+      String message = "x is ";
+      abstract class Stripes {
+         private int x = 0;
+         public void print() {
+            System.out.print(message + Zebra.this.x); // x is 24
+         }
+      }
+      var s = new Stripes() {};
+      s.print();
+      return x;
+   }
+   public static void main(String[] args) {
+      new Zebra().hunt();
+   } }
+```
+
 ## Anonymous classes
 
 - An anonymous class is a specialized form of a local class that does not have a name. 
@@ -7104,6 +7124,33 @@ Separations result = list.stream()
                Collectors.joining(","),
                (s, c) -> new Separations(s, c)));
 System.out.println(result); // Separations[spaceSeparated=x y z, commaSeparated=x,y,z]
+```
+
+```java
+ public class Paging {
+    record Sesame(String name, boolean human)  {
+       @Override public String toString() {
+          return name();
+       }
+    } 
+    record Page(List˂Sesame˃ list, long count)  {}
+
+    public static void main(String[] args) {
+       var monsters = Stream.of(new Sesame("Elmo", false));
+       var people = Stream.of(new Sesame("Abby", true));
+       printPage(monsters, people);
+    }
+
+    private static void printPage(Stream˂Sesame˃ monsters, 
+          Stream˂Sesame˃ people) {
+       Page page = Stream.concat(monsters, people)
+          .collect(Collectors.teeing(
+             Collectors.filtering(s -˃ s.name().startsWith("E"), 
+                Collectors.toList()),
+             Collectors.counting(),
+             (l, c) -˃ new Page(l, c)));
+       System.out.println(page); //  Page[list=[Elmo], count=2]
+    } }
 ```
 
 ## Common Intermediate Operations
