@@ -95,8 +95,6 @@
 - [Overloading](#overloading)
   - [Rules](#rules)
 - [Inheritance](#inheritance)
-  - [hiding variables](#hiding-variables)
-  - [super](#super)
   - [Constructor](#constructor-1)
   - [Class initialization](#class-initialization)
   - [Overriding](#overriding)
@@ -107,6 +105,7 @@
   - [static method hiding](#static-method-hiding)
   - [variable hiding](#variable-hiding)
   - [final hiding and overriding](#final-hiding-and-overriding)
+  - [super](#super)
 - [Abstract classes](#abstract-classes)
   - [Rules](#rules-2)
   - [Constructor in abstract class](#constructor-in-abstract-class)
@@ -3090,50 +3089,6 @@ public class Zoo { }
 public class Zoo extends java.lang.Object { }
 ```
 
-## hiding variables
-
-```java
-// Reptile.java
-public class Reptile {
-   protected int speed = 10;
-}
- 
-// Crocodile.java
-public class Crocodile extends Reptile {
-   protected int speed = 20;
-   public int getSpeed() {
-      return speed;
-   }
-   public static void main(String[] data) {
-      var croc = new Crocodile();
-      System.out.println(croc.getSpeed()); // 20
-   } }
-```
-
-## super
-
-```java
-class Insect {
-   protected int numberOfLegs = 4;
-   String label = "buggy";
-}
-
-public class Beetle extends Insect {
-   protected int numberOfLegs = 6;
-   short age = 3;
-   public void printData() {
-      System.out.println(this.label);
-      System.out.println(super.label);
-      System.out.println(this.age);
-      System.out.println(super.age); // DOES NOT COMPILE
-      System.out.println(numberOfLegs);
-   }
-   public static void main(String []n) {
-      new Beetle().printData();
-   }
-}
-```
-
 ## Constructor
 
 - The first line of every constructor is a call to a parent constructor using `super()` or an overloaded constructor using `this()`.
@@ -3567,6 +3522,25 @@ public class SunBear extends Bear {
 
 ## variable hiding
 
+```java
+// Reptile.java
+public class Reptile {
+   protected int speed = 10;
+}
+ 
+// Crocodile.java
+public class Crocodile extends Reptile {
+   protected int speed = 20;
+   public int getSpeed() {
+      return speed;
+   }
+   public static void main(String[] data) {
+      var croc = new Crocodile();
+      System.out.println(croc.getSpeed()); // 20
+   } }
+```
+
+
 A hidden variable occurs when a child class defines a variable with the same name as an inherited variable defined in the parent class. This creates two distinct copies of the variable within an instance of the child class: one instance defined in the parent class and one defined in the child class.
 
 ```java
@@ -3605,6 +3579,31 @@ public class Penguin extends Bird {
 ```
 
 the private methods would not be overridden or hidden.
+
+## super
+
+```java
+class Insect {
+   protected int numberOfLegs = 4;
+   String label = "buggy";
+}
+
+public class Beetle extends Insect {
+   protected int numberOfLegs = 6;
+   short age = 3;
+   public void printData() {
+      System.out.println(this.label);
+      System.out.println(super.label);
+      System.out.println(this.age);
+      System.out.println(super.age); // DOES NOT COMPILE
+      System.out.println(numberOfLegs);
+   }
+   public static void main(String []n) {
+      new Beetle().printData();
+   }
+}
+```
+
 
 # Abstract classes
 
