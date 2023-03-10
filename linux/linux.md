@@ -775,7 +775,7 @@ sed -i ‘s/four/FOUR/g’ file_name
 ### sed как редактор многих файлов за одну команду
 
 Заменить во всех файлах с расширением .txt в текущем каталоге слово hello на buy. Пишем внешний цикл который меняет счетчик, и далее счетчки используем в команде sed
-```
+```bash
 for i in *.txt; do sed -i 's/hello/buy/g' $i; done
 ```
 
@@ -786,8 +786,8 @@ for i in *.txt; do sed -i 's/hello/buy/g' $i; done
 ```
 awk ' pattern {print $2} ' 
 ```
-опция -F указывает разделитель
-```
+`-F` -  разделитель
+```bash
  echo 'one two three four' | awk '{print $NF}' вывести последнее поле four
 ```
 
