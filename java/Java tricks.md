@@ -921,6 +921,7 @@ public class Var {
 | Addition/subtraction            | `+ -`                                            | Left-to-right |
 | Shift operators                 | `<< >> >>>`                                      | Left-to-right |
 | Relational operators            | `< > <= >= instanceof`                           | Left-to-right |
+| Equal to/not equal to           | `== !=`                                         | Left-to-right |
 | Logical AND                     | `&`                                              | Left-to-right |
 | Logical exclusive OR            | `^`                                              | Left-to-right |
 | Logical inclusive OR            | `\|`                                             | Left-to-right |
