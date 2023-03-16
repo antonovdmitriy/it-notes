@@ -1433,7 +1433,6 @@ void feedAnimals() {
 ```   
 
 
-
 ## Switch expression. New switch, which can return a value
 ![Switch](images/switch_2.png)
 
@@ -1541,6 +1540,26 @@ String getWeather(Season value) {
 ```
 
 - When you use enums with switch it's useful to use a default branch as well, even if it's not mandatory. If you add a value to enum there will be mandatory fixes to all using this enum in switch since code does not compiled. 
+
+
+```java
+public class Weather {
+   enum Seasons {
+      WINTER, SPRING, SUMMER, FALL
+   }
+
+   public static void main(String[] args) {
+      Seasons v = null;
+      switch (v) {
+         case Seasons.SPRING -˃ System.out.print("s");    // DOES NOT COMPILE
+         case Seasons.WINTER -˃ System.out.print("w");    // DOES NOT COMPILE
+         case Seasons.SUMMER -˃ System.out.print("m");    // DOES NOT COMPILE
+         default -˃ System.out.println("missing data"); }
+   }
+}
+```
+
+if the enum name is used in the case statement value, then the code does not compile. In this question, `SPRING` is acceptable, but `Seasons.SPRING` is not.
 
 # Cycles
 

@@ -143,6 +143,8 @@
   - [Настройка сети](#настройка-сети)
   - [CentoOS VirtualBoxGuest](#centoos-virtualboxguest)
   - [Расширения дискового пространтсва](#расширения-дискового-пространтсва)
+- [VM Ware](#vm-ware)
+  - [mount](#mount)
 - [Операции с пользователями](#операции-с-пользователями)
 - [Операции с правами](#операции-с-правами)
   - [File Permission](#file-permission)
@@ -1107,7 +1109,7 @@ lsblk Увидим подключенные устройства
 
 Для временного mount используется команда 
 ```
-mount /dev/partition\_name to\_dir`
+mount /dev/partition\_name to\_dir`f
 ```
 ![](images/image6.png)
 
@@ -2567,6 +2569,24 @@ sudo mount -a
 
  .\\VBoxManage.exe modifyhd  "F:\\Master\\VirtialMachine\\cent8\\cent82.vdi"  --resize 40999
 ```
+
+# VM Ware
+
+## mount 
+
+If automount doesn't work.. I had it. But there is a solution
+
+check that mount works
+```
+sudo mkdir -p /mnt/hgfs/
+sudo /usr/bin/vmhgfs-fuse .host:/ /mnt/hgfs/ -o subtype=vmhgfs-fuse,allow_other
+```
+
+after that add this to `/etc/fstab`
+```
+vmhgfs-fuse   /mnt/hgfs    fuse    defaults,allow_other    0    0
+```
+
 
 # Операции с пользователями
 
