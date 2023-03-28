@@ -10,7 +10,7 @@ Just notes, compilation from different courrses and own thoughts.
 - [Docker](/docker/Docker.md)
 - [Kubernetes](kubernates/kubernates.md)
 - [Oracle](/oracle/oracle.md)
-- [Amazon](/aws/AWS.md)
+- [Aws](/aws/AWS.md)
 - [InteliJ IDEA](intelij-idea/intelij-idea.md)
 - [VS Code](/vs-code/vs-code.md)
 - [Maven](maven/maven.md)

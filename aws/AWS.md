@@ -44,6 +44,18 @@
   - [Memory and CPU](#memory-and-cpu)
     - [Example pricing](#example-pricing)
   - [Environment Variables](#environment-variables)
+  - [Spring cloud functions](#spring-cloud-functions)
+    - [Main idea.](#main-idea)
+    - [documentations and examples](#documentations-and-examples)
+    - [pom and dependencies for aws and spring cloud functions](#pom-and-dependencies-for-aws-and-spring-cloud-functions)
+    - [Internals](#internals)
+    - [How to get a aws Context](#how-to-get-a-aws-context)
+    - [Async lambdas](#async-lambdas)
+    - [Get acces to env variable](#get-acces-to-env-variable)
+    - [Using primitives in labmdas](#using-primitives-in-labmdas)
+    - [Using inputstream like a payload](#using-inputstream-like-a-payload)
+    - [Using pojo in lambdas](#using-pojo-in-lambdas)
+    - [Testing](#testing)
 
 # Advice for the Amazon exams
 
