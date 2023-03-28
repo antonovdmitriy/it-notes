@@ -1011,3 +1011,904 @@ HelloWorldLambda:
       Variables:
         DATABASE_URL: my-database-url
 ```        
+
+## Spring cloud functions
+
+### Main idea.
+
+We can write class that implements `Function` `Consumer` `Supplier` and do not rewrite when we use another cloud provider, but only if you do not use specific class from cloud provider dependencies like `Context` from AWS. It works with class with one methods, it is not mandatory to implement standart interfaces but there are options and problems with it.
+
+### documentations and examples
+
+- [Spring cloud function docs](https://docs.spring.io/spring-cloud-function/docs/current/reference/html/aws.html#_introduction)
+- [my projects for exepiments](https://github.com/antonovdmitriy/learning-aws-lambda-springboot)
+
+
+### pom and dependencies for aws and spring cloud functions
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.example</groupId>
+    <artifactId>learning-aws-lambdas-springboot</artifactId>
+    <version>1.0.1</version>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>2.7.9</version>
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
+
+    <properties>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <wrapper.version>1.0.27.RELEASE</wrapper.version>
+        <aws-lambda-events.version>3.9.0</aws-lambda-events.version>
+        <spring-cloud-function.version>3.2.9</spring-cloud-function.version>
+    </properties>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.springframework.boot.experimental</groupId>
+                        <artifactId>spring-boot-thin-layout</artifactId>
+                        <version>${wrapper.version}</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.2.4</version>
+                <configuration>
+                    <createDependencyReducedPom>false</createDependencyReducedPom>
+                    <shadedArtifactAttached>true</shadedArtifactAttached>
+                    <shadedClassifierName>aws</shadedClassifierName>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <distributionManagement>
+        <repository>
+            <id>github</id>
+            <name>GitHub Packages</name>
+            <url>https://maven.pkg.github.com/antonovdmitriy/learning-aws-lambdas-springboot</url>
+        </repository>
+    </distributionManagement>
+
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-function-dependencies</artifactId>
+                <version>${spring-cloud-function.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-function-adapter-aws</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-lambda-java-events</artifactId>
+            <version>${aws-lambda-events.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-lambda-java-core</artifactId>
+            <version>1.1.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-configuration-processor</artifactId>
+            <optional>true</optional>
+        </dependency>
+    </dependencies>
+</project>
+```
+
+### Internals
+
+For handler methods in `template.yml` we put link to `org.springframework.cloud.function.adapter.aws.FunctionInvoker` like this
+
+```yml
+  AsyncHelloWorldLambdaSpringBoot:
+    Type: AWS::Serverless::Function
+    Properties:
+      Runtime: java11
+      FunctionName: AsyncHelloWorldLambdaSpringBoot
+      MemorySize: 512
+      ## This path to lambda to invoke
+      Handler: org.springframework.cloud.function.adapter.aws.FunctionInvoker::handleRequest
+      CodeUri: target/learning-aws-lambdas-springboot-1.0.1-aws.jar
+      Environment:
+        Variables:
+          SPRING_CLOUD_FUNCTION_DEFINITION: "asyncHelloWorld"
+```
+
+source of `FunctionInvoker`
+
+```java
+/*
+ * Copyright 2019-2022 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.springframework.cloud.function.adapter.aws;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
+
+import com.amazonaws.services.lambda.runtime.Context;
+import com.amazonaws.services.lambda.runtime.RequestStreamHandler;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.MapperFeature;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.datatype.joda.JodaModule;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.reactivestreams.Publisher;
+import reactor.core.publisher.Flux;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.cloud.function.context.FunctionCatalog;
+import org.springframework.cloud.function.context.FunctionProperties;
+import org.springframework.cloud.function.context.FunctionalSpringApplication;
+import org.springframework.cloud.function.context.catalog.SimpleFunctionRegistry.FunctionInvocationWrapper;
+import org.springframework.cloud.function.context.config.RoutingFunction;
+import org.springframework.cloud.function.json.JacksonMapper;
+import org.springframework.cloud.function.json.JsonMapper;
+import org.springframework.cloud.function.utils.FunctionClassUtils;
+import org.springframework.context.ApplicationContextInitializer;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.core.env.Environment;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.util.Assert;
+import org.springframework.util.StreamUtils;
+import org.springframework.util.StringUtils;
+
+/**
+ *
+ * @author Oleg Zhurakousky
+ * @since 3.1
+ *
+ *        see
+ *        https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-output-format
+ */
+public class FunctionInvoker implements RequestStreamHandler {
+
+	private static Log logger = LogFactory.getLog(FunctionInvoker.class);
+
+	private JsonMapper jsonMapper;
+
+	private FunctionInvocationWrapper function;
+
+	private volatile String functionDefinition;
+
+	public FunctionInvoker(String functionDefinition) {
+		this.functionDefinition = functionDefinition;
+		this.start();
+	}
+
+	public FunctionInvoker() {
+		this(null);
+	}
+
+	@SuppressWarnings({ "rawtypes" })
+	@Override
+	public void handleRequest(InputStream input, OutputStream output, Context context) throws IOException {
+		Message requestMessage = AWSLambdaUtils
+				.generateMessage(StreamUtils.copyToByteArray(input), this.function.getInputType(), this.function.isSupplier(), jsonMapper, context);
+
+		Object response = this.function.apply(requestMessage);
+		byte[] responseBytes = this.buildResult(requestMessage, response);
+		StreamUtils.copy(responseBytes, output);
+		// any exception should propagate
+	}
+
+	@SuppressWarnings("unchecked")
+	private byte[] buildResult(Message<?> requestMessage, Object output) throws IOException {
+		Message<byte[]> responseMessage = null;
+		if (output instanceof Publisher<?>) {
+			List<Object> result = new ArrayList<>();
+			for (Object value : Flux.from((Publisher<?>) output).toIterable()) {
+				if (logger.isDebugEnabled()) {
+					logger.debug("Response value: " + value);
+				}
+				result.add(value);
+			}
+			if (result.size() > 1) {
+				output = result;
+			}
+			else if (result.size() == 1) {
+				output = result.get(0);
+			}
+			else {
+				output = null;
+			}
+			if (output != null) {
+				if (logger.isDebugEnabled()) {
+					logger.debug("OUTPUT: " + output + " - " + output.getClass().getName());
+				}
+				byte[] payload = this.jsonMapper.toJson(output);
+				responseMessage = MessageBuilder.withPayload(payload).build();
+			}
+		}
+		else {
+			responseMessage = (Message<byte[]>) output;
+		}
+		return AWSLambdaUtils.generateOutput(requestMessage, responseMessage, this.jsonMapper, function.getOutputType());
+	}
+
+	private void start() {
+		Class<?> startClass = FunctionClassUtils.getStartClass();
+		String[] properties = new String[] {"--spring.cloud.function.web.export.enabled=false", "--spring.main.web-application-type=none"};
+		ConfigurableApplicationContext context = ApplicationContextInitializer.class.isAssignableFrom(startClass)
+				? FunctionalSpringApplication.run(new Class[] {startClass, AWSCompanionAutoConfiguration.class}, properties)
+						: SpringApplication.run(new Class[] {startClass, AWSCompanionAutoConfiguration.class}, properties);
+
+		Environment environment = context.getEnvironment();
+		if (!StringUtils.hasText(this.functionDefinition)) {
+			this.functionDefinition = environment.getProperty(FunctionProperties.FUNCTION_DEFINITION);
+		}
+
+		FunctionCatalog functionCatalog = context.getBean(FunctionCatalog.class);
+		this.jsonMapper = context.getBean(JsonMapper.class);
+		if (this.jsonMapper instanceof JacksonMapper) {
+			((JacksonMapper) this.jsonMapper).configureObjectMapper(objectMapper -> {
+				if (!objectMapper.isEnabled(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES)) {
+					SimpleModule module = new SimpleModule();
+					module.addDeserializer(Date.class, new JsonDeserializer<Date>() {
+						@Override
+						public Date deserialize(JsonParser jsonParser, DeserializationContext deserializationContext)
+								throws IOException {
+							Calendar calendar = Calendar.getInstance();
+							calendar.setTimeInMillis(jsonParser.getValueAsLong());
+							return calendar.getTime();
+						}
+					});
+					objectMapper.registerModule(module);
+					objectMapper.registerModule(new JodaModule());
+					objectMapper.configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true);
+				}
+			});
+		}
+
+		if (logger.isInfoEnabled()) {
+			logger.info("Locating function: '" + this.functionDefinition + "'");
+		}
+
+		this.function = functionCatalog.lookup(this.functionDefinition, "application/json");
+
+		if (this.function == null) {
+			if (logger.isInfoEnabled()) {
+				if (!StringUtils.hasText(this.functionDefinition)) {
+					logger.info("Failed to determine default function. Please use 'spring.cloud.function.definition' property "
+							+ "or pass function definition as a constructir argument to this FunctionInvoker");
+				}
+				Set<String> names = functionCatalog.getNames(null);
+				if (names.size() == 1) {
+					logger.info("Will default to RoutingFunction, since it is the only function available in FunctionCatalog."
+							+ "Expecting 'spring.cloud.function.definition' or 'spring.cloud.function.routing-expression' as Message headers. "
+							+ "If invocation is over API Gateway, Message headers can be provided as HTTP headers.");
+				}
+				else {
+					logger.info("More then one function is available in FunctionCatalog. " + names
+							+ " Will default to RoutingFunction, "
+							+ "Expecting 'spring.cloud.function.definition' or 'spring.cloud.function.routing-expression' as Message headers. "
+							+ "If invocation is over API Gateway, Message headers can be provided as HTTP headers.");
+				}
+			}
+			this.function = functionCatalog.lookup(RoutingFunction.FUNCTION_NAME, "application/json");
+		}
+
+		if (this.function.isOutputTypePublisher()) {
+			this.function.setSkipOutputConversion(true);
+		}
+		Assert.notNull(this.function, "Failed to lookup function " + this.functionDefinition);
+
+		this.functionDefinition = this.function.getFunctionDefinition();
+		if (logger.isInfoEnabled()) {
+			logger.info("Located function: '" + this.functionDefinition + "'");
+		}
+	}
+}
+```
+
+in `start()` method which is invoked in constuctor there is an attempt to find a function in spring context. A property `spring.cloud.function.definition` or env variable `SPRING_CLOUD_FUNCTION_DEFINITION` is used for resovle a function name. The bean of spring clound function dependency `functionCatalog` is used to search a function after resolving function definition. 
+
+```java
+this.function = functionCatalog.lookup(this.functionDefinition, "application/json")
+```
+
+when function is found `functionInvoker` invokes it with a `Message` argument then get a result of invokation and write result as byte array to outputstream.
+
+```java
+	@Override
+	public void handleRequest(InputStream input, OutputStream output, Context context) throws IOException {
+		Message requestMessage = AWSLambdaUtils
+				.generateMessage(StreamUtils.copyToByteArray(input), this.function.getInputType(), this.function.isSupplier(), jsonMapper, context);
+
+		Object response = this.function.apply(requestMessage);
+		byte[] responseBytes = this.buildResult(requestMessage, response);
+		StreamUtils.copy(responseBytes, output);
+		// any exception should propagate
+	}
+```
+
+There is some restrinctoin. While we use just function and aws handler we can get OutputStream in our funcion. In Spring cloud fuction we do not have this opportunity. 
+
+While function invoker generates `Message` it puts headers map to it. It's possible to get `Message` and retrieve specific amazon object from it. There is static method `generateMessage` in class `AWSLambdaUtils` 
+
+```java
+	public static Message<byte[]> generateMessage(byte[] payload, Type inputType, boolean isSupplier, JsonMapper jsonMapper, Context context) {
+		if (logger.isInfoEnabled()) {
+			logger.info("Received: " + new String(payload, StandardCharsets.UTF_8));
+		}
+
+		Object structMessage = jsonMapper.fromJson(payload, Object.class);
+		boolean isApiGateway = structMessage instanceof Map
+				&& (((Map<String, Object>) structMessage).containsKey("httpMethod") ||
+						(((Map<String, Object>) structMessage).containsKey("routeKey") && ((Map) structMessage).containsKey("version")));
+
+		Message<byte[]> requestMessage;
+		MessageBuilder<byte[]> builder = MessageBuilder.withPayload(payload);
+		if (isApiGateway) {
+			builder.setHeader(AWSLambdaUtils.AWS_API_GATEWAY, true);
+		}
+		if (!isSupplier && AWSLambdaUtils.isSupportedAWSType(inputType)) {
+			builder.setHeader(AWSLambdaUtils.AWS_EVENT, true);
+		}
+		if (context != null) {
+			builder.setHeader(AWSLambdaUtils.AWS_CONTEXT, context);
+		}
+		//
+		if (structMessage instanceof Map && ((Map<String, Object>) structMessage).containsKey("headers")) {
+			builder.copyHeaders((Map<String, Object>) ((Map<String, Object>) structMessage).get("headers"));
+		}
+		requestMessage = builder.build();
+		return requestMessage;
+	}
+```
+
+we can see that it puts header name with context object
+
+```java
+if (context != null) {
+	builder.setHeader(AWSLambdaUtils.AWS_CONTEXT, context);
+}
+```
+
+Let's see how works `functionCatalog`. There is a class `BeanFactoryAwareFunctionRegistry` and its parent class `SimpleFunctionRegistry` which implements `FunctionRegistry` interface that extended `FunctionCatalog` interface.
+
+in `FunctionRegistry` there is a default method which is invoked in `FunctionInvoker`
+```java
+	default <T> T lookup(String functionDefinition, String... expectedOutputMimeTypes) {
+		return this.lookup(null, functionDefinition, expectedOutputMimeTypes);
+	}
+```
+
+in `BeanFactoryAwareFunctionRegistry` we have overrided method `lookup`
+
+```java
+	@Override
+	public <T> T lookup(Class<?> type, String functionDefinition, String... expectedOutputMimeTypes) {
+		functionDefinition = StringUtils.hasText(functionDefinition)
+				? functionDefinition
+						: this.applicationContext.getEnvironment().getProperty(FunctionProperties.FUNCTION_DEFINITION, "");
+		if (!this.applicationContext.containsBean(functionDefinition) || !KotlinDetector.isKotlinType(this.applicationContext.getBean(functionDefinition).getClass())) {
+			functionDefinition = this.normalizeFunctionDefinition(functionDefinition);
+		}
+		if (!StringUtils.hasText(functionDefinition)) {
+			logger.info("Can't determine default function definition. Please "
+					+ "use 'spring.cloud.function.definition' property to explicitly define it.");
+			return null;
+		}
+		if (!isFunctionDefinitionEligible(functionDefinition)) {
+			return null;
+		}
+		FunctionInvocationWrapper function = this.doLookup(type, functionDefinition, expectedOutputMimeTypes);
+		Object syncInstance = functionDefinition == null ? this : functionDefinition;
+		synchronized (syncInstance) {
+			if (function == null) {
+				Set<String> functionRegistratioinNames = super.getNames(null);
+				String[] functionNames = StringUtils.delimitedListToStringArray(functionDefinition.replaceAll(",", "|").trim(), "|");
+				for (String functionName : functionNames) {
+					if (functionRegistratioinNames.contains(functionName) && logger.isDebugEnabled()) {
+						logger.debug("Skipping function '" + functionName + "' since it is already present");
+					}
+					else {
+						Object functionCandidate = this.discoverFunctionInBeanFactory(functionName);
+						if (functionCandidate != null) {
+							Type functionType = null;
+							FunctionRegistration functionRegistration = null;
+							if (functionCandidate instanceof FunctionRegistration) {
+								functionRegistration = (FunctionRegistration) functionCandidate;
+							}
+							else if (functionCandidate instanceof BiFunction || functionCandidate instanceof BiConsumer) {
+								functionRegistration = this.registerMessagingBiFunction(functionCandidate, functionName);
+							}
+							else if (KotlinDetector.isKotlinType(functionCandidate.getClass())) {
+								KotlinLambdaToFunctionAutoConfiguration.KotlinFunctionWrapper wrapper =
+									new KotlinLambdaToFunctionAutoConfiguration.KotlinFunctionWrapper(functionCandidate);
+								wrapper.setName(functionName);
+								wrapper.setBeanFactory(this.applicationContext.getBeanFactory());
+								functionRegistration = wrapper.getFunctionRegistration();
+							}
+							else if (this.isFunctionPojo(functionCandidate, functionName)) {
+								Method functionalMethod = FunctionTypeUtils.discoverFunctionalMethod(functionCandidate.getClass());
+								functionCandidate = this.proxyTarget(functionCandidate, functionalMethod);
+								functionType = FunctionTypeUtils.fromFunctionMethod(functionalMethod);
+							}
+							else if (this.isSpecialFunctionRegistration(functionNames, functionName)) {
+								functionRegistration = this.applicationContext
+										.getBean(functionName + FunctionRegistration.REGISTRATION_NAME_SUFFIX, FunctionRegistration.class);
+							}
+							else {
+								functionType = FunctionTypeUtils.discoverFunctionType(functionCandidate, functionName, this.applicationContext);
+							}
+							if (functionRegistration == null) {
+								functionRegistration = new FunctionRegistration(functionCandidate, functionName).type(functionType);
+							}
+							// Certain Kafka Streams functions such as KStream[] return types could be null (esp when using Kotlin).
+							this.register(functionRegistration);
+						}
+						else {
+							if (logger.isDebugEnabled()) {
+								logger.debug("Function '" + functionName + "' is not available in FunctionCatalog or BeanFactory");
+							}
+						}
+					}
+				}
+				function = super.doLookup(type, functionDefinition, expectedOutputMimeTypes);
+			}
+		}
+
+		return (T) function;
+	}
+```
+
+it's quite long method. But we have important issues here.
+
+```java
+		if (!this.applicationContext.containsBean(functionDefinition) || !KotlinDetector.isKotlinType(this.applicationContext.getBean(functionDefinition).getClass())) {
+			functionDefinition = this.normalizeFunctionDefinition(functionDefinition);
+		}
+```
+
+we have a bean with for example name `pojoLambda` in context but it is not kotlin type. Strange expression but it is true  and we go to the body of the if. And let's see what is inside `normalizeFunctionDefinition`
+
+```java
+	/**
+	 * This method will make sure that if there is only one function in catalog
+	 * it can be looked up by any name or no name.
+	 * It does so by attempting to determine the default function name
+	 * (the only function in catalog) and checking if it matches the provided name
+	 * replacing it if it does not.
+	 */
+	String normalizeFunctionDefinition(String functionDefinition) {
+		functionDefinition = StringUtils.hasText(functionDefinition)
+				? functionDefinition.replaceAll(",", "|")
+				: System.getProperty(FunctionProperties.FUNCTION_DEFINITION, "");
+
+		Set<String> names = this.getNames(null);
+		if (!names.contains(functionDefinition)) {
+			List<String> eligibleFunction = names.stream()
+					.filter(name -> !RoutingFunction.FUNCTION_NAME.equals(name))
+					.filter(name -> !RoutingFunction.DEFAULT_ROUTE_HANDLER.equals(name))
+					.collect(Collectors.toList());
+			if (eligibleFunction.size() == 1
+					&& !eligibleFunction.get(0).equals(functionDefinition)
+					&& !functionDefinition.contains("|")
+					&& !eligibleFunction.get(0).startsWith("&")) {
+				functionDefinition = eligibleFunction.get(0);
+			}
+		}
+		return functionDefinition;
+	}
+  ```
+
+  this invoke `getNames` method first which is just flat map conversion already finded function 
+
+  ```java
+  	@Override
+	public Set<String> getNames(Class<?> type) {
+		Set<String> registeredNames = super.getNames(type);
+
+		//--- see https://github.com/spring-cloud/spring-cloud-function/issues/947
+		Set<String> arroundWrapperNeamnames = this.applicationContext.getBeansOfType(FunctionAroundWrapper.class).keySet();
+		String[] names = this.applicationContext.getBeanNamesForType(BiFunction.class);
+		List<String> biFunctions = new ArrayList<>();
+		for (int i = 0; i < names.length; i++) {
+			if (!arroundWrapperNeamnames.contains(names[i])) {
+				biFunctions.add(names[i]);
+			}
+		}
+		///
+
+		if (type == null) {
+			registeredNames
+				.addAll(Arrays.asList(this.applicationContext.getBeanNamesForType(Function.class)));
+			registeredNames
+				.addAll(Arrays.asList(this.applicationContext.getBeanNamesForType(Supplier.class)));
+			registeredNames
+				.addAll(Arrays.asList(this.applicationContext.getBeanNamesForType(Consumer.class)));
+			registeredNames
+				.addAll(biFunctions);
+			registeredNames
+				.addAll(Arrays.asList(this.applicationContext.getBeanNamesForType(BiConsumer.class)));
+			registeredNames
+				.addAll(Arrays.asList(this.applicationContext.getBeanNamesForType(FunctionRegistration.class)));
+		}
+		else {
+			registeredNames.addAll(Arrays.asList(this.applicationContext.getBeanNamesForType(type)));
+		}
+		return registeredNames;
+	}
+```
+
+It tries to find any standart function interfaces in spring context. If it has found just 1 `Function` it registred it even if this name does not match in function definition and this method replace actual function definition on a founded definition. That can be completelly differ. I've got this issue when I have lambda without `Function` interface and another bean which implements `Function`. Even if I write a name of bean, this thing changed definition on a wrong. But after I added another function then expression in `if` does not match and it starts work correcntrly
+
+```java
+	if (eligibleFunction.size() == 1
+					&& !eligibleFunction.get(0).equals(functionDefinition)
+					&& !functionDefinition.contains("|")
+					&& !eligibleFunction.get(0).startsWith("&")) {
+```
+
+### How to get a aws Context
+
+```java
+    public Map<String, Object> handler(Message<String> input) {
+
+        Context context = input.getHeaders().get(AWS_CONTEXT, Context.class);
+
+        Map<String, Object> toReturn = new HashMap<>();
+        toReturn.put("getMemoryLimitInMB", context.getMemoryLimitInMB() + "");
+        return toReturn;
+    }
+```
+
+### Async lambdas
+
+I can find a way to write methods with void return type and use it with `FunctionInvoker`. It is possible to do that using `Consumer` interface implementation.
+
+```java
+@Component("asyncHelloWorld")
+public class HelloWorldLambda implements Consumer<String> {
+
+
+    private final Logger logger = LoggerFactory.getLogger(HelloWorldLambda.class);
+
+  
+    @Override
+    public void accept(String s) {
+        logger.info("Hello, " + s);
+    }
+}
+```
+
+### Get acces to env variable
+
+```java
+@Component
+public class EnvVarLambda implements Consumer<Object> {
+
+    private final Logger logger = LoggerFactory.getLogger(EnvVarLambda.class);
+    @Value("${database.url:#{null}}")
+    private String databaseUrl;
+
+    @Override
+    public void accept(Object o) {
+        if (databaseUrl == null || databaseUrl.isEmpty())
+            logger.info("DATABASE_URL is not set");
+        else
+            logger.info("DATABASE_URL is set to: " + databaseUrl);
+    }
+}
+```
+
+### Using primitives in labmdas
+
+It does not work at all.
+
+```java
+/**
+ * Does not work
+ */
+@Component
+public class BooleanLambda {
+
+    public boolean handlerBoolean(boolean input) {
+        return !input;
+    }
+}
+```
+
+only with wrapper classes
+
+```java
+@Component
+public class IntegerLambdaWithBoolean {
+
+      public Boolean handlerInteger(Integer input) {
+        return input > 100;
+    }
+}
+```
+
+### Using inputstream like a payload
+
+
+it works
+
+```java
+@Component
+public class StreamLambda {
+
+    /**
+     * to test use "my simple text"
+     */
+    public String handlerStream(InputStream inputStream) throws IOException {
+        return new String(inputStream.readAllBytes()).toUpperCase();
+    }
+}
+```
+
+### Using pojo in lambdas
+
+```java
+@Component
+public class PojoLambda {
+
+    /**
+     * to test  { "information" : "Hello Lambda" }  output { "result" : "Input was Hello Lambda" }
+     */
+    public Output handlerPojo(Input input) {
+        return new Output("Input was " + input.getInformation());
+    }
+}
+```
+
+```java
+public class Input {
+
+    private String information;
+
+    public String getInformation() {
+        return information;
+    }
+
+    public void setInformation(String information) {
+        this.information = information;
+    }
+}
+```
+
+```java
+public class Output {
+    private final String result;
+
+    public Output(String result) {
+        this.result = result;
+    }
+
+    public String getResult() {
+        return result;
+    }
+}
+```
+
+### Testing
+
+Annotation to configure spring cloud function tests
+
+```java
+package org.springframework.cloud.function.context.test;
+
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Inherited;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.core.annotation.AliasFor;
+import org.springframework.test.context.ContextConfiguration;
+
+/**
+ *
+ * @author Dave Syer
+ * @since 2.0
+ *
+ */
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+@Inherited
+@SpringBootTest(properties = "spring.functional.enabled=true")
+@ContextConfiguration(loader = FunctionalTestContextLoader.class)
+public @interface FunctionalSpringBootTest {
+
+	@AliasFor(annotation = SpringBootTest.class, attribute = "properties")
+	String[] value() default {};
+
+	@AliasFor(annotation = SpringBootTest.class, attribute = "value")
+	String[] properties() default {};
+
+	@AliasFor(annotation = SpringBootTest.class, attribute = "classes")
+	Class<?>[] classes() default {};
+
+	@AliasFor(annotation = SpringBootTest.class, attribute = "webEnvironment")
+	WebEnvironment webEnvironment() default WebEnvironment.MOCK;
+
+```
+
+example of tests
+
+```java
+@FunctionalSpringBootTest
+class ListLambdaTest {
+
+    public static final String FUNCTION_NAME = "listLambda";
+    @Autowired
+    private FunctionCatalog catalog;
+
+    @DirtiesContext(methodMode = DirtiesContext.MethodMode.AFTER_METHOD)
+    @Test
+    void handlerList() {
+        Function<List<Integer>, List<Integer>> function = catalog.lookup(Function.class, FUNCTION_NAME);
+        List<Integer> result = function.apply(List.of(10, 20));
+        assertEquals(List.of(110, 120), result);
+    }
+
+    @DirtiesContext(methodMode = DirtiesContext.MethodMode.AFTER_METHOD)
+    @Test
+    void handlerListJson() {
+        Function<String, GenericMessage<byte[]>> function = catalog.lookup(Function.class, FUNCTION_NAME, "application/json");
+        GenericMessage<byte[]> result = function.apply("[ 1, 2, 3 ]");
+        assertEquals("[101,102,103]", new String(result.getPayload()));
+    }
+}
+```
+
+There are two ways to invoke functions. One with a object that match signature of a funtions and the another with a conversion from json
+
+Using overriden properties
+
+```java
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.function.context.FunctionCatalog;
+import org.springframework.cloud.function.context.test.FunctionalSpringBootTest;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.util.ReflectionTestUtils;
+
+import java.util.function.Consumer;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+
+@FunctionalSpringBootTest(properties = "database.url=my_db")
+class EnvVarLambdaWithDbUrlInPropertiesTest {
+
+    @Autowired
+    private EnvVarLambda envVarLambda;
+
+    @Autowired
+    private FunctionCatalog catalog;
+
+    @DirtiesContext(methodMode = DirtiesContext.MethodMode.AFTER_METHOD)
+    @Test
+    void acceptPrintsMessageWhenDatabaseUrlIsNotSpecifiedInEnvVariable() {
+        Logger mockLogger = mock(Logger.class);
+        ReflectionTestUtils.setField(envVarLambda, "logger", mockLogger);
+        ArgumentCaptor<String> argumentCaptor = ArgumentCaptor.forClass(String.class);
+        Consumer<String> consumer = catalog.lookup(Consumer.class, "envVarLambda");
+        consumer.accept("");
+
+        verify(mockLogger).info(argumentCaptor.capture());
+        assertEquals("DATABASE_URL is set to: my_db", argumentCaptor.getValue());
+    }
+}
+```
+
+```java
+import com.amazonaws.services.lambda.runtime.Context;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.function.context.FunctionCatalog;
+import org.springframework.cloud.function.context.test.FunctionalSpringBootTest;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.test.annotation.DirtiesContext;
+
+import java.util.Map;
+import java.util.function.Function;
+
+import static org.example.lambda.requestresponse.ContextLambda.REMAINING_TIME_IN_MILLIS;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.springframework.cloud.function.adapter.aws.AWSLambdaUtils.AWS_CONTEXT;
+
+@FunctionalSpringBootTest
+@DirtiesContext
+class ContextLambdaTest {
+
+
+    @Autowired
+    private FunctionCatalog catalog;
+
+    @Test
+    void handlerReturnsExpectedRemainingTIme() {
+        Function<Message<String>, Map<String, Object>> function = catalog.lookup(Function.class, "contextLambda");
+        MessageBuilder<String> messageBuilder = MessageBuilder.withPayload("tadam");
+        Context mockContext = mock(Context.class);
+        Integer expectedRemainingTime = 50;
+        when(mockContext.getRemainingTimeInMillis()).thenReturn(expectedRemainingTime);
+        messageBuilder.setHeader(AWS_CONTEXT, mockContext);
+
+        Map<String, Object> result = function.apply(messageBuilder.build());
+
+        assertNotNull(result);
+        assertEquals(expectedRemainingTime.toString(), result.get(REMAINING_TIME_IN_MILLIS));
+    }
+}
+```
