@@ -1,7 +1,10 @@
 
 # Table of contents
 - [Table of contents](#table-of-contents)
-- [Advice for the Amazon exams](#advice-for-the-amazon-exams)
+- [AWS Certification](#aws-certification)
+  - [Advice for the Amazon exams](#advice-for-the-amazon-exams)
+  - [Common links to cert path](#common-links-to-cert-path)
+  - [Resources for](#resources-for)
 - [Zones and Regions](#zones-and-regions)
 - [User management](#user-management)
   - [Generate secret key](#generate-secret-key)
@@ -57,12 +60,21 @@
     - [Using pojo in lambdas](#using-pojo-in-lambdas)
     - [Testing](#testing)
 
-# Advice for the Amazon exams
+# AWS Certification
+
+## Advice for the Amazon exams
 
 You should have three times to solve every task. Starting from first to last.:
 1. We try to find easy questions and do it immediately. And mark others by categories.
 2. We solve complex tasks but which we understood but we need just more time for them
 3. Others which we don't know how to solve. We need to choose answers for each of the questions. Perhaps it will work
+
+## Common links to cert path
+
+- [Cert paths](https://aws.amazon.com/certification/?nc2=sb_ce_co)
+- [AWS Certified Developer - Associate](https://aws.amazon.com/certification/certified-developer-associate/?ch=sec&sec=rmg&d=1)
+
+## Resources for 
 
 # Zones and Regions
 
@@ -1378,13 +1390,13 @@ public class FunctionInvoker implements RequestStreamHandler {
 }
 ```
 
-in `start()` method which is invoked in constuctor there is an attempt to find a function in spring context. A property `spring.cloud.function.definition` or env variable `SPRING_CLOUD_FUNCTION_DEFINITION` is used for resovle a function name. The bean of spring clound function dependency `functionCatalog` is used to search a function after resolving function definition. 
+in `start()` method which is invoked in constuctor there is an attempt to find a function in spring context. A property `spring.cloud.function.definition` or env variable `SPRING_CLOUD_FUNCTION_DEFINITION` is used for resolve a function name. The bean of spring clound function dependency `functionCatalog` is used to search a function after resolving function definition. 
 
 ```java
 this.function = functionCatalog.lookup(this.functionDefinition, "application/json")
 ```
 
-when function is found `functionInvoker` invokes it with a `Message` argument then get a result of invokation and write result as byte array to outputstream.
+when function is found `functionInvoker` invokes it with a `Message` argument then get a result of invocation and write result as byte array to outputstream.
 
 ```java
 	@Override
@@ -1399,7 +1411,7 @@ when function is found `functionInvoker` invokes it with a `Message` argument th
 	}
 ```
 
-There is some restrinctoin. While we use just function and aws handler we can get OutputStream in our funcion. In Spring cloud fuction we do not have this opportunity. 
+There is some restrinctions. While we use just function and aws handler we can get `OutputStream` in our funcion. In Spring cloud fuction we do not have this opportunity.
 
 While function invoker generates `Message` it puts headers map to it. It's possible to get `Message` and retrieve specific amazon object from it. There is static method `generateMessage` in class `AWSLambdaUtils` 
 
@@ -1571,8 +1583,7 @@ we have a bean with for example name `pojoLambda` in context but it is not kotli
 	}
   ```
 
-  this invoke `getNames` method first which is just flat map conversion already finded function 
-
+  this invoke `getNames` method first
   ```java
   	@Override
 	public Set<String> getNames(Class<?> type) {
