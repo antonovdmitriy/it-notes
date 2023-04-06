@@ -3,6 +3,7 @@
 Just notes, compilation from different courrses and own thoughts. 
 
 - [Java](/java/Java%20tricks.md)
+- [Scala](/scala/scala.md)
 - [Linux](/linux/linux.md)
 - [Bash](/bash/Bash.md)
 - [Ansible](/ansible/ansible.md)
