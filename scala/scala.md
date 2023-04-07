@@ -215,6 +215,85 @@ class MyClass(name: String) {
 }
 ```
 
+# Case classes
+
+```scala
+case class Point(x: Double = 0.0, y: Double = 0.0)    
+```
+
+each constructor parameter is automatically converted to a read-only (immutable) field for Point instances. In other words, it’s as if we put `val` before each field declaration. When you instantiate an instance named point, you can read the fields using `point.x` and `point.y`, but you can’t change their values. Attempting to write `point.y = 3.0` causes a compilation error.
+
+You can also provide default values for constructor and method parameters. The `= 0.0` after each parameter definition specifies `0.0` as the default. Hence, the user doesn’t have to provide them explicitly, but they are inferred left to right. This implies that when you define a default value for one parameter, you must also do this for all parameters to its right.
+
+case-class instances are constructed without using `new`, such as `val p = Point(…)`
+
+While there is no class body for Point, another feature of the case keyword is that the compiler automatically generates several methods for us, including commonly used `toString`, `equals`, and `hashCode` methods. 
+
+```scala
+scala> import progscala3.introscala.shapes.*
+
+scala> val p00 = Point()
+val p00: progscala3.introscala.shapes.Point = Point(0.0,0.0)
+
+scala> val p20 = Point(2.0)
+val p20: progscala3.introscala.shapes.Point = Point(2.0,0.0)
+
+scala> val p20b = Point(2.0)
+val p20b: progscala3.introscala.shapes.Point = Point(2.0,0.0)
+
+scala> val p02 = Point(y = 2.0)
+val p02: progscala3.introscala.shapes.Point = Point(0.0,2.0)
+
+scala> p20 == p20b
+val res0: Boolean = true
+
+scala> p20 == p02
+val res1: Boolean = false
+```
+
+compiler also generates a companion object, a singleton object of the same name, for each case class. In other words, we declared the class `Point`, and the compiler also created an object `Point`.
+
+compiler also adds several methods to the companion object automatically, one of which is named `apply`. It takes the same parameter list as the constructor. it is unnecessary to use `new` to create instances of case classes like Point, this works because the companion method Point.apply(…) gets called.
+
+This is true for any instance, either a declared object or an instance of a class, not just for case-class companion objects
+
+```scala
+val p1 = Point.apply(1.0, 2.0)   // Point is the companion object here!
+val p2 = Point(1.0, 2.0)         // Same!
+```
+
+You can add methods to the companion object, including overloaded `apply` methods. Just declare object `Point`: explicitly and add the methods. The default `apply` method will still be generated, unless you define it explicitly yourself.
+
+#  higher-order function
+
+When a function accepts other functions as parameters or returns functions as values, it is called a higher-order function (HOF).
+
+
+```scala
+package progscala3.introscala.shapes
+
+case class Point(x: Double = 0.0, y: Double = 0.0)                    
+
+abstract class Shape():                                               
+  /**
+   * Draw the shape.
+   * @param f is a function to which the shape will pass a
+   * string version of itself to be rendered.
+   */
+  def draw(f: String => Unit): Unit = f(s"draw: $this")               
+
+case class Circle(center: Point, radius: Double) extends Shape        
+
+case class Rectangle(lowerLeft: Point, height: Double, width: Double) 
+      extends Shape
+
+case class Triangle(point1: Point, point2: Point, point3: Point)
+      extends Shape
+  ```
+
+
+You could say that draw defines a protocol that all shapes have to support, but users can customize. It’s up to each shape to serialize its state to a string representation through its toString method. The f method is called by draw, which constructs the final string using an interpolated string.
+
 # Exception
 
 ```scala
@@ -225,3 +304,4 @@ try {
     println("Something went bad...")
 }
 ```
+
