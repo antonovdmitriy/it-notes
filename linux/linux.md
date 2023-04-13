@@ -2087,7 +2087,7 @@ sudo firewall-cmd --add-service=cockpit --permanent
 
 `Alt + e`  Кодировка
 
-`*` выделить по паттерну
+`+` выделить по паттерну
 
 В диалоге поиска можно искать по истории `Ctrl + UP` `Ctrl + Down`
 

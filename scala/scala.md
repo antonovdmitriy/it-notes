@@ -206,13 +206,59 @@ scala> val pi = 3.1416
 pi: Double = 3.1416
 ```
 
-#  string interpolation
+
+# Strings
+
+Scala’s String is built on Java’s String and adds unique features like multiline literals and string interpolation.
+
+```scala
+val hello = "Hello There"
+val signature = "With Regards, \nYour friend"
+```
+
+## Equality
+
+Unlike Java, the equals operator (==) checks for true equality, not object reference equality:
+
+```scala
+val greeting = "Hello, " + "World"
+val matched = (greeting == "Hello, World") // true
+```
+
+
+##  multiline String
+
+```scala
+scala> val greeting = """She suggested reformatting the file
+     | by replacing tabs (\t) with newlines (\n);
+     | "Why do that?", he asked. """
+greeting: String =
+She suggested reformatting the file
+by replacing tabs (\t) with newlines (\n);
+"Why do that?", he asked.
+```
+##  string interpolation
+- string interpolation is an “s” prefix added before the first double quote of the string
+- dollar sign operators ($) (with optional braces) can be used to note references to external data.
 
 ```scala
 class MyClass(name: String) {            
   def sayHello(otherName: String) = 
     s"Hi $otherName, my name is $name!"  
 }
+```
+
+- An alternate format for string interpolation uses `printf` notation
+
+```scala
+scala> val item = "apple"
+item: String = apple
+
+scala> f"I wrote a new $item%.3s today"
+res2: String = I wrote a new app today
+
+scala> f"Enjoying this $item ${355/113.0}%.5f times today"
+res3: String = Enjoying this apple 3.14159 times today
 ```
 
 # Case classes
@@ -294,6 +340,15 @@ case class Triangle(point1: Point, point2: Point, point3: Point)
 
 You could say that draw defines a protocol that all shapes have to support, but users can customize. It’s up to each shape to serialize its state to a string representation through its toString method. The f method is called by draw, which constructs the final string using an interpolated string.
 
+```scala
+def divideByTwo(n: Int): Int = n / 2             
+ 
+def addOne(f: Int => Int): Int => Int =          
+  f andThen(_ + 1)
+ 
+def divideByTwoAndAddOne = addOne(divideByTwo)   
+```
+
 # Exception
 
 ```scala
@@ -305,3 +360,73 @@ try {
 }
 ```
 
+# Sealed classes
+
+`sealed` keyword means that we can only define subtypes of `Message` in the same file
+
+```scala
+package progscala3.introscala.shapes
+
+sealed trait Message                                                 
+case class Draw(shape: Shape) extends Message                        
+case class Response(message: String) extends Message                 
+case object Exit extends Message 
+```
+
+# Pattern matching
+
+
+```scala
+message match
+  case Exit =>
+    expressions
+  case Draw(shape) =>
+    expressions
+  case Response(unexpected) =>
+    expressions
+```
+
+The `match` expressions work a lot like `if/else` expressions but are more powerful and concise. When one of the patterns matches, the block of expressions after the arrow `=>` is evaluated, up to the next case keyword or the end of the whole expression. Matching is eager; the first match wins.
+
+```scala
+package progscala3.introscala.shapes
+
+object ProcessMessages:                                              
+  def apply(message: Message): Message =                             
+    message match {
+      case Exit =>
+        println(s"ProcessMessage: exiting...")
+        Exit
+      case Draw(shape) =>
+        shape.draw(str => println(s"ProcessMessage: $str"))
+        Response(s"ProcessMessage: $shape drawn")
+      case Response(unexpected) =>
+        val response = Response(s"ERROR: Unexpected Response: $unexpected")
+        println(s"ProcessMessage: $response")
+        response
+    }
+  ```
+
+  If the case clauses don’t cover all possible values that can be passed to the match expression, a `MatchError` is thrown at runtime. 
+
+  A powerful feature of pattern matching is the ability to extract data from the object matched, sometimes called deconstruction (the inverse of construction). Here, when the input message is a `Draw`, we extract the enclosed `Shape` and assign it to the variable `shape`. Similarly, if `Response` is detected, we extract the message as `unexpected`, so named because `ProcessMessages` doesn’t expect to receive a `Response`
+
+  # Example with Shapes
+
+  ```scala
+  package progscala3.introscala.shapes
+
+  def main(args: Array[String]): Unit = {
+    val messages = Seq(
+      Draw(Circle(Point(0.0, 0.0), 1.0)),
+      Draw(Rectangle(Point(0.0, 0.0), 2, 5)),
+      Response(s"Say hello to pi: 3.14159"),
+      Draw(Triangle(Point(0.0, 0.0), Point(2.0, 0.0), Point(1.0, 2.0))),
+      Exit)
+
+    messages.foreach { message =>
+      val response = ProcessMessages(message)
+      println(response)
+    }
+  }
+  ```
