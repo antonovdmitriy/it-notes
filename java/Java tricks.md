@@ -995,6 +995,14 @@ System.out.println(b = (a!=c ? a : b++)); // 5  first decrement but return old v
 ```
 
 ```java
+int ph = 7, vis = 2;
+boolean clear = vis ˃ 1 & (vis ˂ 9 || ph ˂ 2);
+boolean safe = (vis ˃ 2) && (ph++ ˃ 1);
+boolean tasty = 7 ˂= --ph;
+System.out.println(clear + "-" + safe + "-" + tasty); // true - false - false
+```
+
+```java
 int parkAttendance = 0;
 System.out.println(parkAttendance);    // 0
 System.out.println(++parkAttendance); // 1
@@ -1003,7 +1011,7 @@ System.out.println(parkAttendance--); // 1
 System.out.println(parkAttendance);    // 0
 ```
 
-> All of the arithmetic operators may be applied to any Java primitives, with the exception of boolean. Furthermore, only the addition operators + and += may be applied to String values, which results in String concatenation
+> All of the arithmetic operators may be applied to any Java primitives, with the exception of boolean. Furthermore, only the addition operators + and += may be applied to String values, which results in `String` concatenation
 
 ### Modulus 
 
