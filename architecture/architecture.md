@@ -28,6 +28,10 @@ A data-intensive application is typically built from standard building blocks:
 - Send a message to another process, to be handled asynchronously (stream processing)
 - Periodically crunch a large amount of accumulated data (batch processing)
 
+Just an example:
+
+![](images/variant_of_system.png)
+
 ## API problems
 
 ### Paginating 
