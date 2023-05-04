@@ -1,15 +1,20 @@
 ## Table of contents
 
-- [](#)
-      - [Page — based pagination](#page--based-pagination)
-        - [Pros](#pros)
-        - [Cons](#cons)
-      - [KeySet-based pagination](#keyset-based-pagination)
-        - [Pros](#pros-1)
-        - [Cons](#cons-1)
-      - [Cursor-based pagination](#cursor-based-pagination)
-        - [Pros](#pros-2)
-        - [Cons](#cons-2)
+- [Table of contents](#table-of-contents)
+- [Data intensive applications](#data-intensive-applications)
+- [API problems](#api-problems)
+  - [Paginating](#paginating)
+    - [Links](#links)
+    - [Overview](#overview)
+    - [Page — based pagination](#page--based-pagination)
+      - [Pros](#pros)
+      - [Cons](#cons)
+    - [KeySet-based pagination](#keyset-based-pagination)
+      - [Pros](#pros-1)
+      - [Cons](#cons-1)
+    - [Cursor-based pagination](#cursor-based-pagination)
+      - [Pros](#pros-2)
+      - [Cons](#cons-2)
 
 
 ## Data intensive applications
