@@ -126,6 +126,7 @@
 - [Midnight Comander](#midnight-comander)
   - [Избранные директории в mc](#избранные-директории-в-mc)
   - [Цветовая схема](#цветовая-схема)
+    - [Поменять схему через интерфейс mc](#поменять-схему-через-интерфейс-mc)
   - [Открывать файлы через приложения windows](#открывать-файлы-через-приложения-windows)
 - [Разные команды](#разные-команды)
   - [comm (сравнение файлов)](#comm-сравнение-файлов)
@@ -2198,6 +2199,15 @@ $\> mcedit ~/.mc/ini
 
 Найдите внутри строку вида `«skin=default»` и замените на `«skin=xoria256»`
 НО это делать нужно не запуская mc, иначе тема будет перетираться на дефолтную
+
+### Поменять схему через интерфейс mc
+
+- F9, O for Options, or cursor to "Options" and press Enter
+- A for Appearance, or cursor to Appearance and press Enter
+- You will see that default is the current skin.
+- Press Enter to see the other skin choices
+- Cursor to the skin you want and select it by pressing Enter
+- Click OK
 
 ## Открывать файлы через приложения windows
 Если используем cygwin , то удобно, чтобы файлы открывались многие также как и в windows. Для этого находим `/etc/mc/mc.ext`
