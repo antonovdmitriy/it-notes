@@ -7099,6 +7099,17 @@ TreeMap<Integer, List<String>> map = ohMy.collect(
 System.out.println(map);
 ```
 
+Instead of using the downstream collector to specify the type, we can use any of the collectors that we've already shown.
+
+```java
+var ohMy = Stream.of("lions", "tigers", "bears");
+Map<Integer, Long> map = ohMy.collect(
+   Collectors.groupingBy(
+      String::length,
+      Collectors.counting()));
+System.out.println(map);    // {5=2, 6=1}
+```
+
 ### Partitioning
 
 Partitioning is a special case of grouping. With partitioning, there are only two possible groups: true and false. Partitioning is like splitting a list into two parts.
@@ -7129,16 +7140,6 @@ System.out.println(map);    // {false=[], true=[lions, tigers, bears]}
 
 Unlike `groupingBy()`, we cannot change the type of Map that is returned.
 
-Instead of using the downstream collector to specify the type, we can use any of the collectors that we've already shown.
-
-```java
-var ohMy = Stream.of("lions", "tigers", "bears");
-Map<Integer, Long> map = ohMy.collect(
-   Collectors.groupingBy(
-      String::length,
-      Collectors.counting()));
-System.out.println(map);    // {5=2, 6=1}
-```
 ### Mapping
 
 `mapping()` collector that lets us go down a level and add another collector. 
