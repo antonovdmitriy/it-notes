@@ -7157,13 +7157,6 @@ Map<Integer, Optional<Character>> map = ohMy.collect(
 System.out.println(map);    // {5=Optional[b], 6=Optional[t]}
 ```
 
-```java
-var ohMy = Stream.of("lions", "tigers", "bears");
-var map = ohMy.collect(groupingBy(String::length,
-   mapping(s -> s.charAt(0), minBy((a, b) -> a - b))));
-System.out.println(map);    // {5=Optional[b], 6=Optional[t]}
-```
-
 ### Teeing Collectors
 
 use `teeing()` to return multiple values
