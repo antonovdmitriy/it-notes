@@ -175,8 +175,131 @@ object ArgsToUpperCase {
  # Types
 
   - there is no concept of a primitive type in Scala
+  - Parant of all is `Any`. 
+![](images/type_hierachy_1.jpg)
 
-<table style="border-collapse: collapse; border-top: 0.5pt solid ; border-bottom: 0.5pt solid ; border-left: 0.5pt solid ; border-right: 0.5pt solid ; "><colgroup><col class="col_1"><col class="col_2"><col class="col_3"><col class="col_4"><col class="col_5"></colgroup><thead><tr><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">Name</td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">Description</td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">Size</td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">Min</td><td style="border-bottom: 0.5pt solid ; ">Max</td></tr></thead><tbody><tr><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; "><p>Byte</p></td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; "><p>Signed integer</p></td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; "><p>1 byte</p></td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; "><p>–127</p></td><td style="border-bottom: 0.5pt solid ; "><p>128</p></td></tr><tr><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; "><p>Short</p></td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; "><p>Signed integer</p></td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; "><p>2 bytes</p></td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; "><p>–32768</p></td><td style="border-bottom: 0.5pt solid ; "><p>32767</p></td></tr><tr><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; "><p>Int</p></td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; "><p>Signed integer</p></td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; "><p>4 bytes</p></td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; "><p>–2<sup>31</sup></p></td><td style="border-bottom: 0.5pt solid ; "><p>2<sup>31</sup>–1</p></td></tr><tr><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; "><p>Long</p></td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; "><p>Signed integer</p></td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; "><p>8 bytes</p></td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; "><p>–2<sup>63</sup></p></td><td style="border-bottom: 0.5pt solid ; "><p>2<sup>63</sup>–1</p></td></tr><tr><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; "><p>Float</p></td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; "><p>Signed floating point</p></td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; "><p>4 bytes</p></td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; "><p>n/a</p></td><td style="border-bottom: 0.5pt solid ; "><p>n/a</p></td></tr><tr><td style="border-right: 0.5pt solid ; "><p>Double</p></td><td style="border-right: 0.5pt solid ; "><p>Signed floating point</p></td><td style="border-right: 0.5pt solid ; "><p>8 bytes</p></td><td style="border-right: 0.5pt solid ; "><p>n/a</p></td><td><p>n/a</p></td></tr></tbody></table>
+<table>
+    <colgroup>
+        <col>
+        <col>
+        <col>
+        <col>
+        <col>
+    </colgroup>
+    <thead>
+        <tr>
+            <td>Name</td>
+            <td>Description</td>
+            <td>Size</td>
+            <td>Min</td>
+            <td>Max</td>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+                <p>Byte</p>
+            </td>
+            <td>
+                <p>Signed integer</p>
+            </td>
+            <td>
+                <p>1 byte</p>
+            </td>
+            <td>
+                <p>–127</p>
+            </td>
+            <td>
+                <p>128</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <p>Short</p>
+            </td>
+            <td>
+                <p>Signed integer</p>
+            </td>
+            <td>
+                <p>2 bytes</p>
+            </td>
+            <td>
+                <p>–32768</p>
+            </td>
+            <td>
+                <p>32767</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <p>Int</p>
+            </td>
+            <td>
+                <p>Signed integer</p>
+            </td>
+            <td>
+                <p>4 bytes</p>
+            </td>
+            <td>
+                <p>–2<sup>31</sup></p>
+            </td>
+            <td>
+                <p>2<sup>31</sup>–1</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <p>Long</p>
+            </td>
+            <td>
+                <p>Signed integer</p>
+            </td>
+            <td>
+                <p>8 bytes</p>
+            </td>
+            <td>
+                <p>–2<sup>63</sup></p>
+            </td>
+            <td>
+                <p>2<sup>63</sup>–1</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <p>Float</p>
+            </td>
+            <td>
+                <p>Signed floating point</p>
+            </td>
+            <td>
+                <p>4 bytes</p>
+            </td>
+            <td>
+                <p>n/a</p>
+            </td>
+            <td>
+                <p>n/a</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <p>Double</p>
+            </td>
+            <td>
+                <p>Signed floating point</p>
+            </td>
+            <td>
+                <p>8 bytes</p>
+            </td>
+            <td>
+                <p>n/a</p>
+            </td>
+            <td>
+                <p>n/a</p>
+            </td>
+        </tr>
+    </tbody>
+</table>
 
 down conversion
 
@@ -188,7 +311,89 @@ val i: Int = l.toInt
 i: Int = 20
 ```
 
-<table style="border-collapse: collapse; border-top: 0.5pt solid ; border-bottom: 0.5pt solid ; border-left: 0.5pt solid ; border-right: 0.5pt solid ; "><colgroup><col class="col_1"><col class="col_2"><col class="col_3"></colgroup><thead><tr><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">Literal</td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">Type</td><td style="border-bottom: 0.5pt solid ; ">Description</td></tr></thead><tbody><tr><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; "><p><code class="literal">5</code></p></td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; "><p>Int</p></td><td style="border-bottom: 0.5pt solid ; "><p>Unadorned integer literals are <code class="literal">Int</code> by default</p></td></tr><tr><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; "><p><code class="literal">0x0f</code></p></td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; "><p>Int</p></td><td style="border-bottom: 0.5pt solid ; "><p>The “0x” prefix denotes hexadecimal notation</p></td></tr><tr><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; "><p><code class="literal">5l</code></p></td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; "><p>Long</p></td><td style="border-bottom: 0.5pt solid ; "><p>The “l” suffix denotes a <code class="literal">Long</code> type</p></td></tr><tr><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; "><p><code class="literal">5.0</code></p></td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; "><p>Double</p></td><td style="border-bottom: 0.5pt solid ; "><p>Unadorned decimal literals are <code class="literal">Double</code> by default</p></td></tr><tr><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; "><p><code class="literal">5f</code></p></td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; "><p>Float</p></td><td style="border-bottom: 0.5pt solid ; "><p>The “f” suffix denotes a <code class="literal">Float</code> type</p></td></tr><tr><td style="border-right: 0.5pt solid ; "><p><code class="literal">5d</code></p></td><td style="border-right: 0.5pt solid ; "><p>Double</p></td><td><p>The “d suffix denotes a <code class="literal">Double</code> type</p></td></tr></tbody></table>
+
+<table>
+    <colgroup>
+        <col>
+        <col>
+        <col>
+    </colgroup>
+    <thead>
+        <tr>
+            <td>Literal</td>
+            <td>Type</td>
+            <td>Description</td>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+                <p><code>5</code></p>
+            </td>
+            <td>
+                <p>Int</p>
+            </td>
+            <td>
+                <p>Unadorned integer literals are <code>Int</code> by default</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <p><code>0x0f</code></p>
+            </td>
+            <td>
+                <p>Int</p>
+            </td>
+            <td>
+                <p>The “0x” prefix denotes hexadecimal notation</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <p><code>5l</code></p>
+            </td>
+            <td>
+                <p>Long</p>
+            </td>
+            <td>
+                <p>The “l” suffix denotes a <code>Long</code> type</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <p><code>5.0</code></p>
+            </td>
+            <td>
+                <p>Double</p>
+            </td>
+            <td>
+                <p>Unadorned decimal literals are <code>Double</code> by default</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <p><code>5f</code></p>
+            </td>
+            <td>
+                <p>Float</p>
+            </td>
+            <td>
+                <p>The “f” suffix denotes a <code>Float</code> type</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <p><code>5d</code></p>
+            </td>
+            <td>
+                <p>Double</p>
+            </td>
+            <td>
+                <p>The “d suffix denotes a <code>Double</code> type</p>
+            </td>
+        </tr>
+    </tbody>
+</table>
 
 You can use either lowercase or uppercase letters in Scala’s literal types. The literal number `5L` is the same as the literal number `5l`.
 
@@ -206,6 +411,91 @@ scala> val pi = 3.1416
 pi: Double = 3.1416
 ```
 
+# Type operations
+
+<table>
+    <colgroup>
+        <col>
+        <col>
+        <col>
+    </colgroup>
+    <thead>
+        <tr>
+            <td>Name </td>
+            <td>Example </td>
+            <td>Description</td>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+                <p><code>asInstanceOf[&lt;type&gt;]</code></p>
+            </td>
+            <td>
+                <p><code>5.asInstanceOf[Long]</code></p>
+            </td>
+            <td>
+                <p>Converts the value to a value of the desired type. Causes an error if the value is not compatible
+                    with the new type.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <p><code>getClass</code></p>
+            </td>
+            <td>
+                <p><code>(7.0 / 5).getClass</code></p>
+            </td>
+            <td>
+                <p>Returns the type (i.e., the class) of a value.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <p><code>isInstanceOf</code></p>
+            </td>
+            <td>
+                <p><code>(5.0).isInstanceOf[Float]</code></p>
+            </td>
+            <td>
+                <p>Returns true if the value has the given type.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <p><code>hashCode</code></p>
+            </td>
+            <td>
+                <p><code>"A".hashCode</code></p>
+            </td>
+            <td>
+                <p>Returns the hash code of the value, useful for hash-based collections.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <p><code>to&lt;type&gt;</code></p>
+            </td>
+            <td>
+                <p><code>20.toByte; 47.toFloat</code></p>
+            </td>
+            <td>
+                <p>Conversion functions to convert a value to a compatible value.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <p><code>toString</code></p>
+            </td>
+            <td>
+                <p><code>(3.0 / 4.0).toString</code></p>
+            </td>
+            <td>
+                <p>Renders the value to a <code>String</code>.</p>
+            </td>
+        </tr>
+    </tbody>
+</table>
 
 # Strings
 
@@ -259,6 +549,50 @@ res2: String = I wrote a new app today
 
 scala> f"Enjoying this $item ${355/113.0}%.5f times today"
 res3: String = Enjoying this apple 3.14159 times today
+```
+
+##  Capturing Values with Regular Expressions
+
+```scala
+scala> val input = "Enjoying this apple 3.14159 times today"
+input: String = Enjoying this apple 3.14159 times today
+
+scala> val pattern = """.* apple ([\d.]+) times .*""".r                     
+pattern: scala.util.matching.Regex = .* apple ([\d.]+) times .*             
+
+scala> val pattern(amountText) = input                                      
+amountText: String = 3.14159
+
+scala> val amount = amountText.toDouble                                     
+amount: Double = 3.14159
+```
+
+# Tuples
+
+A tuple is an ordered container of two or more values, all of which may have different types. 
+
+`( <value 1>, <value 2>[, <value 3>...] )`
+
+```scala
+scala> val info = (5, "Korben", true)
+info: (Int, String, Boolean) = (5,Korben,true)
+```
+
+access an individual element from a tuple by its 1-based index (e.g., where the first element is 1, second is 2, etc.):
+
+```scala
+val name = info._2
+name: String = Korben
+```
+
+An alternate form of creating a 2-sized tuple is with the relation operator `->`.
+
+```scala
+scala> val red = "red" -> "0xff0000"
+red: (String, String) = (red,0xff0000)
+
+scala> val reversed = red._2 -> red._1
+reversed: (String, String) = (0xff0000,red)
 ```
 
 # Case classes
@@ -430,3 +764,148 @@ object ProcessMessages:
     }
   }
   ```
+
+  # Akka
+
+  ## Akka HTTP
+
+### Dependencies
+  ```scala
+  val AkkaVersion = "2.7.0"
+val AkkaHttpVersion = "10.5.0"
+libraryDependencies ++= Seq(
+  "com.typesafe.akka" %% "akka-actor-typed" % AkkaVersion,
+  "com.typesafe.akka" %% "akka-stream" % AkkaVersion,
+  "com.typesafe.akka" %% "akka-http" % AkkaHttpVersion,
+  "com.typesafe.akka" %% "akka-http-spray-json" % AkkaHttpVersion,
+  "com.typesafe.akka" %% "akka-stream-testkit" % AkkaVersion,
+  "com.typesafe.akka" %% "akka-http-testkit" % AkkaHttpVersion
+)
+```
+
+### Hello World
+
+```scala
+package docs.http.scaladsl
+
+import akka.actor.typed.ActorSystem
+import akka.actor.typed.scaladsl.Behaviors
+import akka.http.scaladsl.Http
+import akka.http.scaladsl.model._
+import akka.http.scaladsl.server.Directives._
+import scala.io.StdIn
+
+object HttpServerRoutingMinimal {
+
+  def main(args: Array[String]): Unit = {
+
+    implicit val system = ActorSystem(Behaviors.empty, "my-system")
+    // needed for the future flatMap/onComplete in the end
+    implicit val executionContext = system.executionContext
+
+    val route =
+      path("hello") {
+        get {
+          complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, "<h1>Say hello to akka-http</h1>"))
+        }
+      }
+
+    val bindingFuture = Http().newServerAt("localhost", 8080).bind(route)
+
+    println(s"Server now online. Please navigate to http://localhost:8080/hello\nPress RETURN to stop...")
+    StdIn.readLine() // let it run until user presses return
+    bindingFuture
+      .flatMap(_.unbind()) // trigger unbinding from the port
+      .onComplete(_ => system.terminate()) // and shutdown when done
+  }
+}
+```
+
+### With json marshalling
+
+```scala
+/*
+ * Copyright (C) 2020-2023 Lightbend Inc. <https://www.lightbend.com>
+ */
+
+package docs.http.scaladsl
+
+import akka.actor.typed.ActorSystem
+import akka.actor.typed.scaladsl.Behaviors
+import akka.http.scaladsl.Http
+import akka.Done
+import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.model.StatusCodes
+// for JSON serialization/deserialization following dependency is required:
+// "com.typesafe.akka" %% "akka-http-spray-json" % "10.1.7"
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import spray.json.DefaultJsonProtocol._
+import spray.json.RootJsonFormat
+
+import scala.io.StdIn
+
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+
+object SprayJsonExample {
+
+  // needed to run the route
+  implicit val system: ActorSystem[_] = ActorSystem(Behaviors.empty, "SprayExample")
+  // needed for the future map/flatmap in the end and future in fetchItem and saveOrder
+  implicit val executionContext: ExecutionContext = system.executionContext
+
+  var orders: List[Item] = Nil
+
+  // domain model
+  final case class Item(name: String, id: Long)
+  final case class Order(items: List[Item])
+
+  // formats for unmarshalling and marshalling
+  implicit val itemFormat: RootJsonFormat[Item] = jsonFormat2(Item.apply)
+  implicit val orderFormat: RootJsonFormat[Order] = jsonFormat1(Order.apply)
+
+  // (fake) async database query api
+  def fetchItem(itemId: Long): Future[Option[Item]] = Future {
+    orders.find(o => o.id == itemId)
+  }
+  def saveOrder(order: Order): Future[Done] = {
+    orders = order.items ::: orders
+    Future { Done }
+  }
+
+  def main(args: Array[String]): Unit = {
+    val route: Route =
+      concat(
+        get {
+          pathPrefix("item" / LongNumber) { id =>
+            // there might be no item for a given id
+            val maybeItem: Future[Option[Item]] = fetchItem(id)
+
+            onSuccess(maybeItem) {
+              case Some(item) => complete(item)
+              case None       => complete(StatusCodes.NotFound)
+            }
+          }
+        },
+        post {
+          path("create-order") {
+            entity(as[Order]) { order =>
+              val saved: Future[Done] = saveOrder(order)
+              onSuccess(saved) { _ => // we are not interested in the result value `Done` but only in the fact that it was successful
+                complete("order created")
+              }
+            }
+          }
+        }
+      )
+
+    val bindingFuture = Http().newServerAt("localhost", 8080).bind(route)
+    println(s"Server online at http://localhost:8080/\nPress RETURN to stop...")
+    StdIn.readLine() // let it run until user presses return
+    bindingFuture
+      .flatMap(_.unbind()) // trigger unbinding from the port
+      .onComplete(_ => system.terminate()) // and shutdown when done
+  }
+}
+```
