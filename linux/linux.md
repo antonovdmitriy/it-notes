@@ -2609,7 +2609,7 @@ vmhgfs-fuse   /mnt/hgfs    fuse    defaults,allow_other    0    0
 # Операции с пользователями
 
 Команда позволяет запустить shell другого пользователя
-```
+```sh
 su - username 
 ```
 
@@ -2618,7 +2618,7 @@ su - username
 ![Linux su Commands1](images/image303.png)
 
 Зайти под root
-```
+```sh
 su -
 ```
 
@@ -2629,7 +2629,7 @@ su -
 ![](images/image116.png)
 
 Показывает имя пользователя
-```
+```sh
 whoami
 ``` 
 
@@ -2678,14 +2678,14 @@ whoami
 usermod -c 'newName' oldName   
 ```
 
-```
+```sh
 usermod -c 'jhonny' john  
 ```
 
 ![](images/image247.png)
 
 добавить пользователя student в группу wheel 
-```
+```sh
 usermod -aG wheel student 
 ```
 
@@ -2708,18 +2708,18 @@ usermod -aG wheel student
 Тут видим `-d` директория `-l` symbolic link. Далее разрешения для владельца, для группы владельцев и всех остальных
 
 Изменить владельца, группу владельцев у файла.
-```
+```sh
 chown user \[:group\] file  
 ```
 
 Изменяем владельца на anna и группу profs
-```
+```sh
 chown anna:profs file  
 ```
 
 Если хотим поменять только группу владельцев.
-```
-chgrp group\_name file\_name
+```sh
+chgrp group_name file_name
 ```
 
 ![](images/image56.png)
