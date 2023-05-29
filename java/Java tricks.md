@@ -8032,8 +8032,6 @@ The JVM now tells you the object reference that triggered the NullPointerExcepti
 Exception in thread "main" java.lang.NullPointerException: Cannot invoke "java.lang.Integer.intValue()" because "<parameter2>" is null
 ```
 
- By default, a NullPointerException on a local variable or method parameter is printed with a number indicating the order in which it appears in the method, such as <local2> or <parameter4>. If you're like us and want the actual variable name to be shown, compile the code with the -g:vars flag, which adds debug info. In the previous examples, <parameter1> and <parameter2> are then replaced with name and jump, respectively.
-
 ```java
 public void setNumberEggs(int numberEggs) {
    if (numberEggs < 0)
