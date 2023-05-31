@@ -3,6 +3,7 @@
 - [Table of contents](#table-of-contents)
 - [Data intensive applications](#data-intensive-applications)
   - [Reliability](#reliability)
+  - [Scalabllity](#scalabllity)
 - [API problems](#api-problems)
   - [Paginating](#paginating)
     - [Links](#links)
@@ -114,6 +115,11 @@ Although we generally prefer tolerating faults over preventing faults, there are
   - Implement good management practices and training
 
 There are situations in which we may choose to sacrifice reliability in order to reduce development cost (e.g., when developing a prototype product for an unproven market) or operational cost (e.g., for a service with a very narrow profit margin)—but we should be very conscious of when we are cutting corners.
+
+### Scalabllity
+
+ - If the system grows in a particular way, what are our options for coping with the growth?
+ - How can we add computing resources to handle the additional load?
 
 ## API problems
 
