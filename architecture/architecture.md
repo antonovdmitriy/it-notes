@@ -34,6 +34,7 @@
     - [Continuous delivery](#continuous-delivery)
     - [DevOps](#devops)
   - [Is the cloud your best option?](#is-the-cloud-your-best-option)
+  - [Cloud native development principles](#cloud-native-development-principles)
 
 
 ## Data intensive applications
@@ -120,6 +121,27 @@ There are situations in which we may choose to sacrifice reliability in order to
 
  - If the system grows in a particular way, what are our options for coping with the growth?
  - How can we add computing resources to handle the additional load?
+- 
+- When you increase a load parameter and keep the system resources (CPU, memory, network bandwidth, etc.) unchanged, how is the performance of your system affected?
+- When you increase a load parameter, how much do you need to increase the resources if you want to keep performance unchanged?
+
+What to measure? 
+
+**throughput** - the number of records we can process per second, or the total time it takes to run a job on a dataset of a certain size
+
+**response time** - the time between a client sending a request and receiving a response.
+
+**Latency** and **response time** are often used synonymously, but they are not the same. The **response time** is what the client sees: besides the actual time to process the request (the service time), it includes network delays and queueing delays. **Latency** is the duration that a request is waiting to be handled—during which it is latent, awaiting service 
+
+We need to think of response time not as a single number, but as a distribution of values that you can measure.
+
+Usually it is better to use percentiles. If you take your list of response times and sort it from fastest to slowest, then the median is the halfway point: for example, if your median response time is 200 ms, that means half your requests return in less than 200 ms, and half your requests take longer than that. The median is also known as the 50th percentile, and sometimes abbreviated as p50. The median refers to a single request; if the user makes several requests (over the course of a session, or because several resources are included in a single page), the probability that at least one of them is slower than the median is much greater than 50%.
+
+95th, 99th, and 99.9th percentiles are common (abbreviated p95, p99, and p999). They are the response time thresholds at which 95%, 99%, or 99.9% of requests are faster than that particular threshold.
+
+Amazon has observed that a 100 ms increase in response time reduces sales by 1% [20], and others report that a 1-second slowdown reduces a customer satisfaction metric by 16% 
+
+On the other hand, optimizing the 99.99th percentile (the slowest 1 in 10,000 requests) was deemed too expensive and to not yield enough benefit for Amazon’s purposes. 
 
 ## API problems
 
@@ -228,7 +250,6 @@ Clients should not store the cursor on their side. Google API Documentation sugg
 - Missing items if they are added to the previous pages
 
 ## Cloud architecture
-
 
 [Cloud native computer foundation](https://www.cncf.io/)
 
@@ -387,3 +408,17 @@ Before deciding to migrate to the cloud, it’s essential also to consider other
 - business interruptions during the migration
 - retraining end users
 - updating documentation and support materials
+
+### Cloud native development principles
+
+The engineers working at the Heroku cloud platform have proposed the 12-Factor methodology as a collection of development principles for designing and building cloud native applications. Later, the methodology was revised and expanded by Kevin Hoffman in his book Beyond the Twelve-Factor App, refreshing the contents of the original factors and adding three extra ones.
+
+1. One codebase, one application
+
+a one-to-one mapping between an application and its codebase, so there’s one codebase for each application. Any shared code should be tracked in its own codebase as a library that can be included as a dependency or service that can be run in standalone mode, acting as a backing service for other applications. Each codebase can optionally be tracked in its own repository.
+
+A deployment is a running instance of the application. Many deployments are possible in different environments, all sharing the same application artifact. There is no need to rebuild the codebase to deploy an application to a specific environment: any aspect that changes between deployments (such as configuration) should be outside the application codebase.
+
+2. API first
+   
+A cloud native system is usually made up of different services that communicate through APIs. Using an API first approach while designing a cloud native application encourages you to think about fitting it into a distributed system and favors the distribution of the work across different teams. By designing the API first, another team using that application as a backing service could create their solution against that API. By designing the contract up front, integration with other systems will be more robust and testable as part of the deployment pipeline. Internally, the API implementation can be changed without affecting other applications (and teams) depending on it.

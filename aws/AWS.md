@@ -6,7 +6,7 @@
   - [Common links to cert path](#common-links-to-cert-path)
   - [Resources for](#resources-for)
 - [Zones and Regions](#zones-and-regions)
-- [User management](#user-management)
+- [IAM](#iam)
   - [Generate secret key](#generate-secret-key)
   - [Billing](#billing)
 - [EC2 (Elastic compute cloud)](#ec2-elastic-compute-cloud)
@@ -82,7 +82,14 @@ AWS houses its computers in more than 60 data centers spread around the world as
 
 A compelling aspect of Amazon’s region model is that each region is largely independent, logistically and from a software management point of view. That means that if a physical problem like a power outage, or a software problem like a deployment bug, happens in one region, the others will almost certainly be unaffected. 
 
-# User management
+# IAM
+
+Service to create:
+- users
+- groups
+- roles
+- policy
+
 
 There is root user, who has full rights for all operations in aws. As well there are IAM regular users, which possible to add to groups. To create IAM User we need first to activate capability to add such users. 
 
@@ -131,7 +138,14 @@ There is root user, who has full rights for all operations in aws. As well there
 Зайти в Billing и выбрать.
 ![Billing prefs](images/billing_prefs.png)
 
-на этой же странице есть ссылка на Managed Billing Alerts. Откроется Cloud Watch сервис нотификаций амазона. В нем можно настроить мониторить сервисы, смотреть логи сервисов, а также настроить нотификации об оплате. 
+Зайти во вкладку Budgets и создать бюджет при превышении которого будет отправляться оповещение
+
+![budgets](images/budgets.png)
+
+<!-- на этой же странице есть ссылка на Managed Billing Alerts. Откроется Cloud Watch сервис нотификаций амазона. В нем можно настроить мониторить сервисы, смотреть логи сервисов, а также настроить нотификации об оплате.  -->
+
+
+другой способ, создать самому алерты
 
 ![Billing prefs](images/billing_prefs_2.png)
 
