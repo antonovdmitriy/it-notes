@@ -534,6 +534,31 @@ aws ec2 describe-instances
 
 info will be in json format.
 
+to launch ec2 instance 
+
+```bash
+aws ec2 run-instances --image-id <value> --instance-type <value> --security-group-ids <value> --subnet-id <value> --key-name <value> --user-data <value>
+```
+where `user-data` is a file with initial script to launch on the instance
+
+an example
+```bash
+aws ec2 run-instances --image-id ami-0c858d4d1feca5370 --instance-type t3.micro --security-group-ids sg-0917c91808bf2ba66 --subnet-id subnet-038d00f0903190f25 --key-name wishlist --user-data file://data.txt
+```
+
+where in user script is
+```bash
+#!/bin/bash
+yum update -y
+yum install -y httpd
+systemctl start httpd
+systemctl enable httpd
+INTERFACE=$(TOKEN=`curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600"` && curl -H "X-aws-ec2-metadata-token: $TOKEN" -v http://169.254.169.254/latest/meta-data/network/interfaces/macs/)
+SUBNETID=$(TOKEN=`curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600"` && curl -H "X-aws-ec2-metadata-token: $TOKEN" -v http://169.254.169.254/latest/meta-data/network/interfaces/macs/${INTERFACE}/subnet-id)
+echo '<center><h1>This instance is in the subnet wih ID: SUBNETID </h1></center>' > /var/www/html/index.txt
+sed "s/SUBNETID/$SUBNETID/" /var/www/html/index.txt > /var/www/html/index.html
+```
+
 ## s3 cli
 
 show list of s3 buckets
@@ -776,6 +801,22 @@ then we need to edit our MAIN route tables for public subnets to add a rule to a
 ![](images/network_example_25.png)
 
 ![](images/network_example_26.png)
+
+and for access from our private subnets to the Internet  we need to create a NAT Gateway attached it to one of our public subnets and add the rule to Private-RT
+
+![](images/network_example_27.png)
+
+![](images/network_example_28.png)
+
+![](images/network_example_29.png)
+
+![](images/network_example_30.png)
+
+then we need to create a security group
+
+![](images/network_example_31.png)
+
+![](images/network_example_32.png)
 
 
 # Load balancing
