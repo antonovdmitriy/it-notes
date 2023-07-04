@@ -7,8 +7,13 @@
   - [Resources for](#resources-for)
 - [Zones and Regions](#zones-and-regions)
 - [IAM](#iam)
+  - [Access control methods](#access-control-methods)
+  - [MFA](#mfa)
+  - [STS (Security Token Service)](#sts-security-token-service)
+  - [Start on IAM](#start-on-iam)
   - [Generate secret key](#generate-secret-key)
   - [Billing](#billing)
+  - [Assuming AWS role](#assuming-aws-role)
 - [EC2 (Elastic compute cloud)](#ec2-elastic-compute-cloud)
   - [Create simple vm](#create-simple-vm)
   - [Simple network rules](#simple-network-rules)
@@ -18,18 +23,31 @@
 - [S3 Simple storage service](#s3-simple-storage-service)
 - [AWS ClI](#aws-cli)
   - [Installing](#installing)
-  - [конфигурирование](#конфигурирование)
+  - [configure](#configure)
+  - [help](#help)
+  - [ec2 cli](#ec2-cli)
   - [s3 cli](#s3-cli)
+  - [assuming a role](#assuming-a-role)
 - [AWS SAM CLI](#aws-sam-cli)
   - [Installation](#installation)
 - [Networking](#networking)
+    - [VPS (Virtual private cloud)](#vps-virtual-private-cloud)
+    - [availiablity zones](#availiablity-zones)
+    - [Subnets](#subnets)
+    - [Routing accross VPS and outside](#routing-accross-vps-and-outside)
+    - [Internet access](#internet-access)
+    - [Connect to the public AWS endpoint](#connect-to-the-public-aws-endpoint)
+    - [NAT for private subnets](#nat-for-private-subnets)
+    - [connect on-premises data center](#connect-on-premises-data-center)
+    - [Firewall](#firewall)
+    - [Examples](#examples)
 - [Load balancing](#load-balancing)
 - [Serverless](#serverless)
   - [BaaS (Backend as a service)](#baas-backend-as-a-service)
   - [FaaS (Function as a service)](#faas-function-as-a-service)
   - [AWS Lambda](#aws-lambda)
   - [How lambda can be invoked](#how-lambda-can-be-invoked)
-  - [Examples](#examples)
+  - [Examples](#examples-1)
     - [Web API](#web-api)
     - [File processing](#file-processing)
   - [Other](#other)
@@ -85,11 +103,60 @@ A compelling aspect of Amazon’s region model is that each region is largely in
 # IAM
 
 Service to create:
-- users
-- groups
-- roles
-- policy
+- users (up to 5000 users in IAM)
+- groups (sets of users). Users can be a member of up to 10 groups
+- roles 
+- policy (defines permissions for the identities or resources )
+  - Permission policy
+    - identity based policy for users, roles and groups
+    - resource-based policy for resources like S3 bucket or DynamoDb tables
+  - Trust policy. Check who can assume the role 
+  
+Users after its creation can only log in, nothing more, has no permissions. 
 
+It's not possible to craate IAM entries for a specific region, only for all of them. 
+
+## Access control methods 
+
+Role based access control (RBAC)
+
+Groups of users organized by job role. Permissions link to the group. User inherits permissions from the group. And principle of least previleges - the minimum permissions to get wob done. 
+
+There are a lot of preconfigured job-function policies like:
+- Administrator
+- Billing
+- Database-administrator
+- Data scientist
+- Developer power user
+- Network administrator
+- Security auditor
+- Support user
+- System administrator
+- View-only user
+
+Attribute-based access control (ABAC)
+
+Permisson according to conditions. Users has a group and tags like metadata, for example department. And policy has condition on group and department tag. And it can have condition with tags which selected resources. Database has a tag environemnt and value production or test. And guy from admin group and with department DBAdmins can reboot database that has Environemnt tag like Production but not Test Database which has another value of the tag Environment.
+
+## MFA
+
+You can use Google Authenticator or a physical token which is possile to order from third parties companies.
+
+![](images/iam_mfa_1.png)
+
+![](images/iam_mfa_2.png)
+
+![](images/iam_mfa_3.png)
+
+![](images/iam_mfa_4.png)
+
+## STS (Security Token Service)
+
+What if you have an app on an EC2 instance and want to get access to S3 bucket. We need to create an instance profile and connect it to the IAM role. then to add trust policy and after that AWS STS could get temporary security credentials for ec2 instance. This credentionals includes AccessKeyId, Expiration, SecretAccessKey, SessionToken. 
+
+
+
+## Start on IAM
 
 There is root user, who has full rights for all operations in aws. As well there are IAM regular users, which possible to add to groups. To create IAM User we need first to activate capability to add such users. 
 
@@ -126,6 +193,8 @@ There is root user, who has full rights for all operations in aws. As well there
 
 ## Generate secret key
 
+if you log in as a user for whom you want to create a certificate
+
 ![Create security cred](images/security_cred.png)
 
 ![Create security cred](images/security_cred_2.png)
@@ -133,6 +202,10 @@ There is root user, who has full rights for all operations in aws. As well there
 ![Create security cred](images/security_cred_3.png)
 
 Не рекомендуется создавать ключ доступа для root акаунта. Все ключи должны храниться в секретных местах. На той же странице можно настроить двухфакторную аутентификацию. Ключи нельзя посмотреть после, только отозвать и создать заново. 
+
+it is possible to create certificate via IAM service on tabs Users for particular user.
+
+![](images/iam_credentials_user.png)
 
 ## Billing
 Зайти в Billing и выбрать.
@@ -172,9 +245,83 @@ There is root user, who has full rights for all operations in aws. As well there
 
 ![Billing prefs](images/billing_prefs_11.png)
 
+## Assuming AWS role
+
+For example we create a new user without any access rights
+
+![](images/iam_role_1.png)
+
+
+![](images/iam_role_2.png)
+
+then we need to get a ARN of a new user.
+
+![](images/iam_role_3.png)
+
+then we need to create a role
+
+![](images/iam_role_4.png)
+
+and put a custom policy where we paste a ARN of user
+
+![](images/iam_role_5.png)
+
+then click Next and put EC2AllAccess permisstion policy to the role
+
+![](images/iam_role_6.png)
+
+then click Next and add the name for the role and click next
+
+![](images/iam_role_7.png)
+
+role is created
+
+![](images/iam_role_8.png)
+
+then log in as a new created user
+
+we can see that user do not have rights for ec2 access
+
+![](images/iam_role_9.png)
+
+but we can assume a role
+
+![](images/iam_role_10.png)
+
+to do it we need to know a id of account and name of the role
+
+![](images/iam_role_11.png)
+
+![](images/iam_role_12.png)
+
+
+and finally we get the rights to ec2 from the role
+
+![](images/iam_role_13.png)
+
+it's possible to switch back
+
+![](images/iam_role_14.png)
+
+
+![](images/iam_role_15.png)
+
+
 # EC2 (Elastic compute cloud)
 
 EC2 was one of the first infrastructure-as-a-service **IaaS** products.
+
+Amazon Machine Image - image with an operating system and configuration of the instance. 
+
+You can create custom AMI. 
+
+Benefits:
+- Elasticity. launch to thousands of instances within minutes
+- Full control the instances with root. 
+- Flexible. Choice of instance types, operating systems and packages. 
+- Reliable. high level of availablity and instances can be rapidly comissioned and replaced
+- Secure. Fully integrated with VPS and security features.  
+- Inexpensive. Pay for what you use
 
 ## Create simple vm
 
@@ -320,7 +467,7 @@ unzip awscliv2.zip
 sudo ./aws/install
 ```
 
-## конфигурирование
+## configure
 ```bash
 aws configure
 ```
@@ -345,6 +492,48 @@ output like this
 }
 ```
 
+> it is important to know that all keys are stored in the `.aws/credentials` file without any encryption. The region is stored in `.aws/config`.
+
+it is possible to get errror
+> An error occurred (RequestTimeTooSkewed) when calling the ListBuckets operation: The difference between the request time and the current time is too large.
+
+I found it in wsl ubuntu. We need to sync time
+
+```bash
+sudo hwclock -s
+```
+
+it is possible to create many profiles on the same machine
+
+```bash
+aws configure --profile name_of_a_new_profile
+```
+
+then after that we can add different credentials for many profiles. All profiles are in `.aws/config` and `.aws/credentials`. 
+
+after configuring it is possible to use profile with any command like this `aws command...... --profile %name_of_a_profile_to_use%`. without profile options the default profile is used. 
+
+## help
+
+to show list of all options
+```bash
+aws help
+```
+
+help about particular option
+
+```bash
+aws help ec2
+```
+
+## ec2 cli
+
+```bash
+aws ec2 describe-instances
+```
+
+info will be in json format.
+
 ## s3 cli
 
 show list of s3 buckets
@@ -353,31 +542,65 @@ show list of s3 buckets
 ```
 ![cli S3](images/aws_cli_1.png)
 
-при подключении может быть ошибка 
-> An error occurred (RequestTimeTooSkewed) when calling the ListBuckets operation: The difference between the request time and the current time is too large.
-
-такое встречал в wsl ubuntu. Нужно синхронизировать время
-```bash
-sudo hwclock -s
-```
-посмотреть список бакетов  в простом формате
+list of all buckets
 ```bash
 aws s3 ls
 ```
 
 ![cli S3](images/aws_cli_2.png)
 
-скопировать файл в s3
+create a bucket
 
+```bash
+aws s3 mb s3://mytestbucket-323423dsdfl
 ```
+
+copy file to s3
+
+```bash
 aws s3 cp ./file.txt s3://tests355465646546/folder_3/
 ```
+
 ![cli S3](images/aws_cli_3.png)
+
+
+to show a list of files in bucket
+
+```bash
+aws s3 ls s3://mytestbucket-323423dsdfl
+```
+
+to remove a bucket. But only for an empty bucket
+
+```bash
+aws s2 rb s3://mytestbucket-323423dsdfl
+```
+
+to forced remove a bucket 
+
+```bash
+aws s2 rb s3://mytestbucket-323423dsdfl --force
+```
+
+## assuming a role
+
+to `.aws/config` add this
+
+```
+[profile my_profile]
+  role_arn = %arn_of_role%
+  source_profile = default
+```
+
+and then use this profile to assume a role
+
+```bash
+aws ec2 describe-instances --profile my_profile
+```
 
 # AWS SAM CLI
 
 ## Installation
-
 
 ```bash
 curl "https://github.com/aws/aws-sam-cli/releases/latest/download/aws-sam-cli-linux-x86_64.zip" -o "aws-sam-cli.zip"
@@ -388,6 +611,172 @@ sam --version
 
 
 # Networking
+
+![](images/networking_1.png)
+
+
+### VPS (Virtual private cloud)
+
+**VPS** is a logically isolated portion of the AWS cloud within a region. A virtual network dedicated to AWS account. 
+
+Each of VPSs has a different block of IP addresses (**CIDR** block) (Classless inter-domain routing)
+
+When we create a VPS we must specify a range of IPv4 adresses for the VPSs in the form of CIDR block for example 10.0.0.0/16. A default VPS is created in each region with subnet in each AZ.
+
+VPS spans all the AZ in the region. 
+
+You have full controll over who access to the AWS resources inside your VPS
+
+We can create diffrent VPS within a region. There is a default limit 5 to an amount of VPSs in one region but it's possible to apply to extend it. 
+
+![](images/networking_2.png)
+
+### availiablity zones
+
+Within a region there are **availiablity zones** (AZ). This is physically isolated area like a datacenter. 
+
+### Subnets 
+
+Within AV there are **subnets**. They can be public or private. 
+
+It is not possible to create a subnet across many AZ. But you can spread load on different AZ and subnets within them. 
+
+Each subnets has block of IP addresses from the CIDR block
+
+We can launch our resources (for example EC2 instance) in a subnets of our vps. 
+
+### Routing accross VPS and outside
+
+**VPS router** takes care or routing within the VPS and outside of the VPS. It is attached to the VPS. We can add rules to **route table**. It is possible to create a route to traffic across different VPSs without using public Internet. 
+
+### Internet access 
+
+If we want to connect to Internet we need to configure **Internet Gateway** OR **Egress only Internet Gateway** for IPV6. It is attached to the VPS. This thing allow to get a connection to the Internet, but does not allows connection from Internet. 
+
+### Connect to the public AWS endpoint 
+
+**VPS endpont** to connect to public AWS endpoints via private addresses. For example to connecto to S3 bucket, that is a public AWS endpoint. 
+
+### NAT for private subnets
+
+**NAT Instance** and **NAT Gateway** Allow instances in private subnets wich only have private IP addresses to be able to connect to the Internet. Network adress translation. 
+
+### connect on-premises data center
+
+If we want to set up VPN between on-premises data center and AWS we can create AWS VPN. There are two principal components to VPN : **Customer gateway** which is router and configuration in the on-premices data center. And then **Virtual Private Gateway** which is component one the AWS side. 
+
+**AWS Direct Connect** is another way to connect on-premices data centers to AWS. Is uses private connection with high speed and bandwidth and low latency.
+
+### Firewall
+
+**Security groups** and **network ACL** are two different types of firewalls. 
+
+![](images/networking_3.png)
+
+
+ACL apply at the subnet level. They attached to each subnet. They apply only to traffic entering/exiting the subnet. They don't apply to traffic within the subnet. This is only engress and ingress traffic. 
+
+ACL has inbound and outbound rules. There are a allow and deny rules. The rules are processed in order. So if the allow is found the the traffic is allowed. If not then eventually it will reach the deny at the end of rule set and the traffic will be denied. 
+
+![](images/networking_5.png)
+
+Security group are applied at the instance level. Actually they're applied to the Elastic Network Interfaces that are attached to any of EC2 instances. 
+
+SG can be applied to many subnets. 
+
+
+SG rules are defined for outbound traffic and inbound traffic. SG support only allow rules not a deny rule. 
+
+SG source can be an IP address or SG ID
+
+![](images/networking_4.png)
+
+SG is statefull. If the traffic is allowed out, outbound. Any return traffic comming in will automatically be allowed if it's assotiated with the same connection. 
+Whereas ACL is stateless. You need separate rule for outbound and the return traffic that's comming back inbound. 
+
+### Examples
+
+Let'c create VPS then two public and two private subnets in different availability zones. For private we will create route tables for our VPS attach them to our private and public subnets. 
+
+We can see a default VPS which had been already created.
+
+![](images/network_example_1.png)
+
+let's create our new VPS.
+
+![](images/network_example_2.png)
+
+![](images/network_example_3.png)
+
+then let's enable dns host names to enable dns hosts for any ec2 instances within this vps
+
+> The DNS hostnames attribute determines whether instances launched in the VPC receive public DNS hostnames that correspond to their public IP addresses.
+
+![](images/network_example_4.png)
+
+![](images/network_example_5.png)
+
+then create subnets
+
+![](images/network_example_6.png)
+
+here we can see default subnets for each AZ in a region
+
+![](images/network_example_7.png)
+
+![](images/network_example_8.png)
+
+![](images/network_example_9.png)
+
+![](images/network_example_10.png)
+
+![](images/network_example_11.png)
+
+![](images/network_example_12.png)
+
+then let's enable public ip addresses for our public networks
+
+> By default, nondefault subnets have the IPv4 public addressing attribute set to false, and default subnets have this attribute set to true
+> An exception is a nondefault subnet created by the Amazon EC2 launch instance wizard — the wizard sets the attribute to true.
+
+![](images/network_example_13.png)
+
+![](images/network_example_14.png)
+
+then let's create route tables for our subnets. Private-RT for privates and MAIN for publics.
+
+![](images/network_example_15.png)
+
+![](images/network_example_16.png)
+
+![](images/network_example_17.png)
+
+![](images/network_example_18.png)
+
+for public network we already have a default route table. Let's just rename it to MAIN
+
+![](images/network_example_19.png)
+
+we can see that our public networks assotiates with MAIN network implicitly
+
+![](images/network_example_20.png)
+
+then let's create Internet Gateway for our public networks to have access from the public networks to the Internet. 
+
+![](images/network_example_21.png)
+
+![](images/network_example_22.png)
+
+![](images/network_example_23.png)
+
+![](images/network_example_24.png)
+
+then we need to edit our MAIN route tables for public subnets to add a rule to access via created Internet Gateway to the Internet. 
+
+![](images/network_example_25.png)
+
+![](images/network_example_26.png)
+
 
 # Load balancing
 ELB - Elastic load balancer
