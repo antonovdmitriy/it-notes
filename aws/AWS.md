@@ -18,6 +18,8 @@
   - [Create simple vm](#create-simple-vm)
   - [Simple network rules](#simple-network-rules)
   - [Horizontal scalling via create another ec2 instance](#horizontal-scalling-via-create-another-ec2-instance)
+  - [User data](#user-data)
+  - [Metadata](#metadata)
 - [EBS Elastic block storage](#ebs-elastic-block-storage)
 - [EFS Elastic file system](#efs-elastic-file-system)
 - [S3 Simple storage service](#s3-simple-storage-service)
@@ -390,16 +392,61 @@ sudo apt-get install apache2
 
 ![Horisontal scaling based on image](images/create_image_7.png)
 
+## User data
+
+It's posiible to launch user code after launching ec2 instance
+
+![](images/ec2_11.png)
+
+ This script is limited by 16 KB. 
+
+ For Windows EC2 instance it is possible to run batch or power-shell scripts.
+
+## Metadata 
+
+It's possible to get metadata from ec2 instace by this address `http://169.254.169.254/latest/meta-data'. It is a local address! 
+
+to see list of available metadata 
+```bash
+curl http://169.254.169.254/latest/meta-data
+```
+
+![](images/ec2_metadata.png)
+
+to get some concrete part of meta-data 
+
+```bash
+curl http://169.254.169.254/latest/meta-data/local-ipv4
+```
+
+
+
 # EBS Elastic block storage
 К каждому инстансу ec2 подключается volume который можно расширять по мере необходимости. 
 Но он доступн в один момент времени только для одного инстанса. Можно делать периодические снепшоты с volume, т.е слепки файловой системы. Отличается от создание образов на основе инстанса т.к сохраняет только файловую систему.
 
+Volumes attaches over network. It is not physical storage on the Ec2 instances. It is network block storage. 
+
+EBS volumes exists within AZ. And automatically replecated within the AZ
+
+There are several types of EBS volumes.
+
 ![Volume view](images/ebs_1.png)
+
+Instance store is attached physically to EC2 instance but it is not persisent. They come with some instance types. They offer extreamely high performance. 
+
+It is possible to create snaphots of the EBS volumes. Actually it saved on the S3 - outside of the AZ of volume and instance. Each shaphost is incremental, it saves only changes between versions. 
+
+Default volume created with a new EC2 instance, but it fade away after termination of the instance. 
+
 
 
 # EFS Elastic file system
 Можно создать общую файловую систему, которую можно разделять между инстансами ec2.
-Итого имеем 2 инстанса, хотим сделать общую папку между ними.
+Итого имеем 2 инстанса, хотим сделать общую папку между ними. But only within one region and only for linux instances using NFS protocol. (/efs-mnt)  
+
+it is possible connect on-premice data center to EFS using direct connect or VPN
+
 
 ![Shared folder via EFS](images/efs_1.png)
 
@@ -409,10 +456,12 @@ sudo apt-get install apache2
 ![Shared folder via EFS](images/efs_3.png)
 ![Shared folder via EFS](images/efs_4.png)
 ![Shared folder via EFS](images/efs_5.png)
-потом нужно подкрутить security group чтобы трафик мог ходить между сервисами aws
+потом нужно подкрутить security group чтобы трафик мог ходить между сервисами aws. 
 Добавляем для каждого инстанса
 ![Shared folder via EFS](images/efs_6.png)
 ![Shared folder via EFS](images/efs_7.png)
+
+На самом деле лучше создать отдельную SG где разрешить трафику ходить по NFS протоколу для обоих инстансов.
 
 далее логинимся на каждый инстанс
 ![Shared folder via EFS](images/efs_8.png)
