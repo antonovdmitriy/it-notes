@@ -18,8 +18,10 @@
   - [Create simple vm](#create-simple-vm)
   - [Simple network rules](#simple-network-rules)
   - [Horizontal scalling via create another ec2 instance](#horizontal-scalling-via-create-another-ec2-instance)
+  - [Horisonal scalling with auto scale groups](#horisonal-scalling-with-auto-scale-groups)
   - [User data](#user-data)
   - [Metadata](#metadata)
+  - [Security access](#security-access)
 - [EBS Elastic block storage](#ebs-elastic-block-storage)
 - [EFS Elastic file system](#efs-elastic-file-system)
 - [S3 Simple storage service](#s3-simple-storage-service)
@@ -43,7 +45,12 @@
     - [connect on-premises data center](#connect-on-premises-data-center)
     - [Firewall](#firewall)
     - [Examples](#examples)
-- [Load balancing](#load-balancing)
+- [Load balancing ELB](#load-balancing-elb)
+  - [ALB - Applicaton load balancer](#alb---applicaton-load-balancer)
+  - [NLB - Network Load Balancer](#nlb---network-load-balancer)
+  - [CLB - Classic load balancer](#clb---classic-load-balancer)
+  - [GLB - Gataway load balancer](#glb---gataway-load-balancer)
+  - [Comparison](#comparison)
 - [Serverless](#serverless)
   - [BaaS (Backend as a service)](#baas-backend-as-a-service)
   - [FaaS (Function as a service)](#faas-function-as-a-service)
@@ -392,6 +399,53 @@ sudo apt-get install apache2
 
 ![Horisontal scaling based on image](images/create_image_7.png)
 
+## Horisonal scalling with auto scale groups
+
+1. Create a launch template for ec2 instance
+
+![](images/ec2_scaling_1.png)
+
+![](images/ec2_scaling_2.png)
+
+![](images/ec2_scaling_3.png)
+
+![](images/ec2_scaling_4.png)
+
+
+```bash
+#!/bin/bash
+yum update -y
+yum install -y httpd
+systemctl start httpd
+systemctl enable httpd
+EC2AZ=$(TOKEN=`curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600"` && curl -H "X-aws-ec2-metadata-token: $TOKEN" -v http://169.254.169.254/latest/meta-data/placement/availability-zone)
+echo '<center><h1>This Amazon EC2 instance is located in Availability Zone: AZID </h1></center>' > /var/www/html/index.txt
+sed "s/AZID/$EC2AZ/" /var/www/html/index.txt > /var/www/html/index.html
+```
+
+![](images/ec2_scaling_5.png)
+
+2. create auto scaling group
+
+![](images/ec2_scaling_6.png)
+
+![](images/ec2_scaling_7.png)
+
+![](images/ec2_scaling_8.png)
+
+![](images/ec2_scaling_9.png)
+
+![](images/ec2_scaling_10.png)
+
+![](images/ec2_scaling_11.png)
+
+![](images/ec2_scaling_12.png)
+
+it's possible to manage auto scaling rules on the base of some metrics (CPU for example) or predicted hours of increasing load.
+
+![](images/ec2_scaling_13.png)
+
+
 ## User data
 
 It's posiible to launch user code after launching ec2 instance
@@ -418,6 +472,14 @@ to get some concrete part of meta-data
 ```bash
 curl http://169.254.169.254/latest/meta-data/local-ipv4
 ```
+
+## Security access
+
+Let's picture we want to access from ec2 instance to s3 bucket. There are two ways to do it.
+
+![](images/ec2_sec_1.png)
+
+![](images/ec2_sec_2.png)
 
 
 
@@ -868,8 +930,70 @@ then we need to create a security group
 ![](images/network_example_32.png)
 
 
-# Load balancing
-ELB - Elastic load balancer
+# Load balancing ELB
+
+## ALB - Applicaton load balancer
+
+![](images/elb_alb.png)
+
+- Operates at the request level (7 level of OCI)
+- Supports path-based routing, host-based routing, query string parameter-based routing  and source IP address-based routing
+- Supports ec2 instances, IP addresses, Lambda functions, and containers as targets
+
+Use cases:
+- Web apps with L7 routing (HTTP/HTTPS)
+- Microservices (Docker containers)
+- Lambda targets
+
+## NLB - Network Load Balancer
+
+![](images/elb_nlb.png)
+
+
+- Operates at the connection level
+- Routes connections based on IP protocol data (4 level of OCI)
+- Offers ultra high performance , low latency, and TLS offloading at scale
+- Can have a static IP/ Elastic IP
+- Supports TCP, TLS, UDP, TCP_UDP and static IP addresses as targets
+
+Use cases:
+- TCP and UDP based apps
+- Ultra-low latency
+- Static IP addresses
+- VPS endpoint services
+
+## CLB - Classic load balancer
+
+![](images/elb_clb.png)
+
+- Old generation, not recommended to use for new apps
+- Performes routing at Layer 4 and Layer 7
+- Use for existing application running in EC2-CLassic
+
+## GLB - Gataway load balancer
+
+![](images/elb_glb.png)
+
+- New thing (2023)
+- Used in front of vurtial appliences such as firewalls , IDS/IPS, and deep packet inspection systems
+- Operates on Layer 3 - listens for all packets on all ports
+- Forwards traffic to the TG speciefied in the listener rules
+- Exchanges traffic with appliences using the GENEVE protocol on port 6081 
+
+Use cases:
+- Load balance virtual appliances such as:
+  - Intrustion detection systems (IDS)
+  - Intrusion prevention systems (IPS)
+  - Next generation firewalls (NGFW)
+  - Web application firewalls (WAF)
+  - Distributed denial of service protection systems (DDoS)
+- Integrate with Auto Scaling groups for elasticity
+- Apply network monitoring and logging for analytics
+
+
+## Comparison
+
+![](images/elb_comparison_1.png)
 
 # Serverless
 
