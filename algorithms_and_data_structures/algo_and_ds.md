@@ -4,36 +4,6 @@
 
 Generally you want to choose the most efficient algorithm—whether you’re trying to optimize for time or space.
 
-## Binary search 
-
-Binary search is an algorithm; its input is a sorted list of elements. With binary search, you guess the middle number and eliminate half the remaining numbers every time. For any list of n, binary search will take $log_2n$ n steps to run in the worst case, whereas simple search will take n steps.
-
-```java
-    int binarySearch(int arr[], int x)
-    {
-        int l = 0, r = arr.length - 1;
-        while (l <= r) {
-            int m = l + (r - l) / 2;
- 
-            // Check if x is present at mid
-            if (arr[m] == x)
-                return m;
- 
-            // If x greater, ignore left half
-            if (arr[m] < x)
-                l = m + 1;
- 
-            // If x is smaller, ignore right half
-            else
-                r = m - 1;
-        }
- 
-        // If we reach here, then element was
-        // not present
-        return -1;
-    }
-```
-
 
 ## Big O notation 
 Big O notation lets you compare the number of operations. It tells you how fast the algorithm grows. Big O establishes a worst-case run time
@@ -72,3 +42,92 @@ The travelling salesman problem (TSP) asks the following question: "Given a list
 
 O(n!)
 
+## Search
+
+### Binary search 
+
+Binary search is an algorithm; its input is a sorted list of elements. With binary search, you guess the middle number and eliminate half the remaining numbers every time. For any list of n, binary search will take $log_2n$ n steps to run in the worst case, whereas simple search will take n steps.
+
+```java
+    int binarySearch(int arr[], int x)
+    {
+        int l = 0, r = arr.length - 1;
+        while (l <= r) {
+            int m = l + (r - l) / 2;
+ 
+            // Check if x is present at mid
+            if (arr[m] == x)
+                return m;
+ 
+            // If x greater, ignore left half
+            if (arr[m] < x)
+                l = m + 1;
+ 
+            // If x is smaller, ignore right half
+            else
+                r = m - 1;
+        }
+ 
+        // If we reach here, then element was
+        // not present
+        return -1;
+    }
+```
+
+
+
+## Sorting
+
+### Selection sorting
+
+```java
+public static void sortAscending(final int[] arr) {
+    for (int i = 0; i < arr.length - 1; i++) {
+        int minElementIndex = i;
+        for (int j = i + 1; j < arr.length; j++) {
+            if (arr[minElementIndex] > arr[j]) {
+                minElementIndex = j;
+            }
+        }
+
+        if (minElementIndex != i) {
+            int temp = arr[i];
+            arr[i] = arr[minElementIndex];
+            arr[minElementIndex] = temp;
+        }
+    }
+}
+
+public static void sortDescending(final int[] arr) {
+    for (int i = 0; i < arr.length - 1; i++) {
+        int maxElementIndex = i;
+        for (int j = i + 1; j < arr.length; j++) {
+            if (arr[maxElementIndex] < arr[j]) {
+                maxElementIndex = j;
+            }
+        }
+
+        if (maxElementIndex != i) {
+            int temp = arr[i];
+            arr[i] = arr[maxElementIndex];
+            arr[maxElementIndex] = temp;
+        }
+    }
+}       
+```
+
+## Recursive
+
+When you write a recursive function, you have to tell it when to stop recursing. That’s why every recursive function has two parts: 
+- **base case** - when the function calls itself
+- **recursive case** -  when the function calls itself
+  
+  so it doesn’t go into an infinite loop.
+
+```python
+def factorial(x):
+  if x == 1:
+    return 1
+  else:
+    return x * factorial(x-1)
+```

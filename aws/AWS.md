@@ -25,11 +25,19 @@
 - [EBS Elastic block storage](#ebs-elastic-block-storage)
 - [EFS Elastic file system](#efs-elastic-file-system)
 - [S3 Simple storage service](#s3-simple-storage-service)
+  - [Overview](#overview)
+  - [Accessing s3](#accessing-s3)
+  - [Storage classes](#storage-classes)
+  - [Example](#example)
 - [AWS ClI](#aws-cli)
   - [Installing](#installing)
   - [configure](#configure)
   - [help](#help)
   - [ec2 cli](#ec2-cli)
+  - [alb and autoscaling group](#alb-and-autoscaling-group)
+    - [create auto scaling group](#create-auto-scaling-group)
+    - [create load balancer, create listener, and attach to TG1 to ASG2](#create-load-balancer-create-listener-and-attach-to-tg1-to-asg2)
+    - [delete ASG2 and ALB2](#delete-asg2-and-alb2)
   - [s3 cli](#s3-cli)
   - [assuming a role](#assuming-a-role)
 - [AWS SAM CLI](#aws-sam-cli)
@@ -47,10 +55,14 @@
     - [Examples](#examples)
 - [Load balancing ELB](#load-balancing-elb)
   - [ALB - Applicaton load balancer](#alb---applicaton-load-balancer)
+    - [Routing ALB](#routing-alb)
+    - [Example how to configure](#example-how-to-configure)
   - [NLB - Network Load Balancer](#nlb---network-load-balancer)
+    - [NLB routing](#nlb-routing)
   - [CLB - Classic load balancer](#clb---classic-load-balancer)
   - [GLB - Gataway load balancer](#glb---gataway-load-balancer)
   - [Comparison](#comparison)
+  - [Session info](#session-info)
 - [Serverless](#serverless)
   - [BaaS (Backend as a service)](#baas-backend-as-a-service)
   - [FaaS (Function as a service)](#faas-function-as-a-service)
@@ -129,7 +141,7 @@ It's not possible to craate IAM entries for a specific region, only for all of t
 
 Role based access control (RBAC)
 
-Groups of users organized by job role. Permissions link to the group. User inherits permissions from the group. And principle of least previleges - the minimum permissions to get wob done. 
+Groups of users organized by job role. Permissions link to the group. User inherits permissions from the group. And principle of least previleges - the minimum permissions to get job done. 
 
 There are a lot of preconfigured job-function policies like:
 - Administrator
@@ -557,10 +569,44 @@ sudo mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,ret
 ![Shared folder via EFS](images/efs_13.png)
 
 # S3 Simple storage service
+
+## Overview
+
+- Можно создавать бакеты (buckets) и в них создавать файлы. 
+- Доступ можно настраивать как на файлы так и на бакеты. Лучше для публичных данных создавать отдельный бакет. 
+- Имя бакета уникально globally. Т.е назвать tests3 нельзя. 
+- Size of files from 0 bytes to 5 TB
+- Buckets are withing a region. Therefore it is a best practice to create buckets in regions that are physically closest to your users to reduce latency
+- There is no hierarchy for objects within the bucket 
+- From 2020 delivers strong read-after-write consistency (before there was eventual consistency)
+![](images/s3_overview_1.png)
+
+actually files hiararcy mimics through the key parts of url. 
+
+![](images/s3_mimic_folder.png)
+
+An object consists of:
+- Key (the name of the object)
+- Version ID
+- Value (actual data)
+- Metadata
+- Subresources
+- Access control information
+
+## Accessing s3
+
+![](images/s3_access.png)
+
+- It is possible to access from vps to s3 bucket through the **internet gateway** via internet or using **s3 Gataway Endpoint** not using internet.  
+
+## Storage classes
+
+![](images/s3_storage_type_1.png)
+
+## Example
+
 ![S3](images/s3_1.png)
 ![S3](images/s3_2.png)
-Можно создавать бакеты (buckets) и в них создавать файлы. Доступ можно настраивать как на папки так и на бакеты. Лучше для публичных данных создавать отдельный бакет. 
-Имя бакета уникально для всех пользователей. Т.е назвать tests3 нельзя. 
 ![S3](images/s3_3.png)
 ![S3](images/s3_4.png)
 
@@ -669,6 +715,31 @@ SUBNETID=$(TOKEN=`curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aw
 echo '<center><h1>This instance is in the subnet wih ID: SUBNETID </h1></center>' > /var/www/html/index.txt
 sed "s/SUBNETID/$SUBNETID/" /var/www/html/index.txt > /var/www/html/index.html
 ```
+
+## alb and autoscaling group
+
+
+### create auto scaling group
+```bash
+aws autoscaling create-auto-scaling-group --auto-scaling-group-name ASG2 --launch-template "LaunchTemplateName=MyEC2WebApp" --min-size 1 --max-size 3 --desired-capacity 2 --availability-zones "us-east-1a" "us-east-1b" --vpc-zone-identifier "subnet-02a94e365a7db9848, subnet-00fcec5c9dcd1077d"
+```
+### create load balancer, create listener, and attach to TG1 to ASG2
+
+```bash
+aws elbv2 create-load-balancer --name ALB2 --subnets subnet-02a94e365a7db9848 subnet-00fcec5c9dcd1077d --security-groups sg-018ef94c41893157d
+
+aws elbv2 create-listener --load-balancer-arn arn:aws:elasticloadbalancing:us-east-1:821711655051:loadbalancer/app/ALB2/c3276fdb62a22113 --protocol HTTP --port 80 --default-actions Type=forward,TargetGroupArn=arn:aws:elasticloadbalancing:us-east-1:821711655051:targetgroup/TG1/e47504d36c5b8a7f
+
+aws autoscaling attach-load-balancer-target-groups --auto-scaling-group-name ASG2 --target-group-arns arn:aws:elasticloadbalancing:us-east-1:821711655051:targetgroup/TG1/e47504d36c5b8a7f
+```
+
+### delete ASG2 and ALB2
+```bash
+aws elbv2 delete-load-balancer --load-balancer-arn arn:aws:elasticloadbalancing:us-east-1:821711655051:loadbalancer/app/ALB2/c3276fdb62a22113
+
+aws autoscaling delete-auto-scaling-group --auto-scaling-group-name ASG2 --force-delete
+```
+
 
 ## s3 cli
 
@@ -945,6 +1016,51 @@ Use cases:
 - Microservices (Docker containers)
 - Lambda targets
 
+### Routing ALB
+
+![](images/alb_routing_1.png)
+
+### Example how to configure
+
+We have autoscaling group for our app, subnets and security groups.
+
+Let's create Target group but do not add to this a particular instance. We add them later. 
+
+![](images/alb_configure_1.png)
+
+![](images/alb_configure_2.png)
+
+![](images/alb_configure_3.png)
+
+![](images/alb_configure_4.png)
+
+create alb and connect it to target group 
+
+![](images/alb_configure_5.png)
+
+![](images/alb_configure_6.png)
+
+![](images/alb_configure_7.png)
+
+![](images/alb_configure_8.png)
+
+![](images/alb_configure_9.png)
+
+connect auto scale group to target group
+
+![](images/alb_configure_10.png)
+
+![](images/alb_configure_11.png)
+
+see changes in target groups
+
+![](images/alb_configure_12.png)
+
+![](images/alb_configure_13.png)
+
+![](images/alb_configure_14.png)
+
+
 ## NLB - Network Load Balancer
 
 ![](images/elb_nlb.png)
@@ -961,6 +1077,12 @@ Use cases:
 - Ultra-low latency
 - Static IP addresses
 - VPS endpoint services
+
+### NLB routing
+
+it is not possible to route by path or host header. But it is possible by port
+
+![](images/nlb_routing_1.png)
 
 ## CLB - Classic load balancer
 
@@ -994,6 +1116,14 @@ Use cases:
 ## Comparison
 
 ![](images/elb_comparison_1.png)
+
+## Session info
+
+![](images/session_state_1.png)
+
+![](images/session_state_2.png)
+
+
 
 # Serverless
 
