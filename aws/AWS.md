@@ -27,8 +27,26 @@
 - [S3 Simple storage service](#s3-simple-storage-service)
   - [Overview](#overview)
   - [Accessing s3](#accessing-s3)
+  - [Security](#security)
+    - [Example using ACL](#example-using-acl)
+    - [Using IAM policies and bucket policies](#using-iam-policies-and-bucket-policies)
+      - [List buckets (user policy)](#list-buckets-user-policy)
+      - [2 See root-level bucket items (user policy)](#2-see-root-level-bucket-items-user-policy)
+      - [View the Department folder contents (user policy)](#view-the-department-folder-contents-user-policy)
+      - [Get and put objects in the Department folder (user policy)](#get-and-put-objects-in-the-department-folder-user-policy)
+      - [Explicitly grant access to user to list the Confidential folder (Bucket Policy) - use with policy 2 above](#explicitly-grant-access-to-user-to-list-the-confidential-folder-bucket-policy---use-with-policy-2-above)
+  - [MFA](#mfa-1)
+    - [S3 Multi Factor Authentication Delete (MFA Delete)](#s3-multi-factor-authentication-delete-mfa-delete)
+    - [MFA protected API access (not only s3)](#mfa-protected-api-access-not-only-s3)
+    - [Encription](#encription)
+  - [S3 Event Notifications](#s3-event-notifications)
   - [Storage classes](#storage-classes)
   - [Example](#example)
+  - [Preassigned temporary url](#preassigned-temporary-url)
+  - [Log bucket events to the another bucket](#log-bucket-events-to-the-another-bucket)
+  - [CORS with S3 bucket](#cors-with-s3-bucket)
+  - [S3 Optimization patterns](#s3-optimization-patterns)
+- [CloudFront (CDN)](#cloudfront-cdn)
 - [AWS ClI](#aws-cli)
   - [Installing](#installing)
   - [configure](#configure)
@@ -599,6 +617,383 @@ An object consists of:
 
 - It is possible to access from vps to s3 bucket through the **internet gateway** via internet or using **s3 Gataway Endpoint** not using internet.  
 
+## Security
+
+Several means to secure s3
+
+- IAM user identity-based policy (are attached to IAM users, groups, or roles)
+- S3 resource-based policy (Can only be attached to Amazon S3 buckets)
+- S3 Access Controls Lists (ACLs) (old approach) - Can be attached to a bucket or directly to an object
+
+- The `Principal` element is not required in the policy
+- AWS generally recommends using S3 bucket policies or IAM policies rather than ACLs
+
+Use IAM policies if:
+
+- You need to control access to AWS services other than S3
+- You have numerous S3 buckets each with different permissions requirements (IAM policies will be easier to manage)
+- You prefer to keep access control policies in the IAM environment
+
+Use S3 bucket policies if:
+- You want a simple way to grant cross account access to your S3 environment, without using IAM roles
+-  Your IAM policies are reaching the size limits
+- You prefer to keep access control policies in the S3 environment
+
+### Example using ACL
+
+let's crate a bucket with enabled acl
+
+![](images/s2_acl_1.png)
+
+put some file there
+
+![](images/s3_acl_2.png)
+
+by default we do not have an access to this file
+
+![](images/s3_acl_3.png)
+
+add acl to the bucket 
+
+![](images/s3_acl_4.png)
+
+![](images/s3_acl_5.png)
+
+![](images/s3_acl_6.png)
+
+still denied
+
+![](images/s3_acl_3.png)
+
+again to permission
+![](images/s3_acl_7.png)
+
+acl to bucket
+![](images/s3_acl_8.png)
+
+still denied
+
+![](images/s3_acl_3.png)
+
+put acl to the object
+
+![](images/s3_acl_9.png)
+
+![](images/s3_acl_10.png)
+
+and finally accessed
+
+![](images/s3_acl_11.png)
+
+### Using IAM policies and bucket policies
+
+it possible to add user policy here
+
+![](images/s3_policies_1.png)
+
+#### List buckets (user policy)
+
+```json
+{
+	"Version": "2012-10-17", 
+	"Statement":[
+		{
+			"Sid": "AllowGroupToSeeBucketListInTheConsole",
+			"Action": ["s3:ListAllMyBuckets"], 
+			"Effect": "Allow", 
+			"Resource": ["arn:aws:s3:::*"]
+		}
+	]
+}
+```
+
+#### 2 See root-level bucket items (user policy)
+
+```json
+{
+	"Version": "2012-10-17", 
+	"Statement": [
+		{
+			"Sid": "AllowGroupToSeeBucketListAndAlsoAllowGetBucketLocationRequiredForListBucket", 
+			"Action": [ "s3:ListAllMyBuckets", "s3:GetBucketLocation" ], 
+			"Effect": "Allow", 
+			"Resource": [ "arn:aws:s3:::*" ]
+		},
+		{
+			"Sid": "AllowRootLevelListingOfCompanyBucket", 
+			"Action": ["s3:ListBucket"], 
+			"Effect": "Allow", 
+			"Resource": ["arn:aws:s3:::YOURBUCKETNAME"], 
+			"Condition":{ 
+				"StringEquals":{
+					"s3:prefix":[""], "s3:delimiter":["/"]
+			}
+				}
+		}
+	]
+}
+```
+
+####  View the Department folder contents (user policy)
+
+```json
+{
+	"Version": "2012-10-17", 
+	"Statement": [
+		{
+			"Sid": "AllowGroupToSeeBucketListAndAlsoAllowGetBucketLocationRequiredForListBucket", 
+			"Action": [ "s3:ListAllMyBuckets", "s3:GetBucketLocation" ], 
+			"Effect": "Allow", 
+			"Resource": [ "arn:aws:s3:::*" ]
+		},
+		{
+			"Sid": "AllowRootLevelListingOfCompanyBucket", 
+			"Action": ["s3:ListBucket"], 
+			"Effect": "Allow", 
+			"Resource": ["arn:aws:s3:::YOURBUCKETNAME"], 
+			"Condition":{ 
+				"StringEquals":{
+					"s3:prefix":[""], "s3:delimiter":["/"]
+			}
+				}
+		},
+		{
+		"Sid": "AllowListBucketIfSpecificPrefixIsIncludedInRequest", 
+		"Action": ["s3:ListBucket"], 
+		"Effect": "Allow", 
+		"Resource": ["arn:aws:s3:::YOURBUCKETNAME"],
+		"Condition":{ "StringLike":{"s3:prefix":["Department/*"]}
+		}
+	}
+	]
+}
+```
+
+#### Get and put objects in the Department folder (user policy)
+
+```json
+{
+	"Version": "2012-10-17", 
+	"Statement":[
+	{
+		"Sid": "AllowGroupToSeeBucketListAndAlsoAllowGetBucketLocationRequiredForListBucket", 
+		"Action": [ "s3:ListAllMyBuckets", "s3:GetBucketLocation" ], 
+		"Effect": "Allow", 
+		"Resource": [ "arn:aws:s3:::*" ]
+	},
+	{
+		"Sid": "AllowRootLevelListingOfCompanyBucket", 
+		"Action": ["s3:ListBucket"], 
+		"Effect": "Allow", 
+		"Resource": ["arn:aws:s3:::YOURBUCKETNAME"], 
+		"Condition":{ 
+			"StringEquals":{
+				"s3:prefix":[""], "s3:delimiter":["/"]
+		}
+			}
+	},
+	{
+		"Sid":"AllowListBucketIfSpecificPrefixIsIncludedInRequest", "Action":["S3:ListBucket"], 
+		"Effect":"Allow", 
+		"Resource": ["arn:aws:s3:::YOURBUCKETNAME"], 
+		"Condition":{
+			"StringLike":{"s3:prefix":["Department/*"]
+			}
+		}
+	},
+{
+		"Sid":"AllowUserToReadWriteObjectDataInDepartmentFolder", 
+		"Action":["s3:GetObject", "s3:PutObject"], 
+		"Effect":"Allow", 
+		"Resource":["arn:aws:s3:::YOURBUCKETNAME/Department/*"]
+	}
+	]
+}
+```
+
+#### Explicitly grant access to user to list the Confidential folder (Bucket Policy) - use with policy 2 above
+
+it is possible to use a combination user-policies and bucket-policy.
+
+to add a bucket policsy 
+
+![](images/s3_policies_2.png)
+
+```json
+{
+	"Version": "2012-10-17", 
+	"Id": "Policy1561964929358", 
+	"Statement":[
+	{
+		"Sid": "Stmt1561964454052", 
+		"Effect": "Allow", 
+		"Principal": {
+			"AWS": "arn:aws:iam::138422235973:user/Paul"
+		},
+		"Action": "s3:*", 
+		"Resource": "arn:aws:s3:::YOURBUCKETNAME",
+		"Condition": {
+			"StringLike": {
+				"s3:prefix": "Confidential/*"
+			}
+		}
+	}
+	]
+}
+```
+
+## MFA
+
+### S3 Multi Factor Authentication Delete (MFA Delete)
+
+Adds MFA requirement for bucket owners to the following operations:
+- Changing the versioning state of a bucket
+- Permanently deleting an object version
+
+The `x-amz-mfa`` request header must be included in the above requests
+
+The second factor is a token generated by a hardware device or software program
+
+Requires `versioning`` to be enabled on the bucket
+
+`Versioning`` can be enabled by:
+  - Bucket owners (root account)
+  - AWS account that created the bucket
+  - Authorized IAM users
+
+MFA delete can be enabled by:
+  - Bucket owner (root account)
+
+### MFA protected API access (not only s3)
+
+![](images/s3_mfa_1.png)
+
+### Encription
+
+- All Amazon S3 buckets have encryption configured by default (from some moment of history)
+- All new object uploads to Amazon S3 are automatically encrypted
+- There is no additional cost and no impact on performance
+- Objects are automatically encrypted by using server side encryption with Amazon S3 managed keys (SSE S3)
+- To encrypt existing unencrypted Amazon S3 objects, you can use Amazon S3 Batch Operations
+- You can also encrypt existing objects by using the CopyObject API operation or the copy object AWS CLI command
+
+![](images/s3_encryption_1.png)
+
+![](images/s3_encryption_2.png)
+
+an example where we have a requirements to use encryption with kms
+
+![](images/s3_encryption_3.png)
+
+example bucket policy to deny without server-side encryption
+
+```json
+{
+    "Version": "2012-10-17",
+    "Id": "PutObjPolicy",
+    "Statement": [
+        {
+            "Sid": "DenyUnEncryptedObjectUploads",
+            "Effect": "Deny",
+            "Principal": "*",
+            "Action": "s3:PutObject",
+            "Resource": "arn:aws:s3:::YOUR-BUCKET-NAME/*",
+            "Condition": {
+                "Null": {
+                    "s3:x-amz-server-side-encryption": "true"
+                }
+            }
+        }
+    ]
+}
+```
+
+and it is posiiible to apply a default encryption in bucket without policy just a by setting.
+
+
+
+Command without encryption: 
+
+```bash
+aws s3 cp YOUR-FILE-NAME s3://YOUR-BUCKET-NAME`
+```
+
+Command with encryption: 
+
+```bash
+aws s3api put-object --body YOUR-FILE-NAME --key YOUR-FILE-NAME --bucket YOUR-BUCKET-NAME --server-side-encryption AES256`
+```
+
+## S3 Event Notifications
+
+to add notification to en email via SNS service when file uploads to s3 bucket
+
+create a SNS topic
+
+![](images/s3_sns_1.png)
+
+create subsription on sns topic 
+
+![](images/s3_sns_2.png)
+
+![](images/s3_sns_3.png)
+
+then an email will be sent on a email for activate subscription, approval subscription required.
+
+![](images/s3_sns_4.png)
+
+configure access policy to our topic
+
+copy arn of topic 
+
+![](images/s3_sns_5.png)
+
+
+put topic arn to `Resource` and copy account id from the arn to the `SourceAccount`.  And paste arn for bucket to `aws:SourceArn`
+
+```json
+{
+ "Version": "2012-10-17",
+ "Id": "AllowS3Publish",
+ "Statement": [
+  {
+   "Sid": "S3EventNotification",
+   "Effect": "Allow",
+   "Principal": {
+     "Service": "s3.amazonaws.com"  
+   },
+   "Action": [
+    "SNS:Publish"
+   ],
+   "Resource": "arn:aws:sns:eu-north-1:967120122177:Email-Me",
+   "Condition": {
+      "ArnLike": { "aws:SourceArn": "arn:aws:s3:::test2342342223" },
+      "StringEquals": { "aws:SourceAccount": "967120122177" }
+   }
+  }
+ ]
+}
+```
+
+and put that json to the access policy on topic. Actually is a grant to publish to this topic events from particular bucket.
+
+![](images/s3_sns_6.png)
+
+then we need to configure a notification event from bucket. Go to the bucket settings.
+
+![](images/s3_sns_7.png)
+
+![](images/s3_sns_8.png)
+
+![](images/s3_sns_9.png)
+
+![](images/s3_sns_10.png)
+
+if we put a file to this bucket we will get similar email
+
+![](images/s3_sns_11.png)
+
+
 ## Storage classes
 
 ![](images/s3_storage_type_1.png)
@@ -613,6 +1008,67 @@ An object consists of:
 Есть также S3 Glacier метафора про холодильник, достать данные из которого потребует значительного времени, но дешевле чем S3. Подходит для бекапов, логов и тд, которые не нужно постоянно читать. Можно настроить политику переноса данных в Glasier после некоторого времени хранения. 
 
 Также если нужен CDN , есть CloudFront. Например если делаем статический сайт и храним его в S3 бакете, можно настроить CloudFront так, чтобы в зависимости от расположения пользователя выбирался ближайший сервис, чтобы сделать загрузку быстрее.
+
+## Preassigned temporary url
+
+We have a bucket with an object and we do not have a public access to this object
+
+![](images/s3_preassigned_url_1.png)
+
+```bash
+aws s3 presign s3://test2342342223/2880px-Hovhannes_Aivazovsky_-_The_Ninth_Wave_-_Google_Art_Project.jpg
+```
+
+![](images/s3_preassigned_url_2.png)
+
+![](images/s3_preassigned_url_3.png)
+
+temproray url with 3600 seconds by defualt.
+
+## Log bucket events to the another bucket
+
+-  Provides detailed records for the requests that are made to a bucket
+- Details include the requester, bucket name, request time, request action, response status, and error code (if applicable)
+- Disabled by default
+- Only pay for the storage space used
+- Must configure a separate bucket as the destination (can specifya prefix)
+- Must grant write permissions to the Amazon S3 Log Delivery group on destination bucket
+
+## CORS with S3 bucket
+
+![](images/s3_cors_1.png)
+
+Enabled through setting:
+- Access-Control-Allow-Origin
+- Access-Control-Allow-Methods
+- Access-Control-Allow-Headers
+
+- These settings are defined using rules
+- Rules are added using JSON files in S3
+- Rules added to that bucket that it will be accessed from different origin
+
+![](images/s3_cors_2.png)
+
+## S3 Optimization patterns
+
+- S3 Automatically scales to high request rates with at least (per prefix):
+  - 3,500 PUT/COPY/POST/DELETE requests/second
+  - 5,500 GET/HEAD requests/second
+
+- Can increase read and write performance by using parallelization across multiple prefixes
+- To increase uploads over long distances, use Amazon S3 Transfer Acceleration
+
+- Byte Range fetches use the Range HTTP header to transfer only specified byte range from an object
+- Combine S3 and EC2 in the same AWS Region
+- Use the latest version of the AWS SDKs
+- Use caching services to cache the latest content:
+  - Amazon CloudFront (CDN)
+  - Amazon ElastiCache (in memory cache)
+- Horizontally scale requests across S3 endpoints
+
+# CloudFront (CDN)
+
+![](images/cloudfront_1.png)
 
 # AWS ClI
 
