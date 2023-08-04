@@ -47,6 +47,12 @@
   - [CORS with S3 bucket](#cors-with-s3-bucket)
   - [S3 Optimization patterns](#s3-optimization-patterns)
 - [CloudFront (CDN)](#cloudfront-cdn)
+  - [Sign URL](#sign-url)
+  - [Sign cookies](#sign-cookies)
+  - [CloudFront origin access identity OAI](#cloudfront-origin-access-identity-oai)
+  - [Cloudfront OAC](#cloudfront-oac)
+  - [Example static website](#example-static-website)
+- [Route 53](#route-53)
 - [AWS ClI](#aws-cli)
   - [Installing](#installing)
   - [configure](#configure)
@@ -1069,6 +1075,69 @@ Enabled through setting:
 # CloudFront (CDN)
 
 ![](images/cloudfront_1.png)
+
+in cloudfront we create a distribution. 
+
+![](images/cloudfront_2.png)
+
+## Sign URL
+
+An analogus to sign url for s3 bucket. It can be possible to use to get a cloud front after authenication via some different endpoint for example a lambda function.
+
+![](images/cloudfront_3.png)
+
+## Sign cookies
+
+- Similar to Signed URLs
+- Use signed cookies when you don’t want to change URLs
+- Can also be used when you want to provide access to multiple restricted files (Signed URLs are for individual files)
+
+## CloudFront origin access identity OAI
+
+Only for s3 bucket. Access to bucket via bucket policy only for a specific cloudfront user. 
+
+![](images/cloudfront_4.png)
+
+Possible it can be deprecated soon.
+
+## Cloudfront OAC
+
+![](images/cloudfront_5.png)
+
+## Example static website 
+
+1. Create a s3 bucket.
+2. updoad index.html and error.html to bucket
+
+3. enable bucket properties to host static web site.
+
+![](images/cloudfront_6.png)
+
+after that bucket properties it is possible to find a url for static web site. But in this case is should be not accessible. 
+
+![](images/cloudfront_7.png)
+
+4. create distribution 
+
+![](images/cloudfront_8.png)
+
+![](images/cloudfront_9.png)
+
+![](images/cloudfront_10.png)
+
+after a couple of minutes it will be deployes around the world. It is possible to copy url to test a website.
+
+![](images/cloudfront_11.png)
+
+![](images/cloudfront_12.png)
+
+# Route 53
+
+![](images/route53_1.png)
+
+![](images/route53_2.png)
+
+![](images/route53_3.png)
 
 # AWS ClI
 
