@@ -67,6 +67,7 @@
       - [Ref](#ref)
       - [Fn::GetAtt](#fngetatt)
     - [Fn:FindInMap](#fnfindinmap)
+- [Elastic Beanstalk](#elastic-beanstalk)
 - [AWS ClI](#aws-cli)
   - [Installing](#installing)
   - [configure](#configure)
@@ -1484,6 +1485,52 @@ Resources:
         - HVM64
       InstanceType: m1.small
 ```
+# Elastic Beanstalk
+
+Managed web apps. Abstraction on vpc, subnets, auto scaling groups and alb. 
+
+![](images/beanstalk_1.png)
+
+Supports Java, .NET, PHP, Node.js, Python, Ruby, Go, and Docker web applications
+
+Supports the following languages and development stacks:
+- Apache Tomcat for Java applications
+- Apache HTTP Server for PHP applications
+- Apache HTTP Server for Python applications
+- Nginx or Apache HTTP Server for Node.js applications
+- Passenger or Puma for Ruby applications
+- Microsoft IIS 7.5, 8.0, and 8.5 for .NET applications
+- Java SE
+- Docker
+- Go
+
+There are several layers
+Applications:
+- Contain environments, environment configurations, and application versions
+- You can have multiple application versions held within an application
+
+Application version:
+- A specific reference to a section of deployable code
+- The application version will point typically to an Amazon S3 bucket containing the code
+
+Environments:
+- An application version that has been deployed on AWS resources
+- The resources are configured and provisioned by AWS Elastic Beanstalk
+- The environment is comprised of all the resources created by Elastic Beanstalk and not just an EC2 instance with your uploaded code
+
+![](images/beanstalk_2.png)
+
+Type of environenment:
+
+**Web servers** are standard applications that listen for and then process HTTP requests, typically over port 80
+
+**Workers** are specialized applications that have a background processing task that listens for messages on an Amazon SQS queue
+
+Workers should be used for long running tasks
+
+![](images/beanstalk_3.png)
+
+
 
 # AWS ClI
 
