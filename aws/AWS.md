@@ -53,6 +53,9 @@
   - [Cloudfront OAC](#cloudfront-oac)
   - [Example static website](#example-static-website)
 - [Route 53](#route-53)
+- [CloudFormation](#cloudformation)
+  - [Nested stacks](#nested-stacks)
+  - [Examples](#examples)
 - [AWS ClI](#aws-cli)
   - [Installing](#installing)
   - [configure](#configure)
@@ -76,7 +79,7 @@
     - [NAT for private subnets](#nat-for-private-subnets)
     - [connect on-premises data center](#connect-on-premises-data-center)
     - [Firewall](#firewall)
-    - [Examples](#examples)
+    - [Examples](#examples-1)
 - [Load balancing ELB](#load-balancing-elb)
   - [ALB - Applicaton load balancer](#alb---applicaton-load-balancer)
     - [Routing ALB](#routing-alb)
@@ -92,7 +95,7 @@
   - [FaaS (Function as a service)](#faas-function-as-a-service)
   - [AWS Lambda](#aws-lambda)
   - [How lambda can be invoked](#how-lambda-can-be-invoked)
-  - [Examples](#examples-1)
+  - [Examples](#examples-2)
     - [Web API](#web-api)
     - [File processing](#file-processing)
   - [Other](#other)
@@ -1138,6 +1141,137 @@ after a couple of minutes it will be deployes around the world. It is possible t
 ![](images/route53_2.png)
 
 ![](images/route53_3.png)
+
+# CloudFormation
+
+![](images/cloudformation_1.png)
+
+- Infrastructure is provisioned consistently with fewer human error
+- Less time and effort than configuring resources manually 
+- You can use version control and peer review for your CloudFormation templates
+- free to use
+- can be used to manage updates and dependencies
+- can be used to rollback and delete the entire stack
+
+**templates** - the JSON or YAML that contains the instruction for building out the AWS environment
+
+**Stacks** - The entire environment described by the template and created updated and deleted as a single unit
+
+**StackSets** - extends functionality of stacks by enabling you to create update or delete stacks across multiple accounts and regions with a single operation
+
+**Change Sets** - A summary of proposed changes to your stack that will allow you to see how those changes might impact your existing resources before implementing them
+
+- stacks are deployed through the Management Console, CLI or APIs.
+
+Stack creating error:
+  - Automatic rollback on error is enabled by default
+  - you will be charged for resources provisioned even if there is an error
+
+An administrator account is the AWS account in which you can crate **StackSets**
+
+A target account is the account into which you create update delete one or more stacks in your stack set
+
+## Nested stacks
+
+Nested stacks allow re-use of CloudFormation code for common use cases
+
+Create a standart template for each common use case and reference it from within your CloudFormation template
+
+## Examples
+
+create a bucket 
+
+```yml
+AWSTemplateFormatVersion: 2010-09-09
+Resources:
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Description: Create Amazon S3 bucket using CloudFormation
+    Properties:
+      BucketName: my-test-bucket-1342323
+Outputs:
+  S3Bucket:
+    Description: S3 bucket created from a CloudFormation template
+    Value: !Ref S3Bucket
+```
+
+create a bucket with default encryption
+
+```yml
+AWSTemplateFormatVersion: 2010-09-09
+Resources:
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Description: Create Amazon S3 bucket using CloudFormation
+    Properties:
+      BucketName: YOUR-BUCKET-NAME
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+Outputs:
+  S3Bucket:
+    Description: S3 bucket created from a CloudFormation template
+    Value: !Ref S3Bucket
+```
+
+bucket with versioning
+```yml
+AWSTemplateFormatVersion: 2010-09-09
+Resources:
+  S3Bucket:
+    DeletionPolicy: Retain
+    Type: AWS::S3::Bucket
+    Description: Create Amazon S3 bucket using CloudFormation
+    Properties:
+      BucketName: my-test-bucket-1342323
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      VersioningConfiguration:
+        Status: Enabled
+Outputs:
+  S3Bucket:
+    Description: S3 bucket created from a CloudFormation template
+    Value: !Ref S3Bucket
+```
+
+Let's create a simple bucket. 
+
+![](images/cloudformation_2.png)
+![](images/cloudformation_3.png)
+
+select a file with "create a bucket " yaml
+
+![](images/cloudformation_4.png)
+
+![](images/cloudformation_5.png)
+ 
+ outputs are from the yml file
+
+![](images/cloudformation_6.png)
+
+
+let's edit bucket and add versioning
+
+![](images/cloudformation_7.png)
+
+![](images/cloudformation_8.png)
+
+it is possible to see that bucket will be changed after applying this template and how it will be changed
+
+![](images/cloudformation_9.png)
+
+![](images/cloudformation_10.png)
+
+and then let's apply created change set
+
+![](images/cloudformation_11.png)
+
+![](images/cloudformation_12.png)
+
+if we delete a stack, then resources also can be deleted. It depends on the their DeletePolicy in template. 
 
 # AWS ClI
 
