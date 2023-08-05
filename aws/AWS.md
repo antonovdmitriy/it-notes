@@ -56,6 +56,17 @@
 - [CloudFormation](#cloudformation)
   - [Nested stacks](#nested-stacks)
   - [Examples](#examples)
+  - [Template features](#template-features)
+    - [Resources](#resources)
+    - [Parameters](#parameters)
+    - [Mappings](#mappings)
+    - [Outputs](#outputs)
+    - [Conditions](#conditions)
+    - [Transform](#transform)
+    - [Intrinsic functions](#intrinsic-functions)
+      - [Ref](#ref)
+      - [Fn::GetAtt](#fngetatt)
+    - [Fn:FindInMap](#fnfindinmap)
 - [AWS ClI](#aws-cli)
   - [Installing](#installing)
   - [configure](#configure)
@@ -1272,6 +1283,207 @@ and then let's apply created change set
 ![](images/cloudformation_12.png)
 
 if we delete a stack, then resources also can be deleted. It depends on the their DeletePolicy in template. 
+
+## Template features
+
+**Logical ID** used to reference resources within the template
+
+**Physical ID** identity resources outside of CloudFormation temlates, but only after the resources have been created
+
+### Resources
+
+The required Resources section declares the AWS resources that you want to include in the stack, such as an Amazon EC2 instance or an Amazon S3 bucket
+
+This is a mandatory section
+
+Resources are declared and can be reference each other
+
+```yml
+Resources:
+  myEC2Instance:
+    Type: "AWS::EC2::Instance"
+    Properties:
+      ImageId: "ami-4424323"
+```
+
+### Parameters
+
+optionl Parameters section to customuze templates
+
+Parameters enable you to input custom values to your template each time you create or update a stack
+
+Useful for template reuse
+
+```yml
+Parameters:
+  InstanceTypeParameter:
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+      - t2.micro
+      - m1.small
+      - m1.large
+    Description: "Enter instance type"
+```
+
+### Mappings
+
+optional Mappings section matches a key to a corresponding set of named values
+
+```yml
+Mappings:
+  RegionMap:
+    us-east-1: 
+      HVM64: "ami-234234234"
+      HVMG2: "ami-sdfsdfs"
+    us-west-1:
+      HVM64: "ami-333"
+      HVMG2: "ami-34545"
+```
+
+With mappings you can set values based on a region. 
+
+### Outputs 
+
+optional Outputs section declares output values that you can import into other stacks (to create cross-stacks references), return in response (to describe stack calls), or view on the AWS CloudFormation console
+
+```yml
+Outputs:
+  StackVPC:
+    Description: The ID of the VPC
+    Value: !Ref MyVPC
+    Export:
+      Name: !Sub "${AWS::StackName}-VPCID"
+```
+
+### Conditions
+
+optional Conditions section contains statements that define a circumstances under which entities are created or configured
+
+```yml
+Conditions:
+  CreateProdResources: !Equals [ !Ref EnvType, prod ]
+```
+
+### Transform
+
+optional Transfrom section specifies one or more macros that CloudFormation uses to process your template
+
+can be used to reference additional code stored in S3, such as Lambda code or reusable snippets of CloudFormation code
+
+`AWS::Serverless` transform specifies a version of the AWS Servless Applicaton Model (AWS SAM) to use. This model defines the AWS SAM syntax that you can use how CloudFormation processes it
+
+`AWS::Include` transform works with template snippet that are stored separately from the main CloudFormation template
+
+```yml
+Transform: AWS::Serverless-2016-10-31
+Resources:
+  MyServerlessFunctionLogicalID:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: index.handler
+      Runtime: nodejs8.10
+      CodeUri: 's3://testBucket/mySourceCode.zip'
+```
+
+### Intrinsic functions
+
+Use intrinsic functions in templates to assign values to properties that are not available until runtime
+
+[Intrinsic functions](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/intrinsic-function-reference.html)
+
+#### Ref
+
+returns the value of the specified parameter or resource
+
+When you specify a parameter's logical name, it returns the value of the parameter
+
+When you specify a resource's logical name, it returns a value that you can typically use to refer to that resource, such as a physical ID
+
+The following resource declaration for an Elastic IP address needs the instance ID of an EC2 instance and uses the Ref function to specify the intsance ID of the MyEC2Instance resource
+
+```yml
+MyEIP:
+  Type: "AWS::EC2::EIP"
+  Properties:
+    InstanceId: !Ref MyEC2Instance
+```
+
+#### Fn::GetAtt
+
+Returns the value of an attribute from a resource in the template
+
+Full synstax (YAML)
+
+```
+Fn::GetAtt: [logicalNameOfResource, attributeName]
+```
+
+Short form (YAML)
+
+```
+!GetAtt logicalNameOfResource.attributeName
+```
+
+```yml
+AWSTemplateFormatVersion: 2010-09-09
+Resources:
+  myELB:
+    Type: AWS::ElasticLoadBalancing::LoadBalancer
+    Properties:
+      AvailabilityZones:
+        - eu-west-1a
+      Listeners:
+        - LoadBalancerPort: '80'
+          InstancePort: '80'
+          Protocol: HTTP
+  myELBIngressGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: ELB ingress group
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '80'
+          ToPort: '80'
+          SourceSecurityGroupOwnerId: !GetAtt myELB.SourceSecurityGroup.OwnerAlias
+          SourceSecurityGroupName: !GetAtt myELB.SourceSecurityGroup.GroupName
+```
+
+### Fn:FindInMap
+
+returns the value corresponding to keys in a two-level map that is declared in the Mappings section
+
+Full Syntax (YAML)
+
+```
+Fn::FindInMap:[MapName, TopLevelKey, SecondLevelKey]
+```
+
+Short Syntax (YAML)
+
+```
+!FindInMap [MapName, TopLevelKey, SecondLevelKey]
+```
+
+```yml
+Mappings:
+  RegionMap:
+    us-east-1: 
+      HVM64: "ami-234234234"
+      HVMG2: "ami-sdfsdfs"
+    us-west-1:
+      HVM64: "ami-333"
+      HVMG2: "ami-34545"
+Resources:
+  myEC2Instance:
+    Type: "AWS::EC2::Instance"
+    Properties:
+      ImageId: !FindInMap
+        - RegionMap
+        - !Ref 'AWS:Region'
+        - HVM64
+      InstanceType: m1.small
+```
 
 # AWS ClI
 
