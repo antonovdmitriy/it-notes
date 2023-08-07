@@ -68,6 +68,14 @@
       - [Fn::GetAtt](#fngetatt)
     - [Fn:FindInMap](#fnfindinmap)
 - [Elastic Beanstalk](#elastic-beanstalk)
+  - [Deployment options](#deployment-options)
+    - [All at once](#all-at-once)
+    - [Rolling](#rolling)
+    - [Rolling with additional batch](#rolling-with-additional-batch)
+    - [Immutable](#immutable)
+    - [Blue/green](#bluegreen)
+  - [AWS Elastic Beanstalk configuration files](#aws-elastic-beanstalk-configuration-files)
+  - [SSL/TLS](#ssltls)
 - [AWS ClI](#aws-cli)
   - [Installing](#installing)
   - [configure](#configure)
@@ -112,9 +120,16 @@
     - [File processing](#file-processing)
   - [Other](#other)
   - [First Java example (compile and deploy via SAM)](#first-java-example-compile-and-deploy-via-sam)
+  - [Types of lambda](#types-of-lambda)
+    - [Synchronous](#synchronous)
+    - [Asynchronous](#asynchronous)
+    - [Event source mapping](#event-source-mapping)
   - [Invoke lambda via AWS CLI](#invoke-lambda-via-aws-cli)
   - [Example with async lambda invocatoin and writing to log](#example-with-async-lambda-invocatoin-and-writing-to-log)
+  - [Create Event Source Mapping](#create-event-source-mapping)
   - [The Lambda Execution Environment](#the-lambda-execution-environment)
+  - [Lambda versions](#lambda-versions)
+  - [Lambda aliases](#lambda-aliases)
   - [Lambda Function Method Signatures](#lambda-function-method-signatures)
     - [Example with basic types](#example-with-basic-types)
     - [Lists and Maps](#lists-and-maps)
@@ -123,6 +138,7 @@
     - [Context](#context)
   - [Timeout](#timeout)
   - [Memory and CPU](#memory-and-cpu)
+  - [Concurrency](#concurrency)
     - [Example pricing](#example-pricing)
   - [Environment Variables](#environment-variables)
   - [Spring cloud functions](#spring-cloud-functions)
@@ -1530,7 +1546,122 @@ Workers should be used for long running tasks
 
 ![](images/beanstalk_3.png)
 
+## Deployment options
 
+### All at once  
+
+- Deploys the new version to all instances simultaneously. 
+- All of your instances are out of service while the deployment takes place
+- Fastest deployment
+- Good for quick iterations in development environment
+- You will experience an outage while the deployment is taking place not ideal for mission critical systems
+- If the update fails, you need to roll back the changes by re deploying the original version to all of your instances
+- No additional cost
+  
+![](images/beanstalk_4.png)
+
+### Rolling
+
+- Update a few instances at a time (batch), and then move onto the next batch once the first batch is healthy
+- Downtime affects 1 batch at a time
+-  Application is running both versions simultaneously
+- Each batch of instances is taken out of service while the deployment takes place
+- Your environment capacity will be reduced by the number of instances in a batch while the deployment takes place
+-  Not ideal for performance sensitive systems
+- If the update fails, you need to perform an additional rolling update to roll back the changes
+- No additional cost
+- Long deployment time
+
+### Rolling with additional batch
+
+- Like Rolling but launches new instances in a batch ensuring that there is full availability
+- Application is running at capacity
+- Can set the batch size
+- Application is running both versions simultaneously
+- Small additional cost
+- Additional batch is removed at the end of the deployment
+- Longer deployment
+- Good for production environments
+
+### Immutable 
+
+![](images/beanstalk_5.png)
+
+- Launches new instances in a new ASG and deploys the version update to these instances before swapping traffic to these instances once healthy
+- Zero downtime
+- New code is deployed to new instances using an ASG
+- High cost as double the number of instances running during updates
+- Longest deployment
+- Quick rollback in case of failures
+- Great for production environments
+
+### Blue/green
+
+![](images/beanstalk_6.png)
+
+- This is not a feature within Elastic Beanstalk
+- You create a new "staging" environment and deploy updates there
+- The new environment (green) can be validated independently, and you can roll back if there are issues
+- Route 53 can be setup using weighted policies to redirect a a percentage of traffic to the staging environment
+- Using Elastic Beanstalk, you can "swap URLs" when done with the environment test
+- Zero downtime
+
+## AWS Elastic Beanstalk configuration files
+
+- You can add AWS Elastic Beanstalk configuration files (.ebextensions) to your web application's source code to configure your environment and customize the AWS resources that it contains
+
+- Configuration files are YAML or JSON formatted documents with a `.config` file extension that you place in a folder
+named `.ebextensions` and deploy in your application source bundle
+
+```yml
+option_settings:
+  aws:elasticbeanstalk:environment:
+    LoadBalancerType: network
+```
+
+`option_settings` section of a configuration file defines values for configuration options
+
+The `Resources` section lets you further customize the resources in your application's environment and define additional AWS resources beyond the functionality provided by configuration options
+
+Additional sections of a configuration file let you configure the EC2 instances that are launched in your environment. These include packages, sources, files, users, groups, commands, container_commands, and services
+
+## SSL/TLS
+
+- SSL/TLS certificates can be assignedto an environment’s Elastic Load Balancer
+- Can use AWS Certificate Manager (ACM)
+- The connections between clients and the load balancer are secured
+- Backend connections between the load balancer and EC2 instances are not secured
+
+You can configure the certificate through the console or through .ebestenstions
+
+```yml 
+option_settings:
+  aws:elbv2:listener:443:
+    ListenerEnabled: 'true'
+    Protocol: HTTPS
+    SSLCertificateArns: arnXXX
+```
+
+- For end to end encryption you can encrypt the backend connections as well
+- Can use a self signed certificate on the EC2 instances
+- Configuration can be made using `.ebextensions` (load balancer dependent)
+- For example, using the `.ebextensions/httpsreencrypt.alb.config` configuration file
+
+```yml 
+option_settings:
+  aws:elbv2:listener:443:
+    DefaultProtocol: https
+    ListenerEnabled: 'true'
+    Protocol: HTTPS
+  aws:elasticbeanstalk:environment:process:https:
+    Port: '443'
+    Protocol: HTTPS
+```
+
+To configure HTTP to HTTPS redirection, do one of the following:
+
+- Configure the instance web servers - configure EC2 web servers to respond to HTTP traffic with an HTTP redirection response status (platform dependent config)
+- Configure the load balancer configure the ALB to send redirection responses to HTTP traffic
 
 # AWS ClI
 
@@ -2087,6 +2218,17 @@ If a particular data center/Availability Zone fails, then Lambda will automatica
 
 - Lambda function may be invoked asynchronously—named **Event** by AWS. This time the request from the upstream caller is responded to immediately by the Lambda platform, while the Lambda function proceeds with processing the request. No further response is returned to the caller in this scenario.
 
+Lambda functions can be invoked directly through:
+- The Lambda console
+- A function URL HTTP(S) endpoint
+-  The Lambda API
+- An AWS SDK
+-  The AWS CLI
+- AWS Toolkits
+
+- Lambda can be invoked by other AWS services
+- Lambda can also be invoked when reading from a stream or queue
+
 ## Examples
 
 ### Web API
@@ -2216,6 +2358,29 @@ aws s3 mb s3://some_unique_name
 ```bash
 aws cloudformation delete-stack --stack-name HelloWorldLambdaJava
 ```
+## Types of lambda 
+
+### Synchronous
+
+- CLI, SDK, API Gateway
+- Wait for the function to process the event and return a response
+- Error handling happens client side (retries, exponential backoff etc.)
+
+
+### Asynchronous
+
+- S3, SNS, CloudWatch Events etc.
+- Event is queued for processing and a response is returned immediately
+- Lambda retries up to 3 times
+- Processing must be idempotent (due to retries)
+
+### Event source mapping
+
+- SQS, Kinesis Data Streams, DynamoDB Streams
+- Lambda does the polling (polls the source)
+- Records are processed in order (except for SQS standard)
+
++ SQS can also trigger Lambda without lambda polling
 
 ## Invoke lambda via AWS CLI
 
@@ -2250,6 +2415,15 @@ where `payload` is a Base64 String
 - result will be in `outputfile.txt`
 
 if we changed as ``--invocation-type Event ``  we will get 202 Status "Accepted".
+
+
+To get logs for an invocation from the command line, use the `--logtype` option. The response includes a `LogResult` field that contains up to 4 KB of base64-encoded logs from the invocation
+
+```bash
+aws lambda invoke --function-name my-function out --log-type Tail
+```
+
+![](images/lambda_1.png)
 
 ## Example with async lambda invocatoin and writing to log
 
@@ -2290,6 +2464,77 @@ aws lambda invoke   --invocation-type Event --function-name HelloWorldJava   --p
 
 ![](images/lambda_example_cloud_watch_3.png)
 
+## Create Event Source Mapping
+
+![](images/lambda_event_source_1.png)
+
+1. Create a role for AWS lambda
+
+![](images/lambda_event_source_2.png)
+
+![](images/lambda_event_source_3.png)
+
+![](images/lambda_event_source_4.png)
+
+after that copy and save arn of the role
+
+2. create sqs queue
+   
+![](images/lambda_event_source_5.png)
+
+![](images/lambda_event_source_6.png)
+
+after that copy and save arn of the queue
+
+3. create lambda by cli
+
+```javascript
+exports.handler = async function(event, context) {
+    event.Records.forEach(record => {
+      const { body } = record;
+      console.log(body);
+    });
+    return {};
+  }
+```
+
+```bash
+zip function.zip index.js
+```
+
+```bash
+aws lambda create-function --function-name EventSourceSQS --zip-file fileb://function.zip --handler index.handler --runtime nodejs16.x --role arn:aws:iam::967120122177:role/my-sqs-role
+```
+
+4. create event-source mapping 
+
+```bash
+aws lambda create-event-source-mapping --function-name EventSourceSQS --batch-size 10 --event-source-arn arn:aws:sqs:eu-north-1:967120122177:MyQueue
+```
+
+to show event-source mapping
+
+```bash
+aws lambda list-event-source-mappings --function-name EventSourceSQS --event-source-arn arn:aws:sqs:eu-north-1:967120122177:MyQueue
+```
+
+![](images/lambda_event_source_7.png)
+
+to delete event-seource mapping
+
+```bash
+aws lambda delete-event-source-mapping --uuid 3b439c3f-22d9-4d2b-9395-c25df2cf049d
+```
+
+5. test exucution by adding a message via sqs console
+
+![](images/lambda_event_source_8.png)
+
+![](images/lambda_event_source_9.png)
+
+![](images/lambda_event_source_10.png)
+
+![](images/lambda_event_source_11.png)
 
 ## The Lambda Execution Environment
 
@@ -2306,6 +2551,57 @@ After that:
 - `Lambda service` will create a `host Linux environment`
 - Lambda will start a language runtime within it. In our case a JVM. The JVM is started with a set of environment flags that we can’t change
 - Starting `Lambda Java Runtime`, such as aws java application server. It is responsible for top-level error handling, logging, and more.
+
+## Lambda versions
+
+- Versioning means you can have multiple versions of your function
+- The function version includes the following information:
+  - The function code and all associated dependencies
+  - The Lambda runtime that executes the function
+  - All the function settings, including the environment variables
+  - A unique Amazon Resource Name (ARN) to identify this version
+of the function
+
+- You can use versions to manage the deployment of your AWS Lambda functions
+- For example, you can publish a new version of a function
+for beta testing without affecting users of the stable
+production version
+
+- You work on `$LATEST`` which is the latest version of the code this is mutable (changeable)
+- When you're ready to publish a Lambda function you create a version (these are numbered)
+- Numbered versions are assigned a number starting with 1 and subsequent versions are incremented by 1
+- Versions are immutable (code cannot be edited)
+
+- Each version has its own ARN
+- This allows you to effectively manage them for different environments like Production, Staging or Development
+
+- A **qualified** ARN has a version suffix
+  
+ `arn:aws:lambda:us-east:1:23423423423:function:myfunction:2`
+
+- An **unqualified** ARN does not have a version suffix
+  
+ `arn:aws:lambda:us-east:1:23423423423:function:myfunction`
+
+- You cannot create an alias from an unqualified ARN
+- When you invoke a function using an unqualified ARN, Lambda implicitly invokes `$LATEST`
+
+## Lambda aliases
+
+![](images/lambda_2.png)
+
+- Lambda aliases are pointers to a specific Lambda version
+- Using an alias, you can invoke a function without having to know which version of the function is being referenced
+- Aliases are mutable (changeable)
+
+![](images/lambda_3.png)
+
+![](images/lambda_4.png)
+
+- Aliases also have static ARNs but can point to any version of the same function
+- Aliases enable stable configuration of event triggers / destinations
+- Aliases enable blue / green deployment by assigning weights to Lambda version
+- You must create a version for an alias, you cannot use `$LATEST``
 
 ## Lambda Function Method Signatures
 
@@ -2647,6 +2943,18 @@ AWS charges for Lambda functions by two primary factors:
 - How much memory a function is specified to use
 
 In other words, given the same execution duration, a Lambda function that has 2GB of RAM costs twice as much to execute as one with 1GB of RAM. Or, one with 512MB of RAM costs 17% of one with 3008MB. This, at scale, could be a big difference.
+
+## Concurrency 
+
+Burst concurrency quotas
+
+3000 - US West (Oregon), US East (N.Viginia), Europe (Ireland)
+1000 - Asia Pacific (Tokyo), Europe (Frankfurt), US East (Ohio)
+500 - Other regions 
+
+If the concurrency limit is exceeded throttling occurs with error "Rate exceeded" and a 429 "TooManyRequestException"
+
+
 
 ### Example pricing
 
