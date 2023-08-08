@@ -87,8 +87,6 @@
     - [delete ASG2 and ALB2](#delete-asg2-and-alb2)
   - [s3 cli](#s3-cli)
   - [assuming a role](#assuming-a-role)
-- [AWS SAM CLI](#aws-sam-cli)
-  - [Installation](#installation)
 - [Networking](#networking)
     - [VPS (Virtual private cloud)](#vps-virtual-private-cloud)
     - [availiablity zones](#availiablity-zones)
@@ -119,7 +117,13 @@
     - [Web API](#web-api)
     - [File processing](#file-processing)
   - [Other](#other)
-  - [First Java example (compile and deploy via SAM)](#first-java-example-compile-and-deploy-via-sam)
+    - [First Java example (compile and deploy via SAM)](#first-java-example-compile-and-deploy-via-sam)
+    - [Example with basic types](#example-with-basic-types)
+    - [Lists and Maps](#lists-and-maps)
+    - [POJO in lambdas](#pojo-in-lambdas)
+    - [Streams](#streams)
+    - [Context](#context)
+  - [Timeout](#timeout)
   - [Types of lambda](#types-of-lambda)
     - [Synchronous](#synchronous)
     - [Asynchronous](#asynchronous)
@@ -130,17 +134,34 @@
   - [The Lambda Execution Environment](#the-lambda-execution-environment)
   - [Lambda versions](#lambda-versions)
   - [Lambda aliases](#lambda-aliases)
+  - [Example with versions and label.](#example-with-versions-and-label)
+  - [Deployment Packages and Environment variables](#deployment-packages-and-environment-variables)
+    - [Container images](#container-images)
+    - [Zip](#zip)
+    - [Deployment through CloudFormation](#deployment-through-cloudformation)
+    - [Lambda layers](#lambda-layers)
+    - [Lambda Environment Variables](#lambda-environment-variables)
+  - [Lambda limits](#lambda-limits)
+  - [Destinations](#destinations)
+  - [AWS SAM CLI](#aws-sam-cli)
+    - [Installation](#installation)
+    - [Features](#features)
+    - [Commands](#commands)
+    - [Environment Variables and SAM](#environment-variables-and-sam)
   - [Lambda Function Method Signatures](#lambda-function-method-signatures)
-    - [Example with basic types](#example-with-basic-types)
-    - [Lists and Maps](#lists-and-maps)
-    - [POJO in lambdas](#pojo-in-lambdas)
-    - [Streams](#streams)
-    - [Context](#context)
-  - [Timeout](#timeout)
   - [Memory and CPU](#memory-and-cpu)
   - [Concurrency](#concurrency)
+    - [Reserved Concurrency](#reserved-concurrency)
+    - [Provisioned Concurrency](#provisioned-concurrency)
+  - [Metrics, tracing, logs](#metrics-tracing-logs)
+    - [Monitoring](#monitoring)
+    - [Logging](#logging)
+    - [Tracing with X-Ray](#tracing-with-x-ray)
+  - [Lambda in a VPC](#lambda-in-a-vpc)
+  - [Lambda Function as a Target for an ALB](#lambda-function-as-a-target-for-an-alb)
+  - [Security](#security-1)
+  - [Best practicies](#best-practicies)
     - [Example pricing](#example-pricing)
-  - [Environment Variables](#environment-variables)
   - [Spring cloud functions](#spring-cloud-functions)
     - [Main idea.](#main-idea)
     - [documentations and examples](#documentations-and-examples)
@@ -1854,18 +1875,6 @@ and then use this profile to assume a role
 aws ec2 describe-instances --profile my_profile
 ```
 
-# AWS SAM CLI
-
-## Installation
-
-```bash
-curl "https://github.com/aws/aws-sam-cli/releases/latest/download/aws-sam-cli-linux-x86_64.zip" -o "aws-sam-cli.zip"
-unzip aws-sam-cli.zip -d sam-installation
-sudo ./aws/install
-sam --version
-```
-
-
 # Networking
 
 ![](images/networking_1.png)
@@ -2251,7 +2260,7 @@ S3 can be configured to invoke the Lambda platform when the file is uploaded, sp
  - We can build email-processing applications, using Simple Email Service (SES) as the event source
  - We can build scheduled-task applications, similar to cron programs, using CloudWatch Scheduled Events as the trigger.
 
-## First Java example (compile and deploy via SAM)
+### First Java example (compile and deploy via SAM)
 
 - this class in simple maven project
 
@@ -2335,12 +2344,13 @@ aws s3 mb s3://some_unique_name
 
 - change directory where `template.yml` file is inside 
 - upload via sam compiled jar
-  ```bash
+
+```bash
    sam deploy \
   --s3-bucket tests465465465465 \
   --stack-name HelloWorldLambdaJava \
   --capabilities CAPABILITY_IAM
-  ```
+```
 
 ![](images/lambda_java_example_3.png)
 
@@ -2358,270 +2368,6 @@ aws s3 mb s3://some_unique_name
 ```bash
 aws cloudformation delete-stack --stack-name HelloWorldLambdaJava
 ```
-## Types of lambda 
-
-### Synchronous
-
-- CLI, SDK, API Gateway
-- Wait for the function to process the event and return a response
-- Error handling happens client side (retries, exponential backoff etc.)
-
-
-### Asynchronous
-
-- S3, SNS, CloudWatch Events etc.
-- Event is queued for processing and a response is returned immediately
-- Lambda retries up to 3 times
-- Processing must be idempotent (due to retries)
-
-### Event source mapping
-
-- SQS, Kinesis Data Streams, DynamoDB Streams
-- Lambda does the polling (polls the source)
-- Records are processed in order (except for SQS standard)
-
-+ SQS can also trigger Lambda without lambda polling
-
-## Invoke lambda via AWS CLI
-
-- Edit an example above by adding `FunctionName`
-
-```yml
-AWSTemplateFormatVersion: 2010-09-09
-Transform: AWS::Serverless-2016-10-31
-Description: HelloWorldLambdaJava
-
-Resources:
-
-  HelloWorldLambda:
-    Type: AWS::Serverless::Function
-    Properties:
-      FunctionName: HelloWorldJava
-      Runtime: java8
-      MemorySize: 512
-      Handler: book.HelloWorld::handler 
-      CodeUri: target/lambda.jar
-```      
-
-- deploy function 
-- invoke lambda via cli
-
-where `payload` is a Base64 String
-
-```bash
- aws lambda invoke --invocation-type RequestResponse --function-name HelloWorldJava --payload IkhlbGxvIg== outputfile.txt
-```
-
-- result will be in `outputfile.txt`
-
-if we changed as ``--invocation-type Event ``  we will get 202 Status "Accepted".
-
-
-To get logs for an invocation from the command line, use the `--logtype` option. The response includes a `LogResult` field that contains up to 4 KB of base64-encoded logs from the invocation
-
-```bash
-aws lambda invoke --function-name my-function out --log-type Tail
-```
-
-![](images/lambda_1.png)
-
-## Example with async lambda invocatoin and writing to log
-
-- change example above
-
-```java
-public class HelloWorld {
-        public void handler(String s) {
-
-            System.out.println("Hello, " + s);
-        }
-}
-```
-- deploy with `sam`
-
-  ```bash
-   sam deploy \
-  --s3-bucket tests465465465465 \
-  --stack-name HelloWorldLambdaJava \
-  --capabilities CAPABILITY_IAM
-  ```
-
-- invoke via cli
-
-```bash
-aws lambda invoke   --invocation-type Event --function-name HelloWorldJava   --payload IkhlbGxvIg== outputfile.txt
-```
-
-- open cloud watch logs
-
-![](images/lambda_example_cloud_watch_1.png)
-
-- open latest log stream
-
-![](images/lambda_example_cloud_watch_2.png)
-
-- find hello in logs
-
-![](images/lambda_example_cloud_watch_3.png)
-
-## Create Event Source Mapping
-
-![](images/lambda_event_source_1.png)
-
-1. Create a role for AWS lambda
-
-![](images/lambda_event_source_2.png)
-
-![](images/lambda_event_source_3.png)
-
-![](images/lambda_event_source_4.png)
-
-after that copy and save arn of the role
-
-2. create sqs queue
-   
-![](images/lambda_event_source_5.png)
-
-![](images/lambda_event_source_6.png)
-
-after that copy and save arn of the queue
-
-3. create lambda by cli
-
-```javascript
-exports.handler = async function(event, context) {
-    event.Records.forEach(record => {
-      const { body } = record;
-      console.log(body);
-    });
-    return {};
-  }
-```
-
-```bash
-zip function.zip index.js
-```
-
-```bash
-aws lambda create-function --function-name EventSourceSQS --zip-file fileb://function.zip --handler index.handler --runtime nodejs16.x --role arn:aws:iam::967120122177:role/my-sqs-role
-```
-
-4. create event-source mapping 
-
-```bash
-aws lambda create-event-source-mapping --function-name EventSourceSQS --batch-size 10 --event-source-arn arn:aws:sqs:eu-north-1:967120122177:MyQueue
-```
-
-to show event-source mapping
-
-```bash
-aws lambda list-event-source-mappings --function-name EventSourceSQS --event-source-arn arn:aws:sqs:eu-north-1:967120122177:MyQueue
-```
-
-![](images/lambda_event_source_7.png)
-
-to delete event-seource mapping
-
-```bash
-aws lambda delete-event-source-mapping --uuid 3b439c3f-22d9-4d2b-9395-c25df2cf049d
-```
-
-5. test exucution by adding a message via sqs console
-
-![](images/lambda_event_source_8.png)
-
-![](images/lambda_event_source_9.png)
-
-![](images/lambda_event_source_10.png)
-
-![](images/lambda_event_source_11.png)
-
-## The Lambda Execution Environment
-
-![](images/lambda_env_1.png)
-
-A lambda function is executed whenever the `invoke` command of the `AWS Lambda API` is called. 
-
-This happens at the following times:
-- When a function is triggered by an event source
-- When you use the test harness in the web console
-- When you call the Lambda API invoke command yourself, typically via the CLI or SDK, from your own code or scripts
-
-After that:
-- `Lambda service` will create a `host Linux environment`
-- Lambda will start a language runtime within it. In our case a JVM. The JVM is started with a set of environment flags that we can’t change
-- Starting `Lambda Java Runtime`, such as aws java application server. It is responsible for top-level error handling, logging, and more.
-
-## Lambda versions
-
-- Versioning means you can have multiple versions of your function
-- The function version includes the following information:
-  - The function code and all associated dependencies
-  - The Lambda runtime that executes the function
-  - All the function settings, including the environment variables
-  - A unique Amazon Resource Name (ARN) to identify this version
-of the function
-
-- You can use versions to manage the deployment of your AWS Lambda functions
-- For example, you can publish a new version of a function
-for beta testing without affecting users of the stable
-production version
-
-- You work on `$LATEST`` which is the latest version of the code this is mutable (changeable)
-- When you're ready to publish a Lambda function you create a version (these are numbered)
-- Numbered versions are assigned a number starting with 1 and subsequent versions are incremented by 1
-- Versions are immutable (code cannot be edited)
-
-- Each version has its own ARN
-- This allows you to effectively manage them for different environments like Production, Staging or Development
-
-- A **qualified** ARN has a version suffix
-  
- `arn:aws:lambda:us-east:1:23423423423:function:myfunction:2`
-
-- An **unqualified** ARN does not have a version suffix
-  
- `arn:aws:lambda:us-east:1:23423423423:function:myfunction`
-
-- You cannot create an alias from an unqualified ARN
-- When you invoke a function using an unqualified ARN, Lambda implicitly invokes `$LATEST`
-
-## Lambda aliases
-
-![](images/lambda_2.png)
-
-- Lambda aliases are pointers to a specific Lambda version
-- Using an alias, you can invoke a function without having to know which version of the function is being referenced
-- Aliases are mutable (changeable)
-
-![](images/lambda_3.png)
-
-![](images/lambda_4.png)
-
-- Aliases also have static ARNs but can point to any version of the same function
-- Aliases enable stable configuration of event triggers / destinations
-- Aliases enable blue / green deployment by assigning weights to Lambda version
-- You must create a version for an alias, you cannot use `$LATEST``
-
-## Lambda Function Method Signatures
-
-- `output-type handler-name(input-type input)`
-- `output-type handler-name(input-type input, Context context)`
-- `void handler-name(InputStream is, OutputStream os)`
-- `void handler-name(InputStream is, OutputStream os, Context context)`
-
-where:
-
-- `output-type` can be `void`, a Java primitive, or a JSON-serializable type.
-- `input-type` is a Java primitive, or a JSON-serializable type.
-- `Context` refers to `com.amazonaws.services.lambda.runtime.Context` 
-- `InputStream` and `OutputStream` refer to the types with those names in the `java.io` package.
-- `handler-name` can be any valid Java method name, and we refer to it in our application’s configuration.
-
-- Java Lambda methods can be either instance methods or static methods, but must be public.
-- A class containing a Lambda function cannot be abstract and must have a no-argument constructor—either the default constructor (i.e., no constructor specified)
-- You are not required to implement any interfaces or base classes, although you may do so if you desire. AWS provides a `RequestHandler` interface if you want to be very explicit about the type of your Lambda classes
-- You may have multiple Lambda functions defined in one class with different names, but we don’t usually recommend this style
 
 ### Example with basic types
 
@@ -2932,54 +2678,448 @@ public class TimeoutLambda {
 2023-02-12T23:45:21.317+01:00	INIT_START Runtime Version: java:8.v14 Runtime Version ARN: arn:aws:lambda:eu-north-1::runtime:976f6b03f8ebcf9a902c3d59a05ba4b7c260b2841a5a10b307bb8bbd15e34a03
 ```
 
-## Memory and CPU
+## Types of lambda 
 
-`memory-size` can be as small as 64MB, although for Java Lambda functions you should probably use at least 256MB. memory-size must be a multiple of 64MB.
+### Synchronous
 
-A very important thing to know is that the memory-size setting is not just for how much RAM your function can use—it also specifies how much CPU power you get. In fact, a Lambda function’s CPU power scales linearly from 64MB up to 1792MB. Therefore a Lambda function configured with 1024MB of RAM has twice the CPU power of one with 512MB of RAM.
-
-AWS charges for Lambda functions by two primary factors:
-- How long a function runs, rounded up to the nearest 100 ms
-- How much memory a function is specified to use
-
-In other words, given the same execution duration, a Lambda function that has 2GB of RAM costs twice as much to execute as one with 1GB of RAM. Or, one with 512MB of RAM costs 17% of one with 3008MB. This, at scale, could be a big difference.
-
-## Concurrency 
-
-Burst concurrency quotas
-
-3000 - US West (Oregon), US East (N.Viginia), Europe (Ireland)
-1000 - Asia Pacific (Tokyo), Europe (Frankfurt), US East (Ohio)
-500 - Other regions 
-
-If the concurrency limit is exceeded throttling occurs with error "Rate exceeded" and a 429 "TooManyRequestException"
+- CLI, SDK, API Gateway
+- Wait for the function to process the event and return a response
+- Error handling happens client side (retries, exponential backoff etc.)
 
 
+### Asynchronous
 
-### Example pricing
+- S3, SNS, CloudWatch Events etc.
+- Event is queued for processing and a response is returned immediately
+- Lambda retries up to 3 times
+- Processing must be idempotent (due to retries)
 
-First, let’s think back to the photo resizer  Let’s say that we set that function to use 1.5GB RAM, it takes on average 10 seconds to run, and it processes 10,000 photos per day. Lambda pricing consists of two parts—request pricing, which is $0.20 per million requests, and duration pricing, which is $0.0000166667 per gigabyte-second. Therefore we need to calculate both parts to estimate cost for our photo resizer:
+### Event source mapping
 
-- The request cost is `$0.20 × .01 = $0.002/day`, or `$0.06/month`.
-- The duration cost is `10 (seconds/invocation) × 10,000 (invocations) × 1.5 (GB) × $0.0000166667 = $2.50/day`, or `$75/month`.
+- SQS, Kinesis Data Streams, DynamoDB Streams
+- Lambda does the polling (polls the source)
+- Records are processed in order (except for SQS standard)
 
-Obviously the duration cost is the vast majority here.
++ SQS can also trigger Lambda without lambda polling
 
-$75/month is about the same cost as a “m5.large” EC2 instance—which is $70/month. An m5.large EC2 instance is the smallest size VM in the m5 “general purpose” family; it has 8GB RAM and two CPUs, so it would likely be about right as an alternative to host our photo resizer. However, Lambda has significant benefits as a solution, even though the costs appear at first glance about the same:
+## Invoke lambda via AWS CLI
 
-- Lambda doesn’t require the operations cost of managing an EC2 instance—there’s no need to think about operating system patches, user management, etc. Therefore our total cost of ownership (TCO) is lower for Lambda.
-- Lambda already manages the “event driven” nature of the application, so we don’t need to build that into the version we would run on a regular server.
-- Lambda will auto-scale without effort and so will handle, without concern, any spikes in traffic. A server-based solution may become overloaded or need to be built to include buffering. In fact, the more “spikey” your application’s load, the more cost effective Lambda is as a solution.
-- Lambda is already highly available across AZs—to guarantee that availability with a server-based solution, we would need to double or triple our costs for two or three zones of availability.
+- Edit an example above by adding `FunctionName`
 
-Now let’s look back to our web API. Let’s say we set the web API Lambda functions to use 512MB RAM and each invocation takes no more than 100 ms to run. Let’s say the API processes on average 10 requests per second (864,000 requests/day) but can peak up to 100 requests per second.
+```yml
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
+Description: HelloWorldLambdaJava
 
-- The request cost is `$0.20 × 0.864 = $0.17/day`, or `$5.18/month`.
-- The duration cost is `0.1 × 864,000 × 0.5 × $0.0000166667 = $0.72/day`, or `$21.60/month`.
+Resources:
 
-In other words, we need to spend $27/month to handle 10 requests/second average, and this system could happily could peak to 10x that rate, without breaking a sweat (or increasing the costs).
+  HelloWorldLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: HelloWorldJava
+      Runtime: java8
+      MemorySize: 512
+      Handler: book.HelloWorld::handler 
+      CodeUri: target/lambda.jar
+```      
 
-## Environment Variables
+- deploy function 
+- invoke lambda via cli
+
+where `payload` is a Base64 String
+
+```bash
+ aws lambda invoke --invocation-type RequestResponse --function-name HelloWorldJava --payload IkhlbGxvIg== outputfile.txt
+```
+
+- result will be in `outputfile.txt`
+
+if we changed as ``--invocation-type Event ``  we will get 202 Status "Accepted".
+
+
+To get logs for an invocation from the command line, use the `--logtype` option. The response includes a `LogResult` field that contains up to 4 KB of base64-encoded logs from the invocation
+
+```bash
+aws lambda invoke --function-name my-function out --log-type Tail
+```
+
+![](images/lambda_1.png)
+
+## Example with async lambda invocatoin and writing to log
+
+- change example above
+
+```java
+public class HelloWorld {
+        public void handler(String s) {
+
+            System.out.println("Hello, " + s);
+        }
+}
+```
+- deploy with `sam`
+
+```bash
+   sam deploy \
+  --s3-bucket tests465465465465 \
+  --stack-name HelloWorldLambdaJava \
+  --capabilities CAPABILITY_IAM
+```
+
+- invoke via cli
+
+```bash
+aws lambda invoke   --invocation-type Event --function-name HelloWorldJava   --payload IkhlbGxvIg== outputfile.txt
+```
+
+- open cloud watch logs
+
+![](images/lambda_example_cloud_watch_1.png)
+
+- open latest log stream
+
+![](images/lambda_example_cloud_watch_2.png)
+
+- find hello in logs
+
+![](images/lambda_example_cloud_watch_3.png)
+
+## Create Event Source Mapping
+
+![](images/lambda_event_source_1.png)
+
+1. Create a role for AWS lambda
+
+![](images/lambda_event_source_2.png)
+
+![](images/lambda_event_source_3.png)
+
+![](images/lambda_event_source_4.png)
+
+after that copy and save arn of the role
+
+2. create sqs queue
+   
+![](images/lambda_event_source_5.png)
+
+![](images/lambda_event_source_6.png)
+
+after that copy and save arn of the queue
+
+3. create lambda by cli
+
+```javascript
+exports.handler = async function(event, context) {
+    event.Records.forEach(record => {
+      const { body } = record;
+      console.log(body);
+    });
+    return {};
+  }
+```
+
+```bash
+zip function.zip index.js
+```
+
+```bash
+aws lambda create-function --function-name EventSourceSQS --zip-file fileb://function.zip --handler index.handler --runtime nodejs16.x --role arn:aws:iam::967120122177:role/my-sqs-role
+```
+
+4. create event-source mapping 
+
+```bash
+aws lambda create-event-source-mapping --function-name EventSourceSQS --batch-size 10 --event-source-arn arn:aws:sqs:eu-north-1:967120122177:MyQueue
+```
+
+to show event-source mapping
+
+```bash
+aws lambda list-event-source-mappings --function-name EventSourceSQS --event-source-arn arn:aws:sqs:eu-north-1:967120122177:MyQueue
+```
+
+![](images/lambda_event_source_7.png)
+
+to delete event-seource mapping
+
+```bash
+aws lambda delete-event-source-mapping --uuid 3b439c3f-22d9-4d2b-9395-c25df2cf049d
+```
+
+5. test exucution by adding a message via sqs console
+
+![](images/lambda_event_source_8.png)
+
+![](images/lambda_event_source_9.png)
+
+![](images/lambda_event_source_10.png)
+
+![](images/lambda_event_source_11.png)
+
+## The Lambda Execution Environment
+
+![](images/lambda_env_1.png)
+
+A lambda function is executed whenever the `invoke` command of the `AWS Lambda API` is called. 
+
+This happens at the following times:
+- When a function is triggered by an event source
+- When you use the test harness in the web console
+- When you call the Lambda API invoke command yourself, typically via the CLI or SDK, from your own code or scripts
+
+After that:
+- `Lambda service` will create a `host Linux environment`
+- Lambda will start a language runtime within it. In our case a JVM. The JVM is started with a set of environment flags that we can’t change
+- Starting `Lambda Java Runtime`, such as aws java application server. It is responsible for top-level error handling, logging, and more.
+
+## Lambda versions
+
+- Versioning means you can have multiple versions of your function
+- The function version includes the following information:
+  - The function code and all associated dependencies
+  - The Lambda runtime that executes the function
+  - All the function settings, including the environment variables
+  - A unique Amazon Resource Name (ARN) to identify this version
+of the function
+
+- You can use versions to manage the deployment of your AWS Lambda functions
+- For example, you can publish a new version of a function
+for beta testing without affecting users of the stable
+production version
+
+- You work on `$LATEST`` which is the latest version of the code this is mutable (changeable)
+- When you're ready to publish a Lambda function you create a version (these are numbered)
+- Numbered versions are assigned a number starting with 1 and subsequent versions are incremented by 1
+- Versions are immutable (code cannot be edited)
+
+- Each version has its own ARN
+- This allows you to effectively manage them for different environments like Production, Staging or Development
+
+- A **qualified** ARN has a version suffix
+  
+ `arn:aws:lambda:us-east:1:23423423423:function:myfunction:2`
+
+- An **unqualified** ARN does not have a version suffix
+  
+ `arn:aws:lambda:us-east:1:23423423423:function:myfunction`
+
+- You cannot create an alias from an unqualified ARN
+- When you invoke a function using an unqualified ARN, Lambda implicitly invokes `$LATEST`
+
+## Lambda aliases
+
+![](images/lambda_2.png)
+
+- Lambda aliases are pointers to a specific Lambda version
+- Using an alias, you can invoke a function without having to know which version of the function is being referenced
+- Aliases are mutable (changeable)
+
+![](images/lambda_3.png)
+
+![](images/lambda_4.png)
+
+- Aliases also have static ARNs but can point to any version of the same function
+- Aliases enable stable configuration of event triggers / destinations
+- Aliases enable blue / green deployment by assigning weights to Lambda version
+- You must create a version for an alias, you cannot use `$LATEST``
+
+## Example with versions and label.
+
+1. Create lambda for python via wizard and then we can change a code. 
+
+![](images/lambda_4.png)
+
+2. next create a first version of lambda with "Hello from Lambda"
+
+![](images/lambda_5.png)
+
+![](images/lambda_6.png)
+
+after this version is immutable.
+
+![](images/lambda_7.png)
+
+3. let's change a text a create new version v2.
+
+![](images/lambda_8.png)
+
+4. and now we can invoke labmdas with v1 and v2 version
+
+```bash
+aws lambda invoke --invocation-type RequestResponse --function-name myFunc:1 outputfile.txt
+aws lambda invoke --invocation-type RequestResponse --function-name myFunc:2 outputfile.txt
+```
+![](images/lambda_9.png)
+
+5. Let's crate an alias an split load 50/50 between two versions
+
+![](images/lambda_10.png)
+
+![](images/lambda_11.png)
+
+![](images/lambda_12.png)
+
+## Deployment Packages and Environment variables
+
+- A Lambda function's code consists of scripts or compiled programs and their dependencies
+- A deployment package is used to deploy function code to Lambda
+- Lambda supports two types of deployment packages:
+  - Container images
+  - .zip file archives
+
+### Container images
+
+A container image includes:
+- The base operating system
+- The runtime
+- Lambda extensions
+- Application code and its dependencies
+
+- Container images are uploaded to the Amazon Elastic Container Registry (ECR)
+- The image is then deployed to the Lambda function
+
+### Zip
+
+- A .zip file archive includes your application code and its dependencies
+- The deployment package is uploaded from Amazon S3 or your computer
+- There are limits to the size of zip archives:
+  - 50 MB (zipped, for direct upload)
+  - 250 MB (unzipped)
+  - 3 MB (console editor)
+
+### Deployment through CloudFormation
+
+- The `AWS::Lambda::Function` resource creates a Lambda function
+- The function code zip file must be stored in Amazon S3
+-  The S3 bucket must be in the same region where you’re running CloudFormation
+-  You also need a CloudFormation template file
+- Set the package type to:
+  - `Image` for container images
+  - `Zip` for .zip archives
+
+### Lambda layers 
+
+- You can configure your Lambda function to pull in additional code and content in the form of layers
+-  A layer is a ZIP archive that contains libraries, a custom runtime, or other dependencies
+- With layers, you can use libraries in your function without needing to include them in your deployment package
+-  A function can use up to 5 layers at a time
+- Layers are extracted to the `/opt` directory in the function execution environment
+- Each runtime looks for libraries in a different location under `/opt`, depending on the language
+
+- To add layers to your function, use the `update-function-configuration` command
+
+```bash
+aws lambda update-function-configuration --function-name my-function --layers arn:lambda:us-east-2:234234:layer:my-layer:3 arn:lambda:us-east-2:234234:layer:their-layer:2 
+```
+
+### Lambda Environment Variables
+
+- Environment variables can be used to adjust your function's behavior without updating code
+- An environment variable is a pair of strings that is stored in a function's version specific configuration
+- Environment variables are defined on the unpublished version of a function
+- When you publish a version, the environment variables are locked for that version
+- Environment variables are key/value pairs
+
+```bash
+aws lambda update-function-configuration --function-name my-function --environment "Variables={BUCKET=my-bucket,KEY=file.txt}"
+```
+
+to see lambda configuration use `get-function-configuration`
+
+It can be possible to encrypt particular variables with key that is in KMS service. Then inside the code it is nessasary to decrypt with getting a key from KMS. It is nessasary to have a role for getting this key and put this role to lambda function. 
+
+![](images/lambda_13.png)
+
+
+## Lambda limits
+
+| Resource                                          | Quota    
+| ------------------------------------------------- | -------------           |
+| Memory allocation        | 128MB to 10240MB in 1-MB increments              |
+| Function timeout         | 900 seconds (15 minutes)                         |
+| Environment variables    | 4KB for all the function's environment variables |
+| Layers                   | up to 5                                          |
+| Burst concurrency        | 500-3000 depending on the Region                 |
+| Invocation payload       | 6MB for synchronous 256KB for async              |
+| Deployment package (zip) | 50 MB zipped, 250MB unzipped, 3MB console        |
+| Container image size     | 10 GB                                            |
+| /tmp directory storage   | 512 MB to 10240MB in 1-MB increment              |
+
+## Destinations
+
+It is possible to send the result of the function to the next destination if the function is invoked asynchronously or if the function prcesses records from a stream.
+
+![](images/lambda_dest_0.png)
+
+![](images/lambda_dest_1.png)
+
+The execution record contains details about the request and response in JSON format
+
+Information sent includes:
+- Version
+- Timestamp
+- Request context
+- Request payload
+- Response context
+- Response payload
+
+- A Dead Letter Queue saves unprocessed events for further processing
+- Applies to asynchronous invocations
+- The DLQ can be an Amazon SQS queue or an Amazon SNS topic
+- When editing the asynchronous configuration, you can specify the number of retries:
+
+![](images/lambda_dest_2.png)
+
+![](images/lambda_dest_3.png)
+
+
+## AWS SAM CLI
+
+### Installation
+
+```bash
+curl "https://github.com/aws/aws-sam-cli/releases/latest/download/aws-sam-cli-linux-x86_64.zip" -o "aws-sam-cli.zip"
+unzip aws-sam-cli.zip -d sam-installation
+sudo ./aws/install
+sam --version
+```
+
+### Features
+
+- Provides a shorthand syntax to express functions, APIs, databases, and event source mappings
+- Can be used to create Lambda functions, API endpoints, DynamoDB tables, and other resources
+
+![](images/sam_1.png)
+
+- A SAM template file is a YAML configuration that represents the architecture of a serverless application
+- You use the template to declare all the AWS resources that comprise your serverless application in one place
+- AWS SAM templates are an extension of AWS CloudFormation templates
+- Any resource that you can declare in an AWS CloudFormation template can also be declared in an AWS SAM template
+
+The “Transform” header indicates it’s a SAM template: `Transform: 'AWS::Serverless-2016-10-31`
+
+There are several resources types:
+- `AWS::Serverless::Function` (AWS Lambda)
+- `AWS::Serverless::Api` (API Gateway)
+- `AWS::Serverless::SimpleTable` (DynamoDB table)
+- `AWS::Serverless::Application` (AWS Serverless Application Repository)
+- `AWS::Serverless::HttpApi` (API Gateway HTTP)
+- `AWS::Serverless::LayerVersion` (Lambda layer)
+
+### Commands
+
+```bash
+sam package -t template.yaml --s3-bucket dctlabs --output-template-file packaged-template.yaml
+sam deploy --template-file packaged-template.yaml --stack-name my-cf-stack
+```
+
+Alternatively
+```bash
+aws cloudformation package --template-file template.yaml --s3-bucket dctlabs --output-template-file packaged template.yaml
+aws cloudformation deploy --template-file packaged-template.yaml --stack-name my-cf-stack
+```
+
+### Environment Variables and SAM
 
 ```java
 package book;
@@ -3008,6 +3148,204 @@ HelloWorldLambda:
       Variables:
         DATABASE_URL: my-database-url
 ```        
+
+
+## Lambda Function Method Signatures
+
+- `output-type handler-name(input-type input)`
+- `output-type handler-name(input-type input, Context context)`
+- `void handler-name(InputStream is, OutputStream os)`
+- `void handler-name(InputStream is, OutputStream os, Context context)`
+
+where:
+
+- `output-type` can be `void`, a Java primitive, or a JSON-serializable type.
+- `input-type` is a Java primitive, or a JSON-serializable type.
+- `Context` refers to `com.amazonaws.services.lambda.runtime.Context` 
+- `InputStream` and `OutputStream` refer to the types with those names in the `java.io` package.
+- `handler-name` can be any valid Java method name, and we refer to it in our application’s configuration.
+
+- Java Lambda methods can be either instance methods or static methods, but must be public.
+- A class containing a Lambda function cannot be abstract and must have a no-argument constructor—either the default constructor (i.e., no constructor specified)
+- You are not required to implement any interfaces or base classes, although you may do so if you desire. AWS provides a `RequestHandler` interface if you want to be very explicit about the type of your Lambda classes
+- You may have multiple Lambda functions defined in one class with different names, but we don’t usually recommend this style
+
+## Memory and CPU
+
+`memory-size` can be as small as 64MB, although for Java Lambda functions you should probably use at least 256MB. memory-size must be a multiple of 64MB.
+
+A very important thing to know is that the memory-size setting is not just for how much RAM your function can use—it also specifies how much CPU power you get. In fact, a Lambda function’s CPU power scales linearly from 64MB up to 1792MB. Therefore a Lambda function configured with 1024MB of RAM has twice the CPU power of one with 512MB of RAM.
+
+AWS charges for Lambda functions by two primary factors:
+- How long a function runs, rounded up to the nearest 100 ms
+- How much memory a function is specified to use
+
+In other words, given the same execution duration, a Lambda function that has 2GB of RAM costs twice as much to execute as one with 1GB of RAM. Or, one with 512MB of RAM costs 17% of one with 3008MB. This, at scale, could be a big difference.
+
+## Concurrency 
+
+Burst concurrency quotas
+
+3000 - US West (Oregon), US East (N.Viginia), Europe (Ireland)
+1000 - Asia Pacific (Tokyo), Europe (Frankfurt), US East (Ohio)
+500 - Other regions 
+
+If the concurrency limit is exceeded throttling occurs with error "Rate exceeded" and a 429 "TooManyRequestException"
+
+### Reserved Concurrency
+
+- Reserved concurrency guarantees a set number of concurrent executions will be available for a critical function
+- You can reserve up to the Unreserved account concurrency value, minus 100 for functions that don't have reserved concurrency
+- To throttle a function, set the reserved concurrency to zero. This stops any events from being processed until you remove the limit
+
+![](images/lambda_concur_1.png)
+
+### Provisioned Concurrency
+
+- When provisioned concurrency is allocated, the function scales with the same burst behavior as standard concurrency
+- After it's allocated, provisioned concurrency serves incoming requests with very low latency
+- When all provisioned concurrency is in use, the function scales up normally to handle any additional requests
+- Application Auto Scaling takes this a step further by providing autoscaling for provisioned concurrency
+
+![](images/lambda_concur_2.png)
+
+## Metrics, tracing, logs
+
+### Monitoring
+
+Lambda sends metrics to Amazon CloudWatch for performance monitoring
+
+![](images/lambda_metrics_1.png)
+
+### Logging 
+
+- Execution logs are stored in Amazon CloudWatch Logs
+- The Lambda function execution role must have permissions (IAM) to allow writes to CloudWatch Logs
+
+### Tracing with X-Ray
+
+- You can use AWS X-Ray to visualize the components of your application, identify performance bottlenecks, and troubleshoot requests that resulted in an error
+-  Your Lambda functions send trace data to X-Ray, and X-Ray processes the data to generate a service map and searchable trace summaries
+
+![](images/lambda_metrics_2.png)
+
+- The AWS X-Ray Daemon is a software application that gathers raw segment data and relays it to the AWS X-Ray service
+- The daemon works in conjunction with the AWS X-Ray SDKs so that data sent by the SDKs can reach the X-Ray service
+- When you trace your Lambda function, the X-Ray daemon automatically runs in the Lambda environment to gather trace data and send it to X Ray
+- The function needs permissions to write to X-Ray in the execution role
+
+## Lambda in a VPC
+
+![](images/lambda_vpc_1.png)
+
+- You must connect to a private subnet with a NAT Gateway for Internet access (no public IP)
+- Careful with DNS resolution of public hostnames as it could add to function running time (cost)
+- Cannot be connected to a dedicated tenancy VPC
+- Only connect to a VPC if you need to, it can slow down function execution
+- To connect to a VPC, your function's execution role must have the following permissions:
+  - `ec2:CreateNetworkInterface`
+  - `ec2:DescribeNetworkInterfaces`
+  - `ec2:DeleteNetworkInterface`
+- These permissions are included in the `AWSLambdaVPCAccessExecutionRole` managed policy
+
+## Lambda Function as a Target for an ALB
+
+- Application Load Balancers (ALBs) support AWS Lambda functions as targets
+- You can register your Lambda functions as targets and configure a listener rule to forward requests to the target group for your Lambda function
+
+![](images/lambda_alb_1.png)
+
+There are some limits to understand:
+
+- The Lambda function and target group must be in the same account and in the same Region
+- The maximum size of the request body that you can send to a Lambda function is 1 MB
+- The maximum size of the response JSON that the Lambda function can send is 1 MB
+- WebSockets are not supported. Upgrade requests are rejected with an HTTP 400 code
+- Local Zones are not supported
+
+## Security
+
+![](images/lambda_security_1.png)
+
+Main points:
+- Function execution role must provide permission to AWS services
+- Lambda API endpoints only support TLS connections
+- AWS recommend to use Secrets Manager instead of environment variables
+- Files, deployment packages and environment variables are encrypted at rest with a KMS key
+
+Signing of the code:
+- AWS Signer is a fully managed code signing service
+- Used to ensure the trust and integrity of code
+- Code is validated against a digital signature
+- With Lambda you can ensure only trusted code runs in Lambda functions
+- Signer is used to create digitally signed packages for deployment
+- IAM policies can enforce that functions can be created only if they have code signing enabled
+- If a developer leaves you can revoke all versions of the signing profile so the code cannot run
+
+## Best practicies
+
+1. Separate the Lambda handler from your core logic. This allows you to make a more unit-testable function
+
+```javascript
+exports.myHandler = function(event, context, callback) {
+	var foo = event.foo;
+	var bar = event.bar;
+	var result = MyLambdaFunction (foo, bar);
+
+	callback(null, result);
+}
+
+function MyLambdaFunction (foo, bar) {
+	// MyLambdaFunction logic here
+}
+```
+
+2. Take advantage of execution environment reuse to improve the performance of your function
+  - Initialize SDK clients and database connections outside of the function handler
+  - Cache static assets locally in the /tmp directory
+  - Subsequent invocations processed by the same instance of your function can reuse these resources
+  - This saves cost by reducing function run time
+
+3. Use a keep-alive directive to maintain persistent connections
+   - Lambda purges idle connections over time and attempting to reuse an idle connection can result in an error
+
+4. Use environment variables to pass operational parameters to your function
+  - For example, use environment variables instead of hard coding S3 bucket names in code
+
+5. Control the dependencies in your function's deployment package
+   - Libraries and runtimes in the Lambda execution environment can be updated and may cause issues
+   - To avoid errors, package dependencies in the deployment package
+
+6. Minimize your deployment package size to its runtime necessities
+   - This reduces the amount of time it takes for deployment packages to be downloaded and unpacked ahead of invocation
+
+7. Avoid using recursive code in your function
+  - Don’t use code that calls itself until some arbitrary criteria is met
+  - Can cause large volumes of invocations and increased costs
+
+### Example pricing
+
+First, let’s think back to the photo resizer  Let’s say that we set that function to use 1.5GB RAM, it takes on average 10 seconds to run, and it processes 10,000 photos per day. Lambda pricing consists of two parts—request pricing, which is $0.20 per million requests, and duration pricing, which is $0.0000166667 per gigabyte-second. Therefore we need to calculate both parts to estimate cost for our photo resizer:
+
+- The request cost is `$0.20 × .01 = $0.002/day`, or `$0.06/month`.
+- The duration cost is `10 (seconds/invocation) × 10,000 (invocations) × 1.5 (GB) × $0.0000166667 = $2.50/day`, or `$75/month`.
+
+Obviously the duration cost is the vast majority here.
+
+$75/month is about the same cost as a “m5.large” EC2 instance—which is $70/month. An m5.large EC2 instance is the smallest size VM in the m5 “general purpose” family; it has 8GB RAM and two CPUs, so it would likely be about right as an alternative to host our photo resizer. However, Lambda has significant benefits as a solution, even though the costs appear at first glance about the same:
+
+- Lambda doesn’t require the operations cost of managing an EC2 instance—there’s no need to think about operating system patches, user management, etc. Therefore our total cost of ownership (TCO) is lower for Lambda.
+- Lambda already manages the “event driven” nature of the application, so we don’t need to build that into the version we would run on a regular server.
+- Lambda will auto-scale without effort and so will handle, without concern, any spikes in traffic. A server-based solution may become overloaded or need to be built to include buffering. In fact, the more “spikey” your application’s load, the more cost effective Lambda is as a solution.
+- Lambda is already highly available across AZs—to guarantee that availability with a server-based solution, we would need to double or triple our costs for two or three zones of availability.
+
+Now let’s look back to our web API. Let’s say we set the web API Lambda functions to use 512MB RAM and each invocation takes no more than 100 ms to run. Let’s say the API processes on average 10 requests per second (864,000 requests/day) but can peak up to 100 requests per second.
+
+- The request cost is `$0.20 × 0.864 = $0.17/day`, or `$5.18/month`.
+- The duration cost is `0.1 × 864,000 × 0.5 × $0.0000166667 = $0.72/day`, or `$21.60/month`.
+
+In other words, we need to spend $27/month to handle 10 requests/second average, and this system could happily could peak to 10x that rate, without breaking a sweat (or increasing the costs).
+
 
 ## Spring cloud functions
 
