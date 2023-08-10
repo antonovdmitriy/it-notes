@@ -175,6 +175,49 @@
     - [Using inputstream like a payload](#using-inputstream-like-a-payload)
     - [Using pojo in lambdas](#using-pojo-in-lambdas)
     - [Testing](#testing)
+- [Dynamo DB](#dynamo-db)
+  - [DynamoDB API](#dynamodb-api)
+  - [Data types](#data-types)
+  - [Table classes](#table-classes)
+  - [Access control](#access-control)
+  - [DynamoDB Partitions and Primary Keys](#dynamodb-partitions-and-primary-keys)
+    - [Partition key](#partition-key)
+    - [Composite key](#composite-key)
+    - [Limits](#limits)
+    - [Best practices for partition keys:](#best-practices-for-partition-keys)
+  - [DynamoDB Consistency Models](#dynamodb-consistency-models)
+    - [Eventually consistent reads](#eventually-consistent-reads)
+    - [Strongly consistent reads](#strongly-consistent-reads)
+    - [Transactions](#transactions)
+  - [DynamoDB Capacity Units (RCU/WCU)](#dynamodb-capacity-units-rcuwcu)
+    - [Read Capacity Units (RCUs):](#read-capacity-units-rcus)
+    - [Write Capacity Units (WCUs)](#write-capacity-units-wcus)
+  - [DynamoDB On Demand Capacity](#dynamodb-on-demand-capacity)
+  - [Performance](#performance)
+  - [DynamoDB Scan and Query API](#dynamodb-scan-and-query-api)
+    - [DynamoDB Scan API](#dynamodb-scan-api)
+    - [DynamoDB Query API](#dynamodb-query-api)
+    - [Examples cli](#examples-cli)
+      - [Import data](#import-data)
+      - [Perform scan of ProductOrders table:](#perform-scan-of-productorders-table)
+      - [Use Page-Size Parameter:](#use-page-size-parameter)
+      - [Use Max-Items Parameter:](#use-max-items-parameter)
+      - [Use Projection-Expression Parameter:](#use-projection-expression-parameter)
+      - [Use Filter-Expression Parameter:](#use-filter-expression-parameter)
+      - [Use Key-Conditions Parameter:](#use-key-conditions-parameter)
+      - [Use Key-Condition-Expression Parameter:](#use-key-condition-expression-parameter)
+  - [Examples](#examples-3)
+  - [DynamoDB LSI and GSI](#dynamodb-lsi-and-gsi)
+    - [DynamoDB Local Secondary Index (LSI)](#dynamodb-local-secondary-index-lsi)
+    - [DynamoDB Global Secondary Index (GSI)](#dynamodb-global-secondary-index-gsi)
+  - [DynamoDB Optimistic Locking and Conditional Updates](#dynamodb-optimistic-locking-and-conditional-updates)
+    - [DynamoDB Optimistic Locking](#dynamodb-optimistic-locking)
+    - [DynamoDB Conditional Updates](#dynamodb-conditional-updates)
+  - [Adding a time to live (TTL) to items](#adding-a-time-to-live-ttl-to-items)
+  - [DynamoDB Streams](#dynamodb-streams)
+  - [Amazon DynamoDB Accelerator (DAX)](#amazon-dynamodb-accelerator-dax)
+    - [DAX vs ElastiCache](#dax-vs-elasticache)
+  - [Amazon DynamoDB Global Tables](#amazon-dynamodb-global-tables)
 
 # AWS Certification
 
@@ -3034,8 +3077,8 @@ It can be possible to encrypt particular variables with key that is in KMS servi
 
 ## Lambda limits
 
-| Resource                                          | Quota    
-| ------------------------------------------------- | -------------           |
+| Resource                 | Quota                                            |
+| ------------------------ | ------------------------------------------------ |
 | Memory allocation        | 128MB to 10240MB in 1-MB increments              |
 | Function timeout         | 900 seconds (15 minutes)                         |
 | Environment variables    | 4KB for all the function's environment variables |
@@ -4253,3 +4296,1133 @@ class ContextLambdaTest {
     }
 }
 ```
+
+# Dynamo DB
+
+- Fully managed NoSQL database service
+- Key/value store and document store
+- It is a non-relational, key value type of database
+- Fully serverless service
+- Push button scaling
+- DynamoDB provides low latency (milliseconds)
+- Microsecond latency can be achieved with **DynamoDB Accelerator (DAX)**. Fully managed in memory cache for DynamoDB that increases performance (microsecond latency)
+- All data is stored on SSD storage
+- Data is replicated across multiple AZs in a Region
+- **DynamoDB Global Tables** synchronizes tables across Regions
+- 99.99% availability SLA 99.999% for Global Tables
+- Flexible schema, good for when data is not well structured or unpredictable
+- **DynamoDB Streams** Captures a time ordered sequence of item level modifications in a DynamoDB table and durably stores
+the information for up to 24 hours. Often used with Lambda and the Kinesis Client Library (KCL)
+- Transaction options Strongly consistent or eventually consistent reads, support for ACID transactions
+- Point in time recovery down to the second in last 35 days; On demand backup and restore
+
+The basic DynamoDB components are:
+- Tables
+- Items (rows)
+- Attributes (columns)
+
+## DynamoDB API
+
+API operations are categorized as **control plane** and **data plane**
+
+Example control plane API actions:
+- `CreateTable` Creates a new table
+- `DescribeTable` Returns information about a table, such as its primary key schema, throughput settings, and index information
+- `ListTables` Returns the names of all your tables in a list
+- `UpdateTable` Modifies the settings of a table or its indexes
+- `DeleteTable` Removes a table and all its dependent objects from DynamoDB
+
+Data plane API actions can be performed using PartiQL (SQL compatible), or classic DynamoDB CRUD APIs
+
+Example data plane API actions (DynamoDB CRUD ):
+- `PutItem` Writes a single item to a table
+- `BatchWriteItem` Writes up to 25 items to a table
+- `GetItem` Retrieves a single item from a table
+- `BatchGetItem` Retrieves up to 100 items from one or more tables
+- `UpdateItem` Modifies one or more attributes in an item
+- `DeleteItem` Deletes a single item from a table
+
+## Data types
+
+- **Scalar Types** represent exactly one value. The scalar types are number, string, binary, Boolean, and null
+- **Document Types** A document type can represent a complex structure with nested attributes, such as you would find in a JSON document. The document types are list and map
+- **Set Types** A set type can represent multiple scalar values. The set types are string set, number set, and binary set
+
+## Table classes
+
+**DynamoDB Standard** – default and recommended for most workloads
+
+**DynamoDB Standard-Infrequent Access(DynamoDB Standard-IA)** - Lower cost storage for tables that store infrequently accessed data, such as:
+- Application logs
+- Old social media posts
+- E-commerce order history
+- Past gaming achievements
+
+## Access control
+
+All authentication and access control is managed using IAM
+
+DynamoDB supports **identity-based** policies:
+- Attach a permissions policy to a user or a group in your account
+- Attach a permissions policy to a role (grant cross account permissions)
+
+DynamoDB doesn't support **resource-based** policies
+
+You can use a special IAM condition to restrict user access to only their own records
+
+The primary DynamoDB resources are tables
+
+Also supports additional resource types, indexes, and streams
+
+You can create indexes and streams only in the context of an existing DynamoDB table (subresources)
+
+These resources and subresources have unique ARNs associated with them, as shown in the following table:
+
+Table `arn:aws:dynamodb:region:account-id:table/table-name`
+
+Index `arn:aws:dynamodb:region:account-id:table/table-name/index/index-name`
+
+Stream `arn:aws:dynamodb:region:account-id:table/table-name/stream/stream-label`
+
+The following example policy grants permissioins for one DynamoDB action (dynamodb:ListTables)
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement":[
+    {
+      "Sid": "ListTables",
+      "Effect": "Allow",
+      "Action": [
+        "dynamodb:ListTables"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
+```
+
+The following example policy grants permissions for three DynamoDB actions
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement":[
+    {
+      "Sid": "DescribeQueryScanBooksTable",
+      "Effect": "Allow",
+      "Action": [
+        "dynamodb:DescribeTable",
+        "dynamodb:Query",
+        "dynamodb:Scan"
+      ],
+      "Resource": "arn:aws:dynamodb:us-west-2:account-id:table/Books"
+    }
+  ]
+}
+```
+
+## DynamoDB Partitions and Primary Keys
+
+- Amazon DynamoDB stores data in partitions
+- A partition is an allocation of storage for a table that is automatically replicated across multiple AZs within an AWS Region
+- DynamoDB manages partitions for you
+- DynamoDB allocates sufficient partitions to support provisioned throughput requirements
+- DynamoDB allocates additional partitions to a table in the following situations:
+  - If you increase the table's provisioned throughput settings beyond what the existing partitions can support
+  - If an existing partition fills to capacity and more storage space is required
+  
+
+- There are two types of Primary key: **Partition keys** and **composite keys**
+
+### Partition key
+
+- Partition key unique attribute (e.g. user ID)
+- Value of the Partition key is input to an internal hash function which determines the partition or physical location on which the data is stored
+-  If you are using the Partition key as your Primary key then no two items can have the same partition key
+
+### Composite key
+
+- Composite key = Partition key + Sort key in combination
+- Example is user posting to a forum. Partition key would be the user ID, Sort key would be the timestamp of the post
+- 2 items may have the same Partition key, but they must have a different Sort key
+- All items with the same Partition key are stored together, then sorted according to the Sort key value
+- Allows you to store multiple items with the same partition key
+
+
+### Limits
+
+- DynamoDB evenly distributes provisioned throughput read capacity units (RCUs) and write capacity units (WCUs) among partitions
+- If your access pattern exceeds 3000 RCU or 1000 WCU for a single partition key value, your requests might be throttled
+- Reading or writing above the limit can be caused by these issues:
+  - Uneven distribution of data due to the wrong choice of partition key
+  - Frequent access of the same key in a partition (the most popular item, also known as a hot key)
+  - A request rate greater than the provisioned throughput
+
+### Best practices for partition keys:
+
+- Use high cardinality attributes e.g. e mailid, employee_no, customerid, sessionid, orderid, and so on
+- Use composite attributes e.g. customerid+productid+countrycode as the partition key and order_date as the sort key
+- Cache popular items use DynamoDB accelerator (DAX) for caching reads
+- Add random numbers or digits from a predetermined range for write heavy use cases. For example, add a random suffix to an invoice
+number such as `INV00023-04593`
+
+## DynamoDB Consistency Models
+
+DynamoDB supports eventually consistent and strongly consistent reads
+
+
+### Eventually consistent reads
+
+- DynamoDB uses eventually consistent reads by default
+- When you read data from a DynamoDB table, the response might not reflect the results of a recently completed write operation
+- The response might include some stale data
+- If you repeat your read request after a short time, the response should return the latest data
+
+### Strongly consistent reads
+
+- DynamoDB returns a response with the most up to date data, reflecting the updates from all prior write operations that were successful
+- A strongly consistent read might not be available if there is a network delay or outage. In this case, DynamoDB may return a server error (HTTP 500)
+- Strongly consistent reads may have higher latency than eventually consistent reads
+- Strongly consistent reads use more throughput capacity than eventually consistent reads
+- Strongly consistent reads are not supported on global secondary indexes
+- With a strongly consistent read, data will always be returned when reading after a successful write
+- You can configure strongly consistent reads with the `GetItem` , `Query` and `Scan` APIs by setting the `consistent-read` (or `ConsistentRead`) parameter to true
+
+### Transactions
+
+- With DynamoDB transactions DynamoDB makes coordinated, all or nothing changes to multiple items both within and across tables
+- Transactions provide atomicity, consistency, isolation, and durability (ACID) in DynamoDB
+- Enables reading and writing of multiple items across multiple tables as an all or nothing operation
+- Checks for a prerequisite condition before writing to a table
+- There is no additional cost to enable transactions for DynamoDB tables
+- You pay only for the reads or writes that are part of your transaction
+- DynamoDB performs **two** underlying reads or writes of every item in the transaction: one to prepare the transaction and one to commit the transaction
+
+- With the **transaction write API**, you can group multiple `Put` , `Update` , `Delete` , and `ConditionCheck` actions
+- You can then submit the actions as a single `TransactWriteItems` operation that either succeeds or fails as a unit
+- The same is true for multiple `Get` actions, which you can group and submit as a single `TransactGetItems` operation
+
+## DynamoDB Capacity Units (RCU/WCU)
+
+- Provisioned capacity is the default setting
+- You specify the reads and write per second
+- Can enabled auto scaling for dynamic adjustments
+- Capacity is specified using:
+  - Read Capacity Units
+  - Write Capacity Units
+
+![](images/dynamodb_7.png)
+
+![](images/dynamodb_8.png)
+
+### Read Capacity Units (RCUs):
+
+- Each API call to read data from your table is a read request
+- Read requests can be strongly consistent, eventually consistent, or transactional
+- For items up to 4 KB in size, one RCU equals:
+  - One strongly consistent read request per second
+  - Two eventually consistent read requests per second
+  - 0.5 transactional read requests per second
+- Items larger than 4 KB require additional RCUs
+
+
+10 strongly consistent reads per second of 4 KB each
+$$
+{{10 * 4 KB } \over 4 KB } = 10 RCU
+$$
+
+10 strongly consistent reads per second of 11 KB each
+$$
+{{10 * 12 KB } \over 4 KB } = 30 RCU
+$$
+
+20 eventually consistent reads per second of 12 KB each
+
+$$
+{20 \over 2} * {12 \over 4} = 30 RCU
+$$
+
+36 eventually consistent reads per second of 16 KB each 
+$$
+{36 \over 2} * {16 \over 4} = 72 RCU
+$$
+
+### Write Capacity Units (WCUs)
+
+- Each API call to write data to your table is a write
+request
+-  For items up to 1 KB in size, one WCU can perform:
+   - One standard write request per second
+   - 0.5 transactional writes requests (one transactional write requires two WCUs)
+- Items larger than 1 KB require additional WCUs
+
+10 standard writes per second of 4 KB each
+$$
+10 * 4 = 40 WCU
+$$
+
+12 standard writes per second of 9.5 KB each (9.5 gets rounded)
+$$
+12 * 10 = 120 WCU
+$$
+
+10 transactional writes per second of 4 KB each
+$$
+10 * 2 * 4 = 80 WCU
+$$
+
+12 transactional writes per second of 9.5 KB each
+$$
+12 * 2 * 10 = 240 WCU
+$$
+
+## DynamoDB On Demand Capacity
+
+- With on demand, you don't need to specify your requirements
+- DynamoDB instantly scales up and down based on the activity of your application
+- Great for unpredictable / spikey workloads or new workloads that aren't well understood
+- You pay for what you use (pay per request)
+
+## Performance
+
+- Throttling occurs when the configured RCU or WCU are exceeded
+- You may receive the following error `ProvisionedThroughputExceededException`. This error indicates that the request rate is too high for the read / write capacity provisioned for the table
+- The AWS SDKs for DynamoDB automatically retry requests that receive this exception
+- The request is eventually successful, unless the retry queue is too large to finish DynamoDB Performance and Throttling
+
+Possible causes of performance issues:
+- **Hot keys** one partition key is being read too often
+- **Hot partitions** when data access is imbalanced, a "hot" partition can receive a higher volume of read and write traffic compared to other partitions
+- **Large items** large items consume more RCUs and WCUs
+
+Resolution:
+- Reduce the frequency of requests and use exponential backoff
+- Try to design your application for uniform activity across all logical partition keys in the table and its secondary indexes
+- Use burst capacity effectively DynamoDB retains up to 5 minutes (300 seconds) of unused read and write capacity which can be consumed quickly
+- Ensure Adaptive Capacity is enabled (default) this feature minimizes throttling due to throughput exceptions
+
+## DynamoDB Scan and Query API
+
+### DynamoDB Scan API
+
+- The Scan operation returns one or more items and item attributes by accessing every item in a table or a secondary index
+- To have DynamoDB return fewer items, you can provide a `FilterExpression` operation
+- A single Scan operation reads up to the maximum number of items set (if using the `Limit` parameter), or a maximum of 1 MB
+- Scan API calls can use a lot of RCUs as they access every item in the table
+- Scan operations proceed sequentially
+- Applications can request a parallel Scan operation by providing the `Segment` and `TotalSegments` parameters
+- Scan uses eventually consistent reads when accessing the data in a table
+- If you need a consistent copy of the data, as of the time that the Scan begins, you can set the `ConsistentRead` parameter to true
+
+![](images/dynamodb_9.png)
+
+In this example the scan will return all posts in the forum that were posted within a date range and that have more than 50 replies:
+
+![](images/dynamodb_10.png)
+
+![](images/dynamodb_11.png)
+
+### DynamoDB Query API
+
+- A query operation finds items in your table based on the primary key attribute and a distinct value to search for
+- For example, you might search for a user ID value and all attributes related to that item would be returned
+- You can use an optional sort key name and value to refine the results
+- For example, if your sort key is a timestamp, you can refine the query to only select items with a timestamp of the last 7 days
+- All attributes are returned for the items by default
+- You can also use the `ProjectionExpression` parameter if you want the query to only return the attributes you want to see
+- By default, queries are eventually consistent
+- To use strongly consistent, you need to explicitly set this in the query
+
+![](images/dynamodb_12.png)
+
+In this example the query returns only items with the client id of chris@example.com that were created within a certain date range and that are in the category pen
+
+![](images/dynamodb_13.png)
+
+### Examples cli
+
+All examples below can be repetead by console portal. Here will be examples for cli. 
+
+
+mystore.json
+
+```json
+{
+    "mystore": [
+        {
+            "PutRequest": {
+                "Item": {
+                    "clientid": {
+                        "S": "john@example.com"
+                    },
+                    "created": {
+                        "S": "2020-03-9T08:12Z"
+                    },
+                    "sku": {
+                        "S": "SKU-S523"
+                    },
+                    "category": {
+                        "S": "T-Shirt"
+                    },
+                    "size": {
+                        "S": "Small"
+                    },
+                    "colour": {
+                        "S": "Red"
+                    },
+                    "qty": {
+                        "N": "1"
+                    },
+                    "price": {
+                        "N": "30"
+                    },
+                    "weight": {
+                        "S": "Light"
+                    } 
+                  
+                }
+            }
+        },
+        {
+            "PutRequest": {
+                "Item": {
+                    "clientid": {
+                        "S": "chris@example.com"
+                    },
+                    "created": {
+                        "S": "2020-03-10T14:30Z"
+                    },
+                    "sku": {
+                        "S": "SKU-J091"
+                    },
+                    "category": {
+                        "S": "Pen"
+                    },
+                    "qty": {
+                        "N": "1"
+                    },
+                    "price": {
+                        "N": "14.99"
+                    },
+                    "colour": {
+                        "S": "Blue"
+                    }
+                  
+                }
+            }
+        },
+        {
+            "PutRequest": {
+                "Item": {
+                    "clientid": {
+                        "S": "chris@example.com"
+                    },
+                    "created": {
+                        "S": "2020-03-10T15:30Z"
+                    },
+                    "sku": {
+                        "S": "SKU-A234"
+                    },
+                    "category": {
+                        "S": "Mug"
+                    },
+                    "qty": {
+                        "N": "2"
+                    },
+                    "price": {
+                        "N": "8.99"
+                    },
+                    "size": {
+                        "N": "12"
+                    }
+                  
+                }
+            }
+        },
+        {
+            "PutRequest": {
+                "Item": {
+                    "clientid": {
+                        "S": "sarah@example.com"
+                    },
+                    "created": {
+                        "S": "2020-03-12T7:42Z"
+                    },
+                    "sku": {
+                        "S": "SKU-R873"
+                    },
+                    "category": {
+                        "S": "Chair"
+                    },
+                    "size": {
+                        "N": "94"
+                    },
+                    "qty": {
+                        "N": "6"
+                    },
+                    "price": {
+                        "N": "82.99"
+                    },
+                    "weight": {
+                        "N": "4011"
+                    } 
+                  
+                }
+            }
+        },
+        {
+            "PutRequest": {
+                "Item": {
+                    "clientid": {
+                        "S": "jenny@example.com"
+                    },
+                    "created": {
+                        "S": "2020-03-13T18:29Z"
+                    },
+                    "sku": {
+                        "S": "SKU-I019"
+                    },
+                    "category": {
+                        "S": "Plate"
+                    },
+                    "qty": {
+                        "N": "12"
+                    },
+                    "price": {
+                        "N": "119.99"
+                    },
+                    "size": {
+                        "N": "30"
+                    }
+                  
+                }
+            }
+        },
+        {
+            "PutRequest": {
+                "Item": {
+                    "clientid": {
+                        "S": "jose@example.com"
+                    },
+                    "created": {
+                        "S": "2020-04-01T20:01Z"
+                    },
+                    "sku": {
+                        "S": "SKU-U812"
+                    },
+                    "category": {
+                        "S": "Phone Case"
+                    },
+                    "qty": {
+                        "N": "1"
+                    },
+                    "price": {
+                        "N": "19.99"
+                    },
+                    "size": {
+                        "S": "iPhone 8"
+                    }
+                  
+                }
+            }
+        },
+        {
+            "PutRequest": {
+                "Item": {
+                    "clientid": {
+                        "S": "jess@example.com"
+                    },
+                    "created": {
+                        "S": "2020-04-02T06:04Z"
+                    },
+                    "sku": {
+                        "S": "SKU-P122"
+                    },
+                    "category": {
+                        "S": "book"
+                    },
+                    "qty": {
+                        "N": "1"
+                    },
+                    "price": {
+                        "N": "24.95"
+                    },
+                    "weight": {
+                        "N": "200"
+                    }
+                  
+                }
+            }
+        },
+        {
+            "PutRequest": {
+                "Item": {
+                    "clientid": {
+                        "S": "cindy@example.com"
+                    },
+                    "created": {
+                        "S": "2020-03-28T20:29Z"
+                    },
+                    "sku": {
+                        "S": "SKU-L398"
+                    },
+                    "qty": {
+                        "N": "1"
+                    },
+                    "price": {
+                        "N": "12.99"
+                    },
+                    "category": {
+                        "S": "Charger"
+                    }
+                  
+                }
+            }
+        },{
+            "PutRequest": {
+                "Item": {
+                    "clientid": {
+                        "S": "adam@example.com"
+                    },
+                    "created": {
+                        "S": "2020-03-18T04:54Z"
+                    },
+                    "sku": {
+                        "S": "SKU-K101"
+                    },
+                    "category": {
+                        "S": "Bowl"
+                    },
+                    "size": {
+                        "N": "20"
+                    },
+                    "price": {
+                        "N": "32"
+                    },
+                    "qty": {
+                        "N": "4"
+                    }
+                  
+                }
+            }
+        },{
+            "PutRequest": {
+                "Item": {
+                    "clientid": {
+                        "S": "safin@example.com"
+                    },
+                    "created": {
+                        "S": "2020-03-21T22:27Z"
+                    },
+                    "sku": {
+                        "S": "SKU-M011"
+                    },
+                    "category": {
+                        "S": "Glasses"
+                    },
+                    "model": {
+                        "S": "Champagne"
+                    },
+                    "qty": {
+                        "N": "10"
+                    },
+                    "price": {
+                        "N": "249.99"
+                    },
+                    "finish": {
+                        "S": "Crystal"
+                    }
+                  
+                }
+            }
+        },{
+            "PutRequest": {
+                "Item": {
+                    "clientid": {
+                        "S": "carol@example.com"
+                    },
+                    "created": {
+                        "S": "2020-03-27T19:19Z"
+                    },
+                    "category": {
+                        "S": "Watch"
+                    },
+                    "model": {
+                        "S": "NXC021Z"
+                    },
+                    "qty": {
+                        "N": "2"
+                    },
+                    "price": {
+                        "N": "349.99"
+                    },
+                    "brand": {
+                        "S": "Garmin"
+                    }
+                  
+                }
+            }
+        },
+        {
+            "PutRequest": {
+                "Item": {
+                    "clientid": {
+                        "S": "jake@example.com"
+                    },
+                    "created": {
+                        "S": "2020-03-18T19:29Z"
+                    },
+                    "sku": {
+                        "S": "SKU-Q012"
+                    },
+                    "category": {
+                        "S": "Camera"
+                    },
+                    "brand": {
+                        "S": "Cannon"
+                    },
+                    "qty": {
+                        "N": "1"
+                    },
+                    "price": {
+                        "N": "429.99"
+                    },
+                    "model": {
+                        "S": "EOS 5D MIV"
+                    }
+                  
+                }
+            }
+        },
+        {
+            "PutRequest": {
+                "Item": {
+                    "clientid": {
+                        "S": "chris@example.com"
+                    },
+                    "created": {
+                        "S": "2020-04-01T12:30Z"
+                    },
+                    "sku": {
+                        "S": "SKU-B123"
+                    },
+                    "category": {
+                        "S": "Batteries"
+                    },
+                    "qty": {
+                        "N": "12"
+                    },
+                    "price": {
+                        "N": "22.99"
+                    },
+                    "size": {
+                        "S": "A3"
+                    }
+                  
+                }
+            }
+        },
+        {
+            "PutRequest": {
+                "Item": {
+                    "clientid": {
+                        "S": "chris@example.com"
+                    },
+                    "created": {
+                        "S": "2020-03-28T18:01Z"
+                    },
+                    "sku": {
+                        "S": "SKU-C765"
+                    },
+                    "category": {
+                        "S": "Ear Plugs"
+                    },
+                    "qty": {
+                        "N": "1"
+                    },
+                    "price": {
+                        "N": "6.99"
+                    }
+                  
+                }
+            }
+        },
+        {
+            "PutRequest": {
+                "Item": {
+                    "clientid": {
+                        "S": "pj@example.com"
+                    },
+                    "created": {
+                        "S": "2020-04-03T07:04Z"
+                    },
+                    "sku": {
+                        "S": "SKU-P122"
+                    },
+                    "category": {
+                        "S": "book"
+                    },
+                    "qty": {
+                        "N": "1"
+                    },
+                    "price": {
+                        "N": "24.95"
+                    },
+                    "weight": {
+                        "N": "200"
+                    }
+                  
+                }
+            }
+        },
+        {
+            "PutRequest": {
+                "Item": {
+                    "clientid": {
+                        "S": "werner@example.com"
+                    },
+                    "created": {
+                        "S": "2020-04-02T06:04Z"
+                    },
+                    "sku": {
+                        "S": "SKU-P122"
+                    },
+                    "category": {
+                        "S": "book"
+                    },
+                    "qty": {
+                        "N": "1"
+                    },
+                    "price": {
+                        "N": "24.95"
+                    },
+                    "weight": {
+                        "N": "200"
+                    }
+                  
+                }
+            }
+        },
+        {
+            "PutRequest": {
+                "Item": {
+                    "clientid": {
+                        "S": "charles@example.com"
+                    },
+                    "created": {
+                        "S": "2020-04-02T06:04Z"
+                    },
+                    "sku": {
+                        "S": "SKU-P122"
+                    },
+                    "category": {
+                        "S": "book"
+                    },
+                    "qty": {
+                        "N": "4"
+                    },
+                    "price": {
+                        "N": "24.95"
+                    },
+                    "weight": {
+                        "N": "200"
+                    }
+                  
+                }
+            }
+        },
+        {
+            "PutRequest": {
+                "Item": {
+                    "clientid": {
+                        "S": "kathy@example.com"
+                    },
+                    "created": {
+                        "S": "2020-04-02T06:04Z"
+                    },
+                    "sku": {
+                        "S": "SKU-P122"
+                    },
+                    "category": {
+                        "S": "book"
+                    },
+                    "qty": {
+                        "N": "2"
+                    },
+                    "price": {
+                        "N": "24.95"
+                    },
+                    "weight": {
+                        "N": "200"
+                    }
+                  
+                }
+            }
+        },
+        {
+            "PutRequest": {
+                "Item": {
+                    "clientid": {
+                        "S": "leonard@example.com"
+                    },
+                    "created": {
+                        "S": "2020-04-03T06:04Z"
+                    },
+                    "sku": {
+                        "S": "SKU-T122"
+                    },
+                    "category": {
+                        "S": "Phone Case"
+                    },
+                    "qty": {
+                        "N": "2"
+                    },
+                    "price": {
+                        "N": "19.95"
+                    },
+                    "weight": {
+                        "S": "iPhone 8"
+                    }
+                  
+                }
+            }
+        },
+        {
+            "PutRequest": {
+                "Item": {
+                    "clientid": {
+                        "S": "pat@example.com"
+                    },
+                    "created": {
+                        "S": "2020-04-03T06:04Z"
+                    },
+                    "sku": {
+                        "S": "SKU-T122"
+                    },
+                    "category": {
+                        "S": "Phone Case"
+                    },
+                    "qty": {
+                        "N": "2"
+                    },
+                    "price": {
+                        "N": "19.95"
+                    },
+                    "weight": {
+                        "S": "iPhone 8"
+                    }
+                  
+                }
+            }
+        },
+        {
+            "PutRequest": {
+                "Item": {
+                    "clientid": {
+                        "S": "colin@example.com"
+                    },
+                    "created": {
+                        "S": "2020-04-03T06:04Z"
+                    },
+                    "sku": {
+                        "S": "SKU-T122"
+                    },
+                    "category": {
+                        "S": "Phone Case"
+                    },
+                    "qty": {
+                        "N": "4"
+                    },
+                    "price": {
+                        "N": "19.95"
+                    },
+                    "weight": {
+                        "S": "iPhone 8"
+                    }
+                  
+                }
+            }
+        }
+      
+    ]
+}
+```
+
+#### Import data
+```bash
+aws dynamodb batch-write-item --request-items file://mystore.json
+```
+
+#### Perform scan of ProductOrders table:
+
+```bash
+aws dynamodb scan --table-name mystore
+```
+
+#### Use Page-Size Parameter:
+
+```bash
+aws dynamodb scan --table-name mystore --page-size 1
+aws dynamodb scan --table-name mystore --page-size 2
+```
+
+#### Use Max-Items Parameter:
+
+```bash
+aws dynamodb scan --table-name mystore --max-items 1
+```
+
+#### Use Projection-Expression Parameter:
+
+```bash
+aws dynamodb scan --table-name mystore --projection-expression "created"
+aws dynamodb scan --table-name mystore --projection-expression "category"
+aws dynamodb scan --table-name mystore --projection-expression "colour"
+```
+
+#### Use Filter-Expression Parameter:
+
+```bash
+aws dynamodb scan --table-name mystore --filter-expression "clientid = :username" --expression-attribute-values '{ ":username": { "S": "chris@example.com" }}'
+aws dynamodb scan --table-name mystore --filter-expression "size = :n" --expression-attribute-values '{ ":n": { "N": "12" }}'
+aws dynamodb scan --table-name mystore --filter-expression "size > :n" --expression-attribute-values '{ ":n": { "N": "12" }}'
+```
+
+#### Use Key-Conditions Parameter:
+
+```bash
+aws dynamodb query  --table-name mystore --key-conditions '{ "clientid":{ "ComparisonOperator":"EQ", "AttributeValueList": [ {"S": "chris@example.com"} ] } }'
+```
+
+#### Use Key-Condition-Expression Parameter:
+
+```bash
+aws dynamodb query --table-name mystore --key-condition-expression "clientid = :name" --expression-attribute-values '{":name":{"S":"chris@example.com"}}'
+```
+
+## Examples
+
+1. Crate a table through a console with a compund key = partinion key + sorted key(optional)
+
+![](images/dynamodb_1.png)
+![](images/dynamodb_2.png)
+
+2. add some row. 
+![](images/dynamodb_3.png)
+
+![](images/dynamodb_4.png)
+
+![](images/dynamodb_5.png)
+
+![](images/dynamodb_6.png)
+
+## DynamoDB LSI and GSI
+
+### DynamoDB Local Secondary Index (LSI)
+
+- Provides an alternative sort key to use for scans and queries
+- Can create up to 5 LSIs per table
+- Must be created at table creation time
+- You cannot add, remove, or modify it later
+- It has the same partition key as your original table (different sort key)
+- Gives you a different view of your data, organized by alternative sort key
+- Any queries based on this sort key are much faster using the index than the main table
+
+![](images/dynamodb_14.png)
+
+![](images/dynamodb_15.png)
+
+### DynamoDB Global Secondary Index (GSI)
+
+- Used to speed up queries on non key attributes
+- You can create when you create your table or at any time
+- Can specify a different partition key as well as a different sort key
+- Gives a completely different view of the data
+- Speeds up any queries relating to this alternative partition and sort key
+
+![](images/dynamodb_16.png)
+
+![](images/dynamodb_17.png)
+
+## DynamoDB Optimistic Locking and Conditional Updates
+
+### DynamoDB Optimistic Locking
+
+- Optimistic locking is a strategy to ensure that the client side item that you are updating (or deleting) is the same as the item in Amazon DynamoDB
+- Protects database writes from being overwritten by the writes of others, and vice versa
+
+![](images/dynamodb_18.png)
+
+### DynamoDB Conditional Updates
+
+- To manipulate data in an Amazon DynamoDB table, you use the `PutItem` , `UpdateItem` , and `DeleteItem` operations
+- You can optionally specify a condition expression to determine which items should be modified
+- If the condition expression evaluates to true, the operation succeeds; otherwise, the operation fails
+
+![](images/dynamodb_19.png)
+
+![](images/dynamodb_20.png)
+
+## Adding a time to live (TTL) to items
+
+- TTL lets you define when items in a table expire so that they can be automatically deleted from the database
+- With TTL enabled on a table, you can set a timestamp for deletion on a per item basis
+- No extra cost and does not use WCU / RCU
+- Helps reduce storage and manage the table size over time
+
+![](images/dynamodb_21.png)
+
+we need to add new attibute (column) with expiry date with linux-epoch time. And then put the name of this attibute here. 
+
+![](images/dynamodb_22.png)
+
+## DynamoDB Streams
+
+![](images/dynamodb_streams_1.png)
+
+- DynamoDB Streams captures a time ordered sequence of item level modifications in any DynamoDB table
+- The information is stored in a log for up to 24 hours
+- Applications can access this log and view the data items as they appeared before and after they were modified, in near real time
+- You can also use the `CreateTable` or `UpdateTable` API operations to enable or modify a stream
+- The `StreamSpecification` parameter determines how the stream is configured:
+  - `StreamEnabled` Specifies whether a stream is enabled (true) or disabled (false) for the table
+  - `StreamViewType` Specifies the information that will be written to the stream whenever data in the table is modified:
+    - `KEYS_ONLY` Only the key attributes of the modified item
+    - `NEW_IMAGE` The entire item, as it appears after it was modified
+    - `OLD_IMAGE` The entire item, as it appeared before it was modified
+    - `NEW_AND_OLD_IMAGES` Both the new and the old images of the item
+
+## Amazon DynamoDB Accelerator (DAX)
+
+- DAX is a managed service that provides in memory acceleration for DynamoDB tables
+- Improves performance from milliseconds to microseconds , even at millions of requests per second
+- Provides managed cache invalidation, data population, and cluster management
+- DAX is used to improve READ performance (not writes)
+- You do not need to modify application logic, since DAX is compatible with existing DynamoDB API calls
+
+![](images/dynamodb_dax_1.png)
+
+- You can enable DAX with just a few clicks in the AWS Management Console or using the AWS SDK
+- Just as with DynamoDB, you only pay for the capacity you provision
+- Provisioned through clusters and charged by the node (runs on EC2 instances)
+- Pricing is per node hour consumed and is dependent on the instance type you select
+
+### DAX vs ElastiCache
+
+- DAX is optimized for DynamoDB
+- With ElastiCache you have more management overhead (e.g. invalidation)
+- With ElastiCache you need to modify application code to point to cache
+- ElastiCache supports more datastores
+
+## Amazon DynamoDB Global Tables
+
+- DynamoDB global tables is a fully managed solution for deploying a multi region, multi master database
+- When you create a global table, you specify the AWS Regions where you want the table to be available
+- DynamoDB performs all the necessary tasks to create identical tables in these regions, and propagate ongoing data changes to all of them
+
+![](images/dynamodb_global_1.png)
+
+![](images/dynamodb_global_2.png)
+
+![](images/dynamodb_global_3.png)
