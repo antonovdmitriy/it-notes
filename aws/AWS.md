@@ -229,6 +229,34 @@
   - [SQS CLI examples](#sqs-cli-examples)
   - [Amazon SQS API](#amazon-sqs-api)
   - [What if the message is bigger than 256 KB? Java library](#what-if-the-message-is-bigger-than-256-kb-java-library)
+- [SNS Simple Notification Service](#sns-simple-notification-service)
+  - [Amazon SNS + Amazon SQS Fan Out](#amazon-sns--amazon-sqs-fan-out)
+- [Simple serverless](#simple-serverless)
+- [AWS Step Functions](#aws-step-functions)
+- [Amazon EventBridge](#amazon-eventbridge)
+- [Amazon API Gateway](#amazon-api-gateway)
+  - [Feautures](#feautures)
+  - [Deployment types](#deployment-types)
+    - [Edge Optimized APIs](#edge-optimized-apis)
+    - [Regional APIs](#regional-apis)
+    - [Private endpoint](#private-endpoint)
+  - [Structure of API](#structure-of-api)
+  - [Integration Types](#integration-types)
+    - [AWS integration](#aws-integration)
+    - [AWS\_PROXY (or Lambda proxy integration)](#aws_proxy-or-lambda-proxy-integration)
+    - [HTTP](#http)
+    - [MOCK](#mock)
+  - [Mapping Templates](#mapping-templates)
+  - [API Gateway Stages and Deployments](#api-gateway-stages-and-deployments)
+  - [Swagger and Open API 3](#swagger-and-open-api-3)
+  - [Caching and Throttling](#caching-and-throttling)
+    - [Caching](#caching)
+    - [Throttling](#throttling)
+  - [API Gateway Usage Plans and API Keys](#api-gateway-usage-plans-and-api-keys)
+  - [API Gateway Access Control](#api-gateway-access-control)
+    - [Resource Based Policies](#resource-based-policies)
+    - [Lambda Authorizer](#lambda-authorizer)
+    - [Cognito User Pool Authorizer](#cognito-user-pool-authorizer)
 
 # AWS Certification
 
@@ -5572,3 +5600,296 @@ aws sqs send-message --queue-url QUEUE-URL --message-body test-long-short-pollin
   - Send a message that references a single message object stored in an Amazon S3 bucket
   - Get the corresponding message object from an Amazon S3 bucket
   - Delete the corresponding message object from an Amazon S3 bucket
+
+# SNS Simple Notification Service
+
+![](images/sns_1.png)
+
+- Amazon SNS is a highly available, durable, secure, fully managed pub/sub messaging service
+- Amazon SNS provides topics for high throughput, push based, many to many messaging
+- Publisher systems can fan out messages to a large number of subscriber endpoints
+  - Amazon SQS queues
+  - AWS Lambda functions
+  - HTTP/S webhooks
+  - Mobile push
+  - SMS
+  - Email
+
+- Multiple recipients can be grouped using Topics
+- A topic is an “access point” for allowing recipients to dynamically subscribe for identical copies of the same notification
+- One topic can support deliveries to multiple endpoint types
+- Flexible message delivery over multiple transport protocols
+
+## Amazon SNS + Amazon SQS Fan Out
+- You can subscribe one or more Amazon SQS queues to an Amazon SNS topic
+- Amazon SQS manages the subscription and any necessary permissions
+- When you publish a message to a topic, Amazon SNS sends the message to every subscribed queue
+
+![](images/sns_2.png)
+
+# Simple serverless
+
+![](images/simple_serverless_1.png)
+
+# AWS Step Functions
+
+![](images/sf_1.png)
+
+- AWS Step Functions is used to build distributed applications as a series of steps in a visual workflow.
+- You can quickly build and run state machines to execute the steps of your application
+
+How it works:
+1. Define the steps of your workflow in the JSON based Amazon States Language. The visual console automatically graphs each step in the order of execution
+2. Start an execution to visualize and verify the steps of your application are operating as intended. The console highlights the real time status of each step and provides a detailed history of every execution
+3. AWS Step Functions operates and scales the steps of your application and underlying compute for you to help ensure your application executes reliably under increasing demand
+
+![](images/sf_2.png)
+
+# Amazon EventBridge
+
+![](images/event_bridge_1.png)
+
+![](images/event_bridge_2.png)
+
+![](images/event_bridge_3.png)
+
+![](images/event_bridge_4.png)
+
+# Amazon API Gateway
+
+![](images/gateway_1.png)
+
+Amazon API Gateway supports:
+
+- **REST APIs** support OIDC and OAuth 2.0 authorization, and come with built in support for CORS and automatic deployments
+- **HTTP APIs** designed for low latency, cost effective integrations with AWS services, including AWS Lambda, and HTTP endpoints
+- **WebSocket APIs** deployed as a stateful frontend for an AWS service (such as Lambda or DynamoDB) or for an HTTP endpoint
+- REST APIs and HTTP APIs support authorizers for AWS Lambda, IAM, and Amazon Cognito
+- WebSocket APIs support IAM authorization and Lambda authorizers
+
+## Feautures
+
+Support for RESTful APIs and WebSocket APIs: With API Gateway, you can create RESTful APIs using either HTTP APIs or REST APIs
+
+Private integrations with AWS ELB & AWS Cloud Map: Route requests to private resources in your VPC. Using HTTP APIs, you can build APIs for services behind private ALBs, private NLBs, and IP based services registered in AWS Cloud Map, such as ECS tasks
+
+Metering: Define plans that meter and restrict third-party developer access to APIs
+
+Security: API Gateway provides multiple tools to authorize access to APIs and control service operation access
+
+Resiliency: Manage traffic with throttling so that backend operations can withstand traffic spikes
+
+Operations Monitoring: API Gateway provides a metrics dashboard to monitor calls to services
+
+Lifecycle Management: Operate multiple API versions and multiple stages for each version simultaneously so that existing applications can continue to call previous versions after new API versions are published
+
+AWS Authorization: Support for signature version 4 for REST APIs and WebSocket APIs, IAM access policies, and authorization with bearer tokens (e.g. JWT, SAML) using Lambda functions
+
+## Deployment types
+
+![](images/gateway_2.png)
+
+### Edge Optimized APIs
+
+- An edge optimized API endpoint is best for geographically distributed clients
+- API requests are routed to the nearest CloudFront Point of Presence (POP)
+- This is the default endpoint type for API Gateway REST APIs
+- Edge optimized APIs capitalize the names of HTTP headers
+
+### Regional APIs
+
+- A regional API endpoint is intended for clients in the same region
+- Reduces connection overhead for connections from the same Region
+- Any custom domain name that you use is specific to the region where the API is deployed
+- If you deploy a regional API in multiple regions, it can have the same custom domain name in all regions
+
+### Private endpoint
+
+Private REST APIs can only be accessed from within a VPC using an interface VPC endpoint
+
+![](images/gateway_3.png)
+
+## Structure of API
+
+![](images/gateway_4.png)
+
+- A Method resource is integrated with an Integration resource
+- **Method request**: The public interface of a REST API method in API Gateway that defines the parameters and body that an app developer must send in requests to access the backend through the API
+- **Method response**: The public interface of a REST API that defines the status codes, headers, and body models that an app developer should expect in responses from the API
+  
+- API methods are integrated with backend endpoints using API integrations
+- Backend endpoints are known as “integration endpoints”
+- **Integration request**: 
+  - The internal interface of a WebSocket API route or REST API method in API Gateway
+  - Maps the body of a route request or the parameters and body of a method request to the formats required by the backend
+- **Integration response:**:
+  - The internal interface of a WebSocket API route or REST API method in API Gateway
+  - Maps the status codes, headers, and payload that are received from the backend to the response format that is returned to a client app
+
+## Integration Types
+
+- You choose an API integration type according to the types of integration endpoint you work with and how you want data to pass to and from the integration endpoint
+- For a Lambda function, you can have the **Lambda proxy integration** , or the **Lambda custom integration**
+- For an HTTP endpoint, you can have the **HTTP proxy** integration or the **HTTP custom integration**
+- For an AWS service action, you have the **AWS integration** of the non proxy type only
+- API Gateway also supports the mock integration, where API Gateway serves as an integration endpoint to respond to a method request
+
+### AWS integration
+
+- This type of integration lets an API expose AWS service actions
+- Must configure both the integration request and integration response and set up necessary data mappings from the method request to the integration request, and from the integration response to the method response
+
+![](images/gateway_5.png)
+
+### AWS_PROXY (or Lambda proxy integration)
+
+- This integration relies on direct interactions between the client and the integrated Lambda function
+- With this type of integration, also known as the **Lambda proxy integration**, you do not set the integration request or the
+integration response
+- API Gateway passes the incoming request from the client as the input to the backend Lambda function
+- The integrated Lambda function takes the input of this format and parses the input from all available sources, including request headers, URL path variables, query string parameters and applicable body
+- The function returns the result following this output format
+
+![](images/gateway_6.png)
+
+### HTTP
+
+- This type of integration lets an API expose HTTP endpoints in the backend
+- With the HTTP integration, also known as the **HTTP custom integration**, you must configure both the integration request and integration response
+- You must set up necessary data mappings from the method request to the integration request, and from the integration response to the method response
+
+![](images/gateway_7.png)
+
+### MOCK
+
+- This type of integration lets API Gateway return a response without sending the request further to the backend
+- Used to test the integration set up without incurring charges for using the backend and to enable collaborative development of an API
+- A team can isolate their development effort by setting up simulations of API components owned by other teams by using the MOCK integrations
+
+## Mapping Templates
+
+- An API's method request can take a payload in a different format from the corresponding integration request payload, as required in the backend
+- Similarly, the backend may return an integration response payload different from the method response payload, as expected by the frontend
+- API Gateway lets you use mapping templates to map the payload from a method request to the corresponding integration request and from an integration response to the corresponding method response
+- A mapping template is a script expressed in Velocity Template Language (VTL) and applied to the payload using JSONPath expressions
+
+![](images/gateway_8.png)
+
+## API Gateway Stages and Deployments
+
+- **Deployments** are a snapshot of the APIs resources and methods
+-  Deployments must be created and associated with a **stage** for anyone to access the API
+- A stage is a logical reference to a lifecycle state of your REST or WebSocket API (e.g. `dev`, `prod`, `beta`, `v2`)
+- API stages are identified by API ID and stage name 
+- Stage variables are like environment variables for API Gateway
+- Stage variables can be used in:
+  - Lambda function ARN
+  - HTTP endpoint
+  - Parameter mapping templates
+
+![](images/gateway_9.png)
+
+Use cases for stage variables:
+- Configure HTTP endpoints your stages talk to (dev, test, prod etc.)
+- Pass configuration parameters to AWS Lambda through mapping templates
+- Stage variables are passed to the “context” object in Lambda
+- Stage variables are used with Lambda aliases
+- You can create a stage variable to indicate the corresponding Lambda alias
+- You can create canary deployments for any stage and choose the % of traffic the canary channel receives
+
+## Swagger and Open API 3
+
+- You can import existing Swagger / Open API 3.0 definitions (written in YAML or JSON) to API Gateway
+- This is a common way of defining REST APIs using API definition as code
+- Can also export current APIs as Swagger / Open API 3.0 definition
+- Uses the API Gateway Import API feature to import an API from an external definition
+- You specify the options using a mode query parameter in the request URL
+
+## Caching and Throttling
+
+### Caching
+
+- You can add caching to API calls by provisioning an Amazon API Gateway cache and specifying its size in gigabytes
+- Caching allows you to cache the endpoint's response
+- Caching can reduce number of calls to the backend and improve latency of requests to the API
+
+![](images/gateway_10.png)
+
+- API Gateway caches responses for a specific amount of time (time to live or TTL)
+- The default TTL is 300 seconds (min 0, max 3600)
+- Caches are defined per stage
+- You can encrypt caches
+- The cache capacity is between 0.5GB to 237GB
+- It is possible to override cache settings for specific methods
+- You can flush the entire cache (invalidate it) immediately if required
+- Clients can invalidate the cache with the header: `Cache-Control: max age=0`
+
+### Throttling
+
+- API Gateway sets a limit on a steady state rate and a burst of request submissions against all APIs in your account
+- Limits:
+  - By default, API Gateway limits the steady state request rate to 10,000 requests per second
+  - The maximum concurrent requests is 5,000 requests across all APIs within an AWS account
+  - If you go over 10,000 requests per second or 5,000 concurrent requests, you will receive a 429 Too Many Requests error response
+- Upon catching such exceptions, the client can resubmit the failed requests in a way that is rate limiting, while complying with the API Gateway throttling limits
+- Amazon API Gateway provides two basic types of throttling related settings:
+  - **Server-side** throttling limits are applied across all clients. These limit settings exist to prevent your API and your
+account from being overwhelmed by too many requests
+  - **Per-client** throttling limits are applied to clients that use API keys associated with your usage policy as client
+identifier
+- API Gateway throttling related settings are applied in the following order:
+  - Per-client per method limits that you set for an API stage in a usage plan
+  - Per-client limits that you set in a usage plan
+  - Default per-method limits and individual per method limitsvthat you set in API stage settings
+  - Account level throttling
+
+## API Gateway Usage Plans and API Keys
+
+![](images/gateway_11.png)
+
+- A usage plan specifies who can access one or more deployed API stages and methods and how much and how fast they can access them
+- You can use a usage plan to configure throttling and quota limits, which are enforced on individual client API keys
+- The plan uses API keys to identify API clients and meters access to the associated API stages for each key
+- It also lets you configure throttling limits and quota limits that are enforced on individual client API keys
+- You can use API keys together with usage plans or Lambda authorizers to control access to your APIs
+
+## API Gateway Access Control
+
+There are several mechanisms for controlling and managing access to an API:
+- Resource-based policies
+- Identity-based policies
+- IAM Tags
+- Endpoint policies for interface VPC endpoints
+- Lambda authorizers
+- Amazon Cognito user pools
+
+### Resource Based Policies 
+
+- Amazon API Gateway resource policies are JSON policy documents that you attach to an API
+- Control whether a specified principal can invoke the API
+
+![](images/gateway_12.png)
+
+![](images/gateway_13.png)
+
+### Lambda Authorizer
+
+- A Lambda authorizer is an API Gateway feature that uses a Lambda function to control access to your API
+- API Gateway calls the Lambda authorizer, which takes the caller's identity as input and returns an IAM policy as output
+- There are two types of Lambda authorizers:
+  - A token based Lambda authorizer receives the caller's identity in a bearer token, such as a JSON Web Token (JWT) or an OAuth token.
+  - A request parameter based Lambda authorizer receives the caller's identity in a combination of headers, query string parameters, stageVariables, and $context variables
+- For WebSocket APIs, only request parameter based authorizers are supported
+
+![](images/gateway_14.png)
+
+### Cognito User Pool Authorizer
+
+- A user pool is a user directory in Amazon Cognito
+- With a user pool, users can sign into a web or mobile app through Amazon Cognito
+- Users can also sign in through social identity providers like Google, Facebook, Amazon, or Apple, and through SAML identity providers
+- You can use an Amazon Cognito user pool to control who can access your API in Amazon API Gateway
+- You create an authorizer of the `COGNITO_USER_POOLS` type and then configure an API method to use that authorizer
+
+![](images/gateway_15.png)
+
