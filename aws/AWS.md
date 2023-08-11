@@ -218,6 +218,17 @@
   - [Amazon DynamoDB Accelerator (DAX)](#amazon-dynamodb-accelerator-dax)
     - [DAX vs ElastiCache](#dax-vs-elasticache)
   - [Amazon DynamoDB Global Tables](#amazon-dynamodb-global-tables)
+- [SQS](#sqs)
+  - [Queue types](#queue-types)
+    - [Standart Queue](#standart-queue)
+    - [FIFO Queue](#fifo-queue)
+  - [Dead letter](#dead-letter)
+  - [SQS Delay Queue](#sqs-delay-queue)
+  - [Visibility Timeout](#visibility-timeout)
+  - [SQS Long Polling vs Short Polling](#sqs-long-polling-vs-short-polling)
+  - [SQS CLI examples](#sqs-cli-examples)
+  - [Amazon SQS API](#amazon-sqs-api)
+  - [What if the message is bigger than 256 KB? Java library](#what-if-the-message-is-bigger-than-256-kb-java-library)
 
 # AWS Certification
 
@@ -5426,3 +5437,138 @@ we need to add new attibute (column) with expiry date with linux-epoch time. And
 ![](images/dynamodb_global_2.png)
 
 ![](images/dynamodb_global_3.png)
+
+# SQS
+
+![](images/sqs_1.png)
+
+- Amazon SQS is pull based , not push based (like SNS)
+- Messages are up to 256KB in size
+- Larger messages can be sent using the Amazon SQS Extended Client Library for Java
+- Messages can be kept in the queue from 1 minute to 14 days
+- Default retention period is 4 days
+- Amazon SQS guarantees that your messages will be processed at least once
+
+## Queue types
+
+![](images/sqs_2.png)
+
+### Standart Queue
+
+- Unlimited Throughput: Standard queues support a nearly unlimited number of transactions per second (TPS) per API
+- Best Effort Ordering: Occasionally, messages might be delivered in an order different from which they were sent
+- At Least Once Delivery: A message is delivered at least once, but occasionally more than one copy of a message is delivered
+
+### FIFO Queue
+
+- High Throughput: FIFO queues support up to 300 messages per second (300 send, receive, or delete operations per second). When you batch 10 messages per operation (maximum), FIFO queues can support up to 3,000 messages per second
+- First ln First out Delivery: The order in which messages are sent and received is strictly preserved
+- Exactly Once Processing: A message is delivered once and remains available until a consumer processes and deletes it. Duplicates are not introduced into the queue
+
+- FIFO queues require the **Message Group ID** and **Message Deduplication ID** parameters to be added to messages
+
+**Message Group ID** `MessageGroupId`
+
+- The tag that specifies that a message belongs to a specific message group
+- Messages that belong to the same message group are guaranteed to be processed in a FIFO manner
+- Messages with a different Group ID may be received out of order
+
+**Message Deduplication ID** `MessageDeduplicationId`
+
+- The token used for deduplication of messages within the deduplication interval
+- The deduplication interval is 5 minutes
+- Generated as the SHA 256 with the message body
+
+## Dead letter
+
+![](images/sqs_3.png)
+
+- The main task of a dead letter queue is handling message failure
+- A dead letter queue lets you set aside and isolate messages that can’t be processed correctly to determine why their processing didn’t succeed
+- It is not a queue type, it is a standard or FIFO queue that has been specified as a dead letter queue in the configuration of another standard or FIFO queue
+
+![](images/sqs_4.png)
+
+- Messages are moved to the dead letter queue when the `ReceiveCount` for a message exceeds the `maxReceiveCount` for a queue
+- Dead letter queues should not be used with standard queues when your application will keep retrying transmission
+- Dead letter queues will break the order of messages in FIFO queues
+
+## SQS Delay Queue
+
+![](images/sqs_5.png)
+
+When to use a delay queue:
+- Large distributed applications which may need to introduce a delay in processing
+- You need to apply a delay to an entire queue of messages
+- For example, adding a delay of a few seconds to allow updates to sales or stock control databases before sending a notification to a customer confirming an online transaction
+
+## Visibility Timeout
+
+- The amount of time a message is invisible in the queue after a reader picks it up
+- Provided the job is processed before the visibility timeout expires, the message will then be deleted from the queue
+- If the job is not processed within the visibility timeout, the message will become visible again and another reader will process it
+- This could result in the same message being delivered twice
+- Default visibility timeout is 30 seconds
+- Maximum is 12 hours
+
+## SQS Long Polling vs Short Polling
+
+![](images/sqs_6.png)
+
+- SQS **Long polling** is a way to retrieve messages from SQS queues waits for messages to arrive. 
+- SQS **Short polling** returns immediately (even if the message queue is empty)
+- SQS Long polling can lower costs
+- SQS Long polling can be enabled at the queue level or at the API level using `WaitTimeSeconds`. The maximum amount of time that a long polling receive call will wait for a message to become available before returning an empty response.
+- SQS Long polling is in effect when the Receive Message Wait Time is a value greater than 0 seconds and up to 20 seconds
+
+## SQS CLI examples
+
+```bash
+aws sqs list-queues
+
+aws sqs send-message --queue-url QUEUE-URL --message-body test-message-1 --delay-seconds 10
+
+aws sqs receive-message --queue-url QUEUE-URL --wait-time-seconds 10
+
+aws sqs send-message --queue-url QUEUE-URL --message-body test-long-short-polling
+```
+
+## Amazon SQS API
+
+`ChangeMessageVisibility`
+
+- Changes the visibility timeout of a specified message in a queue to a new value
+- Default is 30 seconds; minimum is 0 seconds; maximum is 12 hours
+
+`GetQueueAttributes` and `SetQueueAttributes`
+
+- Gets/sets attributes for the specified queue
+- Lots of possible values and recommend reviewing them in the AWS API reference
+- Key attributes for the exam:
+  - `DelaySeconds` Configures a delay queue. 0/s to 900/s (default 0/s)
+  - `ReceiveMessageWaitTimeSeconds` Sets short/long polling. 0/s to 20/s (default 0s)
+  - `VisibilityTimeout` The visibility timeout for the queue. 0/ to 43,200/s (12 hours) (default 30/s)
+
+`ReceiveMessage`
+
+- Retrieves one or more messages (up to 10), from the specified queue
+- Using the `WaitTimeSeconds` parameter enables long poll support
+
+`SendMessage`
+
+- `DelaySeconds` parameter delays a message
+- `MessageDeduplicationId` parameter adds a deduplication ID (FIFO only)
+- `MessageGroupId` parameter adds a tag for a message group (FIFO only)
+
+## What if the message is bigger than 256 KB? Java library
+
+![](images/sqs_7.png)
+
+- Maximum messages size in SQS is 256 KB
+- You can use Amazon S3 and the Amazon SQS Extended Client Library for Java to manage Amazon SQS messages
+- Useful for storing and consuming messages up to 2 GB in size
+- You can use the Amazon SQS Extended Client Library for Java library to do the following:
+  - Specify whether messages are always stored in Amazon S3 or only when the size of a message exceeds 256 KB
+  - Send a message that references a single message object stored in an Amazon S3 bucket
+  - Get the corresponding message object from an Amazon S3 bucket
+  - Delete the corresponding message object from an Amazon S3 bucket
