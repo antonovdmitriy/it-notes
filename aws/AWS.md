@@ -257,6 +257,24 @@
     - [Resource Based Policies](#resource-based-policies)
     - [Lambda Authorizer](#lambda-authorizer)
     - [Cognito User Pool Authorizer](#cognito-user-pool-authorizer)
+- [ECS](#ecs)
+  - [Features](#features-1)
+  - [Components](#components)
+    - [Amazon ECS Clusters](#amazon-ecs-clusters)
+    - [ECS Container Instances and Container Agent](#ecs-container-instances-and-container-agent)
+    - [Amazon ECS Images](#amazon-ecs-images)
+    - [Amazon ECS Tasks and Task Definitions](#amazon-ecs-tasks-and-task-definitions)
+  - [Launch Types](#launch-types)
+    - [Fargate Launch Type](#fargate-launch-type)
+    - [EC2 Launch Type](#ec2-launch-type)
+    - [External Launch Type](#external-launch-type)
+  - [Amazon ECS and IAM Roles](#amazon-ecs-and-iam-roles)
+  - [ECS Task Placement Strategies](#ecs-task-placement-strategies)
+    - [Cluster Query Language](#cluster-query-language)
+  - [Scaling Amazon ECS](#scaling-amazon-ecs)
+    - [Service auto scaling](#service-auto-scaling)
+    - [Cluster auto scaling](#cluster-auto-scaling)
+  - [Amazon ECS with ALB](#amazon-ecs-with-alb)
 
 # AWS Certification
 
@@ -5892,4 +5910,248 @@ There are several mechanisms for controlling and managing access to an API:
 - You create an authorizer of the `COGNITO_USER_POOLS` type and then configure an API method to use that authorizer
 
 ![](images/gateway_15.png)
+
+# ECS
+
+![](images/ecs_1.png)
+
+## Features
+
+- Serverless with AWS Fargate managed for you and fully scalable
+- Fully managed container orchestration control plane is managed for you
+- Docker support run and manage Docker containers with integration into the Docker Compose CLI
+- Windows container support ECS supports management of Windows containers
+- Elastic Load Balancing integration distribute traffic across containers using ALB or NLB
+- Amazon ECS Anywhere (NEW) enables the use of Amazon ECS control plane to manage on premises implementations
+
+## Components
+
+**Cluster** - Logical grouping of tasks or services
+
+**Container instance** - EC2 instance running the the ECS agent
+
+**Task Definition** - Blueprint that describes how a docker container should launch
+
+**Task** - A running container using settings in a Task Definition
+
+**Service**  - Defines long running tasks can control task count with Auto Scaling and attach an ELB
+
+### Amazon ECS Clusters
+
+- ECS Clusters are a logical grouping of container instances that you can place tasks on
+- A default cluster is created but you can then create multiple clusters to separate resources
+- ECS allows the definition of a specified number (desired count) of tasks to run in the cluster
+- Clusters can contain tasks using the **Fargate** and **EC2 launch type**
+- EC2 launch type clusters can contain different container instance types
+- Each container instance may only be part of one cluster at a time
+- Clusters are region specific
+- You can create IAM policies for your clusters to allow or restrict users' access to specific clusters
+
+### ECS Container Instances and Container Agent
+
+- You can use any AMI that meets the Amazon ECS AMI specification
+- The EC2 instances used as container hosts must run an ECS agent
+- The ECS container agent allows container instances to connect to the cluster
+- The container agent runs on each infrastructure resource on an ECS cluster
+
+### Amazon ECS Images
+
+- Containers are created from a read-only template called an image which has the instructions for creating a Docker container
+- Images are built from a Dockerfile
+- Only Docker containers are supported on ECS
+- Images are stored in a registry such as DockerHub or Amazon Elastic Container Registry (ECR)
+- ECR is a managed AWS Docker registry service that is secure, scalable and reliable
+- ECR supports private Docker repositories with resource based permissions using AWS IAM in order to access repositories and images
+- You can use the Docker CLI to push, pull and manage images
+
+### Amazon ECS Tasks and Task Definitions
+
+- A task definition is required to run Docker containers in Amazon ECS
+- A task definition is a text file in JSON format that describes one or more containers, up to a maximum of 10
+- Task definitions use Docker images to launch containers
+- You specify the number of tasks to run ((i.e. the number of containers)
+
+Some of the parameters you can specify in a task definition include:
+- Which Docker images to use with the containers in your task
+- How much CPU and memory to use with each container
+- Whether containers are linked together in a task
+- The Docker networking mode to use for the containers in your task
+- What (if any) ports from the container are mapped to the host container instances
+- Whether the task should continue if the container finished or fails
+- The commands the container should run when it is started
+- Environment variables that should be passed to the container when it starts
+- Data volumes that should be used with the containers in the task
+- IAM role the task should use for permissions
+
+## Launch Types
+
+### Fargate Launch Type
+
+![](images/ecs_2.png)
+
+- Run containers without the need to provision and manage the backend infrastructure
+- AWS Fargate is the serverless way to host your Amazon ECS workloads
+- Fargate automatically provisions resources
+- Fargate provisions and manages compute
+- Charged for running tasks
+- No EBS integration
+- Fargate handles cluster optimization
+- Limited control, infrastructure is automated
+
+### EC2 Launch Type
+
+![](images/ecs_3.png)
+
+- Run containers on a cluster of Amazon EC2 instances that you manage
+- You explicitly provision EC2 instances
+- You’re responsible for upgrading, patching, care of EC2 pool
+- You’re responsible for managing EC2 instances
+- Charged per running EC2 instance
+- EFS and EBS integration
+- You handle cluster optimization
+- More granular control over infrastructure
+
+### External Launch Type
+
+- Run containers on your on-premises servers or virtual machines (VMs) uses Amazon ECS Anywhere
+
+## Amazon ECS and IAM Roles
+
+![](images/ecs_4.png)
+
+![](images/ecs_5.png)
+
+## ECS Task Placement Strategies
+
+- A task placement strategy is an algorithm for selecting instances for task placement or tasks for termination
+- Task placement strategies can be specified when either running a task or creating a new service
+- This is relevant only to the EC2 launch type
+- Amazon ECS supports the following task placement strategies:
+  - **binpack** place tasks based on the least available amount of CPU or memory. This minimizes the number of instances in use - **random** place tasks randomly
+  - **spread** place tasks evenly based on the specified value
+    - Accepted values are `instanceId` or `host` (same effect)
+    - Or any platform or custom attribute that is applied to a container instance, such as `attribute:ecs.availability-zone`
+    - Service tasks are spread based on the tasks from that service
+    - Standalone tasks are spread based on the tasks from the same task group- 
+
+The following strategy distributes tasks evenly across Availability Zones
+
+```json
+"placementStrategy": [
+  {
+    "field": "attribute:ecs:availability-zone",
+    "type": "spread"
+  }
+]
+```
+
+The following strategy distributes tasks evenly across all instances
+
+
+```json
+"placementStrategy": [
+  {
+    "field": "instanceId",
+    "type": "spread"
+  }
+]
+```
+
+The following strategy bin packs tasks based on memory
+
+
+```json
+"placementStrategy": [
+  {
+    "field": "memory",
+    "type": "binpack"
+  }
+]
+```
+
+The following strategy distributes tasks evenly across Availability Zones and then bin packs tasks based on memory within each Availability Zone
+
+```json
+"placementStrategy": [
+  {
+    "field": "attribute:ecs:availability-zone",
+    "type": "spread"
+  },  
+  {
+    "field": "memory",
+    "type": "binpack"
+  }
+]
+```
+
+- A task placement constraint is a rule that is considered during task placement
+- Amazon ECS supports the following types of task placement constraints:
+  - **distinctInstance** Place each task on a different container instance
+  - **memberOf** Place tasks on container instances that satisfy an expression
+
+### Cluster Query Language
+
+- Cluster queries are expressions that enable you to group objects
+- For example, you can group container instances by attributes such as Availability Zone , instance type , or custom metadata
+- Expressions have the following syntax: `subject operator [argument]`
+
+Example 1:
+
+The following expression selects instances with the specified instance type:
+
+```
+attribute:ecs.instance-type == t2.small
+```
+
+Example 2:
+
+The following expression selects instances in the us east 1a or us east 1b Availability Zone:
+
+```
+attribute:ecs.availabllity-zone in [us-east-1a, us-east-1b]
+```
+
+
+Example 3:
+
+The following expression selects instances that are hosting tasks in the `service:production` group:
+
+```
+task:group == service:production
+```
+
+## Scaling Amazon ECS
+
+### Service auto scaling
+
+![](images/ecs_7.png)
+
+- automatically adjusts the desired task count up or down using the Application Auto Scaling service
+
+Amazon ECS Service Auto Scaling supports the following types of scaling policies:
+
+- **Target Tracking Scaling Policies** Increase or decrease the number of tasks that your service runs based on a target value for a specific CloudWatch metric
+
+- **Step Scaling Policies** Increase or decrease the number of tasks that your service runs in response to CloudWatch alarms. Step scaling is based on a set of scaling adjustments, known as step adjustments, which vary based on the size of the alarm breach
+  
+- **Scheduled Scaling** Increase or decrease the number of tasks that your service runs based on the date and time
+
+### Cluster auto scaling
+
+![](images/ecs_8.png)
+
+- uses a Capacity Provider to scale the number of EC2 cluster instances using EC2 Auto Scaling
+
+- Uses an ECS resource type called a **Capacity Provider**
+
+- A Capacity Provider can be associated with an EC2 **Auto Scaling Group** (ASG)
+
+- ASG can automatically scale using:
+
+  - **Managed scaling** with an automatically created scaling policy on your ASG
+  - **Managed instance termination protection** which enables container aware termination of instances in the ASG when scale in happens
+
+## Amazon ECS with ALB
+
+![](images/ecs_9.png)
 
