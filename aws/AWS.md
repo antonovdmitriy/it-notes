@@ -285,6 +285,7 @@
   - [Amazon EKS Auto Scaling](#amazon-eks-auto-scaling)
   - [Amazon EKS Pod Networking](#amazon-eks-pod-networking)
   - [Amazon EKS and Elastic Load Balancing](#amazon-eks-and-elastic-load-balancing)
+- [Copilot](#copilot)
 
 # AWS Certification
 
@@ -6488,3 +6489,63 @@ Workload Auto Scaling:
   - An AWS Network Load Balancer (NLB) when you create a Kubernetes service of type `LoadBalancer`
 - In the past, the Kubernetes network load balancer was used for instance targets, but the AWS Load balancer Controller was used for IP targets
 -  With the AWS Load Balancer Controller version 2.3.0 or later, you can create NLBs using either target type
+  
+# Copilot 
+
+- Command line interface for launching and managing containers
+- Used with ECS, Fargate, and AWS AppRunner
+- Based on Infrastructure as Code (IaC) templates
+- Simple commands to build containerized environments
+
+build a copilot environment
+```bash
+copilot init
+```
+
+show info about environments and services
+
+```bash
+copilot app show
+```
+
+show info about environments
+
+```bash
+copilot env ls
+```
+
+list of all services in an applicaition
+
+```bash
+copilot svc ls
+```
+
+show service status
+
+```bash
+copilot svc status
+```
+
+Install the Copilot CLI
+```bash
+sudo curl -Lo /usr/local/bin/copilot https://github.com/aws/copilot-cli/releases/latest/download/copilot-linux && sudo chmod +x /usr/local/bin/copilot && copilot --help
+```
+
+clone sample app
+
+```bash
+git clone https://github.com/aws-samples/amazon-ecs-cli-sample-app.git demo-app
+```
+
+init and deploy sample app
+
+```bash
+copilot init --app demo --name api --type 'Load Balanced Web Service' --dockerfile './Dockerfile' --port 80 --deploy
+```
+
+after that actually cloud formation will be started. It is possible to see a cloud formations events and logs.
+
+Delete the app by running the following command
+```bash
+copilot app delete
+```
