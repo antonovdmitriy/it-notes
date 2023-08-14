@@ -275,6 +275,16 @@
     - [Service auto scaling](#service-auto-scaling)
     - [Cluster auto scaling](#cluster-auto-scaling)
   - [Amazon ECS with ALB](#amazon-ecs-with-alb)
+  - [Example](#example-1)
+  - [Amazon Elastic Container Registry (ECR)](#amazon-elastic-container-registry-ecr)
+    - [Pushing an Image to a Private Repository](#pushing-an-image-to-a-private-repository)
+    - [create an image and push to the ecr](#create-an-image-and-push-to-the-ecr)
+    - [create a task definition and load balancer](#create-a-task-definition-and-load-balancer)
+    - [create fargate cluster and service](#create-fargate-cluster-and-service)
+- [EKS](#eks)
+  - [Amazon EKS Auto Scaling](#amazon-eks-auto-scaling)
+  - [Amazon EKS Pod Networking](#amazon-eks-pod-networking)
+  - [Amazon EKS and Elastic Load Balancing](#amazon-eks-and-elastic-load-balancing)
 
 # AWS Certification
 
@@ -6155,3 +6165,326 @@ Amazon ECS Service Auto Scaling supports the following types of scaling policies
 
 ![](images/ecs_9.png)
 
+## Example
+
+1. Create a role for working with ec2 instances and ecs
+  
+![](images/ec2_example_1.png)
+
+![](images/ecs_example_2.png)
+
+![](images/ecs_example_3.png)
+
+2. create a cluster with manual instance configuration
+  
+![](images/ecs_example_4.png)
+
+![](images/ecs_example_5.png)
+
+3. Go to the [link](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html) to get aim id for instance for our region
+
+4. configure ec2 instance
+![](images/ecs_example_6.png)
+
+![](images/ecs_example_7.png)
+
+![](images/ecs_example_8.png)
+
+```bash
+#!/bin/bash
+echo ECS_CLUSTER=myecs-cluster >> /etc/ecs/ecs.config
+```
+
+![](images/ecs_example_9.png)
+
+5. Check adding instance to the ecs cluster 
+  
+![](images/ecs_example_10.png)
+
+6. Create a task definition
+
+![](images/ecs_example_11.png)
+
+![](images/ecs_example_12.png)
+
+7. Run task in a cluster
+  
+![](images/ecs_example_13.png)
+
+![](images/ecs_example_14.png)
+
+![](images/ecs_example_15.png)
+
+the stop that task.
+
+Now we want to create a service , not a task.
+
+1. create a service
+   
+![](images/ecs_example_16.png)
+
+![](images/ecs_example_17.png)
+
+![](images/ecs_example_18.png)
+
+2. check that alb is created
+
+![](images/ecs_example_19.png)
+
+![](images/ecs_example_20.png)
+
+
+3. check default security group settings to allow http trafic
+  
+![](images/ecs_example_21.png)
+
+4. copy public dns for load balancer and check service
+
+[](images/ecs_example_22.png)
+
+## Amazon Elastic Container Registry (ECR)
+
+-  Amazon ECR is a fully managed container registry
+- Integrated with Amazon ECS and Amazon EKS
+- Supports Open Container Initiative (OCI) and Docker Registry HTTP API V2 standards
+- You can use Docker tools and Docker CLI commands such as `push` , `pull` , `list` , and `tag`
+- Can be accessed from any Docker environment in the cloud, on premises, or on you machine
+- Container images and artifacts are stored in S3
+- You can use namespaces to organize repositories
+- Public repositories allow everyone to access container images
+- Access control applies to private repositories:
+  - IAM access control. Set policies to define access to container images in private repositories
+  - Resource-based policies. Access control down to the individual API action such as `create` , `list` , `describe` , `delete` , and `get`
+
+**Registry** An Amazon ECR private registry is provided to each AWS account; you can create one or more repositories in your registry and store images in them
+
+**Authorization token** Your client must authenticate to Amazon ECR registries as an AWS user before it can push and pull images
+
+**Repository** An Amazon ECR repository contains your Docker images, OCI images, and OCI compatible artifacts
+
+**Repository policy** You can control access to your repositories and the images within them with repository policies
+
+**Image** You can push and pull container images to your repositories
+
+**Lifecycle policies** manage the lifecycle of the images in your repositories
+
+**Image scanning** identify software vulnerabilities in your container images
+
+**Cross-Region and cross-account replication** replicate images across accounts/Region
+
+**Pull through cache rules** cache repositories in remote public registries in your private Amazon ECR registry
+
+![](images/ecr_1.png)
+
+### Pushing an Image to a Private Repository
+
+![](images/ecr_2.png)
+
+1. First, authenticate the Docker client to ECR:
+
+```bash
+aws ecr get-login-password --region region | docker login --username AWS --password-stdin aws_account_id.dkr.ecr.region.amazonaws.com
+```
+
+2. Tag your image with the Amazon ECR registry, repository, and image tag name to use
+  
+```bash
+docker tag e9ae3c220b23 aws_account_id.dkr.ecr.region.amazonaws.com/my-repository:tag
+```
+
+3. Push the image using the docker push command
+
+```bash
+docker push aws_account_id.dkr.ecr.region.amazonaws.com/my-repository:tag
+```
+
+### create an image and push to the ecr
+
+1. Preparation
+  
+```bash
+sudo su
+yum update
+yum install docker
+systemctl enable docker.service
+systemctl start docker.service
+docker pull nginx
+docker images
+```
+
+2. Create policy and role
+Policy
+
+```json
+{
+    "Version": "2012-10-17",
+    "Id": "ECRPolicy",
+    "Statement": [
+        {
+            "Sid": "AllowAll",
+            "Effect": "Allow",
+            "Action": "ecr:*",
+            "Resource": "*"
+        }
+    ]
+}
+```
+create a role "Ecr-role"
+
+3. modiry ec2 instance to put the iam role to this
+4. create repository
+
+```bash
+aws ecr create-repository --repository-name nginx --region eu-north-1
+```
+
+5. tag an image
+  
+```bash
+docker tag nginx:latest 967120122177.dkr.ecr.eu-north-1.amazonaws.com/nginx:latest
+```
+
+6. login to repository
+
+```bash
+aws ecr get-login-password --region eu-north-1 | docker login --username AWS --password-stdin 967120122177.dkr.ecr.eu-north-1.amazonaws.com/nginx
+```
+
+7. push image to the registry
+
+```bash
+docker push 967120122177.dkr.ecr.eu-north-1.amazonaws.com/nginx:latest
+```
+
+![](images/ecr_3.png)
+
+![](images/ecr_4.png)
+
+### create a task definition and load balancer
+
+```json
+{
+    "executionRoleArn": "arn:aws:iam::967120122177:role/ecsTaskExecutionRole",
+    "containerDefinitions": [
+        {
+            "name": "sample-website",
+            "image": "nginx",
+            "essential": true,
+            "portMappings": [
+                {
+                    "hostPort": 80,
+                    "protocol": "tcp",
+                    "containerPort": 80
+                }
+            ]
+        }
+    ],
+    "requiresCompatibilities": [
+        "FARGATE"
+    ],
+    "networkMode": "awsvpc",
+    "cpu": "256",
+    "memory": "512",
+    "family": "ecs-lab"
+}
+```
+
+```bash
+aws ecs register-task-definition --cli-input-json file://taskdef.json
+```
+
+- Create an Application Load Balancer
+- Should be internet facing
+- Listen on HTTP port 80
+- Add a second listener on HTTP 8080
+- Choose 2 public subnets in different AZs
+- Create a new TG - target-group-1, protocol HTTP 80, target type = IP address
+- Creat a second TG - target-group-2, protocol HTTP 8080, target type = IP address
+- For the second listener, forward to target-group-2
+- Update security group to allow inbound on 80 and 8080
+
+![](images/ecr_5.png)
+
+### create fargate cluster and service
+
+![](images/ecr_6.png)
+
+```json
+{
+    "taskDefinition": "ecs-lab:1",
+    "cluster": "my-ecs-lab-cluster",
+    "loadBalancers": [
+        {
+            "targetGroupArn": "arn:aws:elasticloadbalancing:eu-north-1:967120122177:targetgroup/target-group-1/e643ef57b116e03b",
+            "containerName": "sample-website",
+            "containerPort": 80
+        }
+    ],
+    "desiredCount": 1,
+    "launchType": "FARGATE",
+    "schedulingStrategy": "REPLICA",
+    "deploymentController": {
+        "type": "CODE_DEPLOY"
+    },
+    "networkConfiguration": {
+        "awsvpcConfiguration": {
+            "subnets": [
+                "subnet-06de25a3fe9cbc2d5",
+                "subnet-04aad41493971da07"
+            ],
+            "securityGroups": [
+                "sg-0e8b189c4b4611c55":
+            ],
+            "assignPublicIp": "ENABLED"
+        }
+    }
+}
+```
+
+```bash
+aws ecs create-service --service-name my-service --cli-input-json file://create-service.json
+```
+
+# EKS
+
+![](images/eks_1.png)
+
+- Amazon Elastic Kubernetes Service (Amazon EKS) is a managed service
+- Use when you need to **standardize** container orchestration across multiple environments using a **managed** Kubernetes implementation
+- **Hybrid Deployment** manage Kubernetes clusters and applications across hybrid environments (AWS + On premises)
+- **Batch Processing** run sequential or parallel batch workloads on your EKS cluster using the Kubernetes Jobs API. Plan, schedule and execute batch workloads
+- **Machine Learning** use Kubeflow with EKS to model your machine learning workflows and efficiently run distributed training jobs using the latest EC2 GPU powered instances, including Inferentia
+- **Web Applications** build web applications that automatically scale up and down and run in a highly available configuration across multiple Availability Zones
+
+## Amazon EKS Auto Scaling
+
+Cluster Auto Scaling:
+- **Vertical Pod Autoscaler** automatically adjusts the CPU and memory reservations for your pods to help "right size" your applications
+- **Horizontal Pod Autoscaler** automatically scales the number of pods in a deployment, replication controller, or replica set based on that resource's CPU utilization 
+  
+Workload Auto Scaling:
+- Amazon EKS supports two autoscaling products:
+  - Kubernetes Cluster Autoscaler
+  - Karpenter open source autoscaling project.
+
+- The cluster autoscaler uses AWS scaling groups, while Karpenter works directly with the Amazon EC2 fleet
+
+## Amazon EKS Pod Networking
+
+- Amazon EKS supports native VPC networking with the Amazon VPC Container Network Interface (CNI) plugin for Kubernetes
+- This plugin assigns a private IPv4 or IPv6 address from your VPC to each pod
+-  The VPC CNI plugin for Kubernetes is deployed with each of your Amazon EC2 nodes in a Daemonset with the name `aws-node`
+- The plugin consists of two components:
+  - **L-IPAM** daemon Responsible for creating network interfaces and attaching the network interfaces to Amazon EC2 instances, assigning secondary IP addresses to network interfaces, and maintaining a warm pool of IP addresses on each node for assignment to Kubernetes pods when they are scheduled
+  - **CNI plugin** Responsible for wiring the host network (for example, configuring the network interfaces and virtual Ethernet pairs) and adding the correct network interface to the pod namespace
+
+## Amazon EKS and Elastic Load Balancing
+
+- Amazon EKS supports **Network Load Balancer** and **Application Load Balancers**
+- The AWS Load Balancer Controller manages AWS Elastic Load Balancers for a Kubernetes cluster
+- Install the AWS Load Balancer Controller using Helm V3 or later or by applying a Kubernetes manifest
+- The controller provisions the following resources:
+  - An AWS Application Load Balancer (ALB) when you create a Kubernetes Ingress
+  - An AWS Network Load Balancer (NLB) when you create a Kubernetes service of type `LoadBalancer`
+- In the past, the Kubernetes network load balancer was used for instance targets, but the AWS Load balancer Controller was used for IP targets
+-  With the AWS Load Balancer Controller version 2.3.0 or later, you can create NLBs using either target type
