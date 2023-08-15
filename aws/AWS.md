@@ -281,11 +281,28 @@
     - [create an image and push to the ecr](#create-an-image-and-push-to-the-ecr)
     - [create a task definition and load balancer](#create-a-task-definition-and-load-balancer)
     - [create fargate cluster and service](#create-fargate-cluster-and-service)
+    - [codedeploy application and pipeline](#codedeploy-application-and-pipeline)
+    - [implement blue/green update](#implement-bluegreen-update)
 - [EKS](#eks)
   - [Amazon EKS Auto Scaling](#amazon-eks-auto-scaling)
   - [Amazon EKS Pod Networking](#amazon-eks-pod-networking)
   - [Amazon EKS and Elastic Load Balancing](#amazon-eks-and-elastic-load-balancing)
 - [Copilot](#copilot)
+- [AWS CI/CD Tools](#aws-cicd-tools)
+  - [Code Commit](#code-commit)
+  - [Code Pipeline](#code-pipeline)
+    - [Example pipeline codecommit and beanstalk](#example-pipeline-codecommit-and-beanstalk)
+  - [Code Build](#code-build)
+    - [AWS CodeBuild Components](#aws-codebuild-components)
+  - [Example](#example-2)
+  - [AWS CodeDeploy](#aws-codedeploy)
+    - [Blue/Green Traffic Shifting](#bluegreen-traffic-shifting)
+  - [Amazon CodeGuru](#amazon-codeguru)
+    - [Amazon CodeGuru Reviewer](#amazon-codeguru-reviewer)
+    - [Amazon CodeGuru Profiler](#amazon-codeguru-profiler)
+  - [Amazon Code Star](#amazon-code-star)
+  - [AWS Cloud9](#aws-cloud9)
+  - [AWS Amplify and AppSync](#aws-amplify-and-appsync)
 
 # AWS Certification
 
@@ -6446,6 +6463,122 @@ aws ecs register-task-definition --cli-input-json file://taskdef.json
 aws ecs create-service --service-name my-service --cli-input-json file://create-service.json
 ```
 
+### codedeploy application and pipeline
+
+current state 
+![](images/lab_1.png)
+
+1. create code commit repository ecs-lab (via UI console)
+2. clone repo
+
+paste this in file taskdef.json
+
+```json
+{
+    "executionRoleArn": "arn:aws:iam::967120122177:role/ecsTaskExecutionRole",
+    "containerDefinitions": [
+        {
+            "name": "sample-website",
+            "image": "<IMAGE_NAME>",
+            "essential": true,
+            "portMappings": [
+                {
+                    "hostPort": 80,
+                    "protocol": "tcp",
+                    "containerPort": 80
+                }
+            ]
+        }
+    ],
+    "requiresCompatibilities": [
+        "FARGATE"
+    ],
+    "networkMode": "awsvpc",
+    "cpu": "256",
+    "memory": "512",
+    "family": "ecs-lab"
+}
+```
+
+and to `appspec.yaml`
+
+```json
+version: 0.0
+Resources:
+  - TargetService:
+      Type: AWS::ECS::Service
+      Properties:
+        TaskDefinition: <TASK_DEFINITION>
+        LoadBalancerInfo:
+          ContainerName: "sample-website"
+          ContainerPort: 80
+```
+
+3. create a role for deploy to ecs `CodeDeployECSRole`
+  
+![](images/lab_2.png)
+
+4. create application in code deploy
+
+![](images/lab_3.png)
+
+![](images/lab_4.png)
+
+5. create deployment group
+
+![](images/lab_5.png)
+
+![](images/lab_6.png)
+
+![](images/lab_7.png)
+
+6. create a pipeline
+  
+![](images/lab_8.png)
+
+![](images/lab_9.png)
+
+![](images/lab_01.png)
+
+![](images/lab_02.png)
+
+7. Add image image action to first stage
+
+![](images/lab_03.png)
+
+![](images/lab_04.png)
+
+![](images/lab_05.png)
+
+8. Edit deploy action
+  
+![](images/lab_06.png)
+
+9. release changes
+
+![](images/lab_07.png)
+
+
+10. We can see that traffic started to switch to another target group
+    
+![](images/lab_08.png)
+
+![](images/lab_09.png)
+
+then rollback pipeline. 
+
+### implement blue/green update
+
+1. delete and push the image again
+  
+and in details it is possible to see how changed traffic
+
+![](images/lab_001.png)
+
+state after switching
+
+![](images/lab_002.png)
+
 # EKS
 
 ![](images/eks_1.png)
@@ -6549,3 +6682,338 @@ Delete the app by running the following command
 ```bash
 copilot app delete
 ```
+
+# AWS CI/CD Tools
+
+![](images/devops_1.png)
+
+![](images/devops_2.png)
+
+![](images/devops_3.png)
+
+## Code Commit
+
+- AWS CodeCommit is a fully managed source control service that hosts secure Git based repositories
+- Git is an Open Source distributed source control system:
+- Centralized repository for all of your code, binaries, images,
+and libraries
+- Tracks and manages code changes
+- Maintains version history
+- Manages updates from multiple sources
+- Enables collaboration
+- CodeCommit repositories are private
+- CodeCommit scales seamlessly
+- CodeCommit is integrated with Jenkins, CodeBuild and other CI tools
+- You can transfer your files to and from AWS CodeCommit using HTTPS or SSH
+- Repositories are automatically encrypted at rest through AWS Key Management Service (AWS KMS) using customer specific keys
+- You need to configure your Git client to communicate with CodeCommit repositories
+
+- IAM supports CodeCommit with three types of credentials:
+
+  - **Git credentials** an IAM generated user name and password pair you can use to communicate with CodeCommit repositories over HTTPS
+  - **SSH keys** a locally generated public private key pair that you can associate with your IAM user to communicate with CodeCommit repositories over SSH
+  - **AWS access keys** which you can use with the credential helper included with the AWS CLI to communicate with CodeCommit repositories over HTTPS 
+
+![](images/devops_4.png)
+
+![](images/devops_5.png)
+
+![](images/devops_6.png)
+
+![](images/devops_7.png)
+
+Edit Local SSH Configuration
+Edit your SSH configuration file`~/.ssh/config`. Add the following lines to the file
+
+```
+Host git-codecommit.*.amazonaws.com
+User Your-IAM-SSH-Key-ID-Here
+IdentityFile ~/.ssh/Your-Private-Key-File-Name-Here
+```
+
+![](images/devops_8.png)
+
+
+## Code Pipeline
+
+- Fully managed continuous delivery service that helps you automate your release pipelines for fast and reliable application and infrastructure updates
+- Automates the build, test, and deploy phases of your release process every time there is a code change, based on the release model you define
+- CodePipeline provides tooling integrations for many AWS and third party software at each stage of the pipeline including:
+  - **Source stage** S3, CodeCommit , Github , ECR, Bitbucket Cloud (
+  - **Build** CodeBuild ,Jenkins
+  - **Deploy stage** CloudFormation, CodeDeploy, ECS, Elastic Beanstalk, AWS, Service Catalog, S3
+- **Pipelines** A workflow that describes how software changes go through the release process
+- **Artifacts**
+  - Files or changes that will be worked on by the actions and stages in the pipeline
+  - Each pipeline stage can create "artifacts"
+  - Artifacts are passed, stored in Amazon S3 and then passed on to the next stage
+- **Stages**
+  - Pipelines are broken up into stages
+  - Each stage can have sequential actions and or parallel actions
+  - Stage examples would be build, test, deploy, load test etc.
+  - Manual approval can be defined at any stage
+- **Actions**
+  - Stages contain at least one action
+  - Actions affect artifacts and will have artifacts as either an input, and output, or both
+- **Transitions**
+  - The progressing from one stage to another inside of a pipeline- 
+
+### Example pipeline codecommit and beanstalk
+
+![](images/devops_9.png)
+
+1. create web-server environment in beanstalk
+
+![](images/devops_10.png)
+
+2. create pipeline 
+ 
+![](images/devops_11.png)
+
+![](images/devops_12.png)
+
+![](images/devops_13.png)
+
+![](images/devops_14.png)
+
+![](images/devops_15.png)
+
+## Code Build
+
+- AWS CodeBuild is a fully managed continuous integration (CI) service
+- Compiles source code, runs tests, and produces software packages that are ready to deploy
+- CodeBuild scales continuously and processes multiple builds concurrently
+- You pay based on the time it takes to complete the builds
+- CodeBuild takes source code from GitHub, CodeCommit, CodePipeline , S3
+- Build instructions can be defined in the code `buildspec.yml`
+- Output logs can be sent to Amazon S3 & Amazon CloudWatch Logs
+
+### AWS CodeBuild Components
+
+**Build project** defines how CodeBuild will run a build defines settings including:
+  - Location of the source code
+  - The build environment to use
+  - The build commands to run
+  - Where to store the output of the build
+
+**Build environment** the operating system, language runtime, and tools that CodeBuild uses for the build
+
+**Build Specification** a YAML file that describes the collection of commands and settings for CodeBuild to run a build
+
+| Option                | Description                                                                                         | Phase Type |
+|-----------------------|-----------------------------------------------------------------------------------------------------|------------|
+| `phases/*/run`        | Specifies a Linux user that runs its commands                                                        | Optional   |
+| `phases/*/on failure` | Specifies the action to take if failure occurs during the phase (ABORT or CONTINUE)                   | Optional   |
+| `phases/*/finally`    | Runs commands after commands in the commands block (even if the commands in the commands block fail) | Optional   |
+| `phases/install`      | Commands to run during installation                                                                 | Optional   |
+| `phases/pre_build`    | Commands to run before the build                                                                     | Optional   |
+| `phases/build`        | Commands to run during the build                                                                     | Optional   |
+| `phases/post_build`   | Commands to run after the build                                                                      | Optional   |
+
+## Example 
+
+![](images/devops_17.png)
+
+put this file to source code as `buildspec.yml`
+
+```json
+version: 0.2
+
+phases:
+    install:
+        commands:
+            - echo "Entered the install phase..."
+    pre_build:
+        commands:
+            - echo "Entered the pre_build phase..."
+    build:
+        commands:
+            - echo "Entered the build phase..."
+            - echo "Build started on `date`"
+            - find production.txt
+    post_build:
+        commands:
+            - echo "Entered the post_build phase..."
+            - echo "Build completed on `date`"
+```
+
+create build project
+
+![](images/devops_18.png)
+
+![](images/devops_19.png)
+
+![](images/devops_20.png)
+
+![](images/devops_21.png)
+
+add build stage to a pipeline
+
+![](images/devops_22.png)
+
+![](images/devops_23.png)
+
+![](images/devops_24.png)
+
+![](images/devops_25.png)
+
+![](images/devops_26.png)
+
+![](images/devops_27.png)
+
+![](images/devops_28.png)
+
+![](images/devops_29.png)
+
+![](images/devops_30.png)
+
+![](images/devops_31.png)
+
+test stage is failed. Because we have an expression `find production.txt` in our file `buildspec.yml`. Let's add file to the repository.
+
+![](image/devops_32.png)
+
+and then push our approval stage.
+
+![](images/devops_33.png)
+
+![](images/devops_34.png)
+
+## AWS CodeDeploy
+
+- CodeDeploy is a deployment service that automates application deployments
+- Deploys to Amazon EC2 instances, on-premises instances, serverless Lambda functions, and Amazon ECS
+- You can deploy a nearly unlimited variety of application content, including:
+  - Serverless AWS Lambda functions
+  - Web and configuration files
+  - Executables
+  - Packages
+  - Scripts
+  - Multimedia files
+
+- CodeDeploy application contains information about what to deploy and how to deploy it
+- Need to choose the compute platform:
+  - EC2/Onpremises
+  - AWS Lambda
+  - Amazon ECS
+
+EC2/On Premises:
+- Amazon EC2, on premises servers, or both
+- Traffic is directed using an in place or blue/green deployment type
+![](images/devops_35.png)
+
+AWS Lambda:
+- Used to deploy applications that consist of an updated version of a Lambda function
+- You can manage the way in which traffic is shifted to the updated Lambda function versions during a deployment by choosing a **canary**, **linear**, or **all-at-once** configuration
+
+![](images/devops_36.png)
+
+Amazon ECS:
+
+- Used to deploy an Amazon ECS containerized application as a task set
+- CodeDeploy performs a blue/green deployment by installing an updated version of the application as a new replacement task set
+- CodeDeploy reroutes production traffic from the original application task set to the replacement task set
+- The original task set is terminated after a successful deployment
+- You can manage the way in which traffic is shifted to the updated task set during a deployment by choosing a
+**canary** , **linear** , or **all-at-once** configuration
+
+![](images/devops_37.png)
+
+### Blue/Green Traffic Shifting
+
+- **AWS Lambda**: Traffic is shifted from one version of a Lambda function to a new version of the same Lambda function
+- **Amazon ECS**: Traffic is shifted from a task set in your Amazon ECS service to an updated, replacement task set in the same Amazon ECS service
+- **EC2/OnPremises**: Traffic is shifted from one set of instances in the original environment to a replacement set of instances
+
+Note: All AWS Lambda and Amazon ECS deployments are blue/green. An EC2/On-Premises deployment can be in place or blue/green
+
+For **Amazon ECS** and **AWS Lambda** there are three ways traffic can be shifted during a deployment:
+
+- **Canary** Traffic is shifted in two increments. You can choose from predefined canary options that specify the percentage of traffic shifted to your updated Amazon ECS task set / Lambda function in the first increment and the interval, in minutes, before the remaining traffic is shifted in the second increment
+
+- **Linear** Traffic is shifted in equal increments with an equal number of minutes between each increment. You can choose from predefined linear options that specify the percentage of traffic shifted in each increment and the number of minutes between each increment
+
+- **All-at-once** All traffic is shifted from the original Amazon ECS task set / Lambda function to the updated Amazon ECS task set / Lambda function all at once
+
+## Amazon CodeGuru
+
+Provides intelligent recommendations for improving application performance, efficiency, and code quality
+
+### Amazon CodeGuru Reviewer
+
+- Reviews Java and Python code and offers suggestions for improvement
+- Suggestions are best on best practices
+- Finds complex issues such as resource leak and security analysis
+- Integrations with Secrets Manager to use a secrets detector that finds unprotected secrets in code
+- Supports the following source providers:
+  - AWS CodeCommit
+  - Bitbucket
+  - GitHub
+  - GitHub Enterprise Cloud
+  - GitHub Enterprise Server
+
+### Amazon CodeGuru Profiler
+
+- Collects runtime performance data from your live applications
+- Provides recommendations that can help you fine tune your application performance
+- Provides different visualizations to identify:
+  - What code is running on the CPU
+  - How much time is consumed
+  - Ways to reduce CPU utilization
+- Profiling includes:
+  - Latency and CPU utilization issues in your application
+  - Ways to reduce the infrastructure costs of running an application
+  - Identify application performance issues
+  - Understand your application's heap utilization over time
+
+## Amazon Code Star 
+
+![](images/devops_01.png)
+
+- AWS CodeStar enables you to quickly develop, build, and deploy applications on AWS
+- It is a preconfigured continuous delivery toolchain for developing, building, testing, and deploying
+- Use project templates to develop applications on services such as:
+  - Amazon EC2
+  - AWS Lambda
+  - Elastic Beanstalk
+- You can use code editors such as Visual Studio, Eclipse or the AWS CLI
+- Uses IAM to manage developer identities
+- Built-in role based policies for secure team access
+- Share projects with three access levels:
+  - Owners
+  - Contributors
+  - Viewers
+- Application code is stored in CodeCommit
+- Compiles and packages source code with CodeBuild
+- A preconfigured pipeline is used through CodePipeline
+- Automated deployments with CodeDeploy and CloudFormation
+
+## AWS Cloud9
+
+- AWS Cloud9 is an integrated development environment (IDE)
+- Used by developers to write, run, and debug code
+- Editor provides syntax highlighting, code completion, and error checking
+- Terminal is used to navigate the file system, run commands, and manage code
+- Provides collaboration features that allow multiple developers to work on the same codebase simultaneously
+- Provides a range of debugging tools to identify and fix errors in code
+- Integrates with many AWS services including AWS Lambda, Amazon EC2, and AWS CodePipeline
+
+## AWS Amplify and AppSync
+
+- Tools and features for building full-stack applications on AWS
+- Build web and mobile backends, and web frontend UIs
+- **AWS Amplify Studio** is a visual interface for building web and mobile apps:
+  - Use the visual interface to define a data model, user authentication, and file storage without backend expertise
+  - Easily add AWS services not available within Amplify Studio using the AWS Cloud Development Kit (CDK)
+  - Connect mobile and web apps using Amplify Libraries for iOS, Android, Flutter, React Native, and web (JavaScript)
+- **AWS Amplify Hosting** is a fully managed CI/CD and hosting service for fast, secure, and reliable static and server side rendered apps
+- **AWS AppSync** is a fully managed service that makes it easy to develop GraphQL APIs
+- Applications can securely access, manipulate, and receive real time updates from multiple data sources such as databases or APIs
+- AWS AppSync automatically scales a GraphQL API execution engine up and down to meet API request volumes
+- Uses GraphQL , a data language that enables client apps to fetch, change and subscribe to data from servers
+- AWS AppSync lets you specify which portions of your data should be available in a real time manner using GraphQL Subscriptions
+- AWS AppSync supports AWS Lambda, Amazon DynamoDB, and Amazon Elasticsearch
+- Server side data caching capabilities reduce the need to directly access data sources
+- AppSync is fully managed and eliminates the operational overhead of managing cache clusters
+
+![](images/devops_02.png)
