@@ -327,6 +327,15 @@
   - [Amazon Kinesis Data Streams](#amazon-kinesis-data-streams)
   - [Kinesis Data Firehose](#kinesis-data-firehose)
   - [Kinesis Data Analytics](#kinesis-data-analytics)
+- [Amazon OpenSearch Service (ElasticSearch)](#amazon-opensearch-service-elasticsearch)
+  - [OpenSearch Service Deployment](#opensearch-service-deployment)
+  - [OpenSearch in an Amazon VPC](#opensearch-in-an-amazon-vpc)
+  - [The ELK Stack](#the-elk-stack)
+  - [OpenSearch Access Control](#opensearch-access-control)
+  - [OpenSearch Best Practices](#opensearch-best-practices)
+- [Amazon Athena and AWS Glue](#amazon-athena-and-aws-glue)
+  - [Optimizing Athena for Performance](#optimizing-athena-for-performance)
+  - [AWS Glue](#aws-glue)
 
 # AWS Certification
 
@@ -7347,3 +7356,109 @@ Kinesis Data Firehose destinations:
 
 ![](images/kinesis_7.png)
 
+# Amazon OpenSearch Service (ElasticSearch)
+
+![](images/search_1.png)
+
+- Distributed search and analytics suite
+- Based on the popular open source Elasticsearch
+- Supports queries using SQL syntax
+- Integrates with open source tools
+- Scale by adding or removing instances
+- Availability in up to three Availability Zones
+- Backup using snapshots
+- Encryption at rest and in transit
+
+## OpenSearch Service Deployment
+
+- Clusters are created (Management Console, API, or CLI)
+- Clusters are also known as OpenSearch Service domains
+- You specify the number of instances and instance types
+- Storage options include UltraWarm or Cold storage
+
+![](images/search_2.png)
+
+## OpenSearch in an Amazon VPC
+
+- Clusters can be deployed in a VPC for secure intra-VPC communications
+- VPN or proxy required to connect from the internet (public domains are directly accessible)
+- Cannot use IP-based access policies
+
+Limitations of VPC deployments:
+- You can’t switch from VPC to a public endpoint. The reverse is also true
+- You can’t launch your domain within a VPC that uses dedicated tenancy
+- After you place a domain within a VPC, you can’t move it to a different VPC, but you can change the subnets and security group settings
+
+## The ELK Stack
+
+- ELK stands for Elasticsearch, Logstash, and Kibana
+- This is a popular combination of projects
+- Aggregate logs from systems and applications, analyze these logs, and create visualizations
+- Use cases include:
+  - Visualizing application and infrastructure monitoring data
+  - Troubleshooting
+  - Security analytics
+
+## OpenSearch Access Control
+
+Resource-based policies-  often called a domain access policy
+
+Identity-based policies attached to users or roles (principals)
+
+IP-based policies Restrict access to one or more IP addresses or CIDR blocks
+
+Fine-grained access control Provides:
+- Role-based access control
+- Security at the index, document, and field level
+- OpenSearch Dashboards multi-tenancy
+- HTTP basic authentication for OpenSearch and penSearch Dashboards
+
+
+Authentication options include:
+- Federation using SAML to on-premises directories
+- Amazon Cognito and social identity providers
+
+## OpenSearch Best Practices
+
+- Deploy OpenSearch data instances across three Availability Zones (AZs) for the best availability
+- Provision instances in multiples of three for equal distribution across AZs
+- If three AZs are not available use two AZs with equal numbers of instances
+- Use three dedicated master nodes
+- Configure at least one replica for each index
+- Apply restrictive resource-based access policies to the domain (or use fine-grained access control)
+- Create the domain within an Amazon VPC
+- For sensitive data enable node-to-node encryption and encryption at rest
+
+# Amazon Athena and AWS Glue
+
+![](images/athena_1.png)
+
+![](images/athena_2.png)
+
+- Athena queries data in S3 using SQL
+- Can be connected to other data sources with Lambda
+- Data can be in CSV, TSV, JSON, Parquet and ORC formats
+- Uses a managed Data Catalog (AWS Glue) to store information and schemas about the databases and tables
+
+## Optimizing Athena for Performance
+
+- Partition your data
+- Bucket your data - bucket the data within a single partition
+- Use Compression. AWS recommend using either Apache Parquet or Apache ORC
+- Optimize file sizes
+- Optimize columnar data store generation. Apache Parquet and Apache ORC are popular columnar data stores
+- Optimize ORDER BY and Optimize GROUP BY
+- Use approximate functions
+- Only include the columns that you need
+
+## AWS Glue
+
+- Fully managed extract, transform and load (ETL) service
+- Used for preparing data for analytics
+- AWS Glue runs the ETL jobs on a fully managed, scale out Apache Spark environment
+- AWS Glue discovers data and stores the associated metadata (e.g. table definition and schema) in the AWS Glue Data Catalog
+- Works with data lakes (e.g. data on S3), data-warehouses (including RedShift), and data stores (including RDS or EC2 databases)
+- You can use a **crawler** to populate the AWS Glue Data Catalog with tables
+- A crawler can crawl multiple data stores in a single run
+- Upon completion, the crawler creates or updates one or more tables in your Data Catalog.
+- ETL jobs that you define in AWS Glue use the Data Catalog tables as sources and targets
