@@ -336,6 +336,15 @@
 - [Amazon Athena and AWS Glue](#amazon-athena-and-aws-glue)
   - [Optimizing Athena for Performance](#optimizing-athena-for-performance)
   - [AWS Glue](#aws-glue)
+- [AWS CDK](#aws-cdk)
+- [AWS AppConfig](#aws-appconfig)
+- [Amazon CloudWatch](#amazon-cloudwatch)
+  - [Use cases / benefits include:](#use-cases--benefits-include)
+  - [Features](#features-2)
+  - [Amazon CloudWatch Metrics](#amazon-cloudwatch-metrics)
+  - [Amazon CloudWatch Alarms](#amazon-cloudwatch-alarms)
+    - [PutMetricData CLI Command](#putmetricdata-cli-command)
+    - [Trigger CloudWatch Alarm](#trigger-cloudwatch-alarm)
 
 # AWS Certification
 
@@ -7462,3 +7471,114 @@ Authentication options include:
 - A crawler can crawl multiple data stores in a single run
 - Upon completion, the crawler creates or updates one or more tables in your Data Catalog.
 - ETL jobs that you define in AWS Glue use the Data Catalog tables as sources and targets
+
+# AWS CDK
+
+- Build apps in the cloud with standard programming languages
+- Supports TypeScript, JavaScript, Python, Java, C#/ C#/.Net , and Go
+- Use these languages to create reusable **Constructs**
+- Compose them into **Stacks** and **Apps**
+- Command line toolkit
+- ‘Synthesizes’ AWS CloudFormation templates
+
+![](images/cdk_1.png)
+
+# AWS AppConfig
+
+- Create, manage, and deploy application configurations
+- Capability of AWS Systems Manager
+- A configuration is a collection of settings that influence the behavior of your application
+- Applications can be hosted on:
+  - Amazon EC2 instances
+  - AWS Lambda
+  - Mobile applications
+  - IoT devices
+- Reduces errors associated with configuration changes and streamlines deployment
+- Configurations can be stored in:
+  - Amazon S3
+  - AWS AppConfig
+  - Systems Manager Parameter Store
+  - Systems Manager Document Store
+  - Bitbucket, GitHub, CodeCommit (via CodePipeline)
+- Applications must be updated to check for and retrieve configuration data
+- API actions include:
+  - `StartConfigurationSession`
+  - `GetLatestConfiguration`
+
+Validators are used to ensure that configuration data is syntactically and semantically correct
+
+Validators are either:
+  - JSON Schema Validators
+  - AWS Lambda Validators
+
+Deployment type is either:
+  - Linear. uses a growth factor which is a step %
+  - Exponential. uses the exponential formula G*(2^N)
+
+Deployment strategies:
+- `AppConfig.AllAtOnce` all targets at once
+- `AppConfig.Linear50PercentEvery30Seconds` 50% of targets every 30 seconds
+
+# Amazon CloudWatch
+
+CloudWatch is used for performance monitoring, alarms, log collection and automated actions
+
+## Use cases / benefits include:
+
+- Collect performance metrics from AWS and on premises systems
+- Automate responses to operational changes
+- Improve operational performance and resource optimization
+- Derive actionable insights from logs
+- Get operational visibility and insight
+
+## Features
+
+- **CloudWatch Metrics** services send time ordered data points to CloudWatch
+- **CloudWatch Alarms** monitor metrics and initiate actions
+- **CloudWatch Logs** centralized collection of system and application logs
+- **CloudWatch Events** stream of system events describing changes to AWS resources and can trigger actions
+
+## Amazon CloudWatch Metrics
+
+- Metrics are sent to CloudWatch for many AWS services
+- EC2 metrics are sent every 5 minutes by default (free)
+- Detailed EC2 monitoring sends every 1 minute (chargable)
+- Unified CloudWatch Agent sends system level metrics for EC2 and on premises servers
+- System-level metrics include memory and disk usage
+
+![](images/cloudwatch_1.png)
+
+- Can publish custom metrics using CLI or API
+- Custom metrics are one of the following resolutions:
+  - **Standard resolution** - data having a one minute granularity
+  - **High resolution** data at a granularity of one second
+- AWS metrics are standard resolution by default
+
+## Amazon CloudWatch Alarms
+
+Two types of alarms
+- **Metric alarm**. Performs one or more actions based on a single metric
+- **Composite alarm**. Uses a rule expression and takes into account multiple alarms
+
+Metric alarm states:
+- `OK`. Metric is within a threshold
+- `ALARM`. Metric is outside a threshold
+- `INSUFFICIENT_DATA`. not enough data
+
+![](images/cloudwatch_2.png)
+
+### PutMetricData CLI Command
+
+```bash
+aws cloudwatch put-metric-data --metric-name bytes --namespace MyCustomNameSpace --unit Bytes --value 242678092 --dimensions InstanceId=INSTANCE-ID,InstanceType=t2.micro --region us-east-1
+```
+
+```bash
+aws cloudwatch put-metric-data --metric-name latency --namespace MyCustomNameSpace --unit Milliseconds --value 24 --dimensions InstanceId=INSTANCE-ID,InstanceType=t2.micro --region us-east-1
+```
+
+### Trigger CloudWatch Alarm
+
+```bash
+aws cloudwatch put-metric-data --metric-name latency --namespace MyCustomNameSpace --unit Milliseconds --value 35 --dimensions InstanceId=INSTANCE-ID,InstanceType=t2.micro --region us-east-1
+```
