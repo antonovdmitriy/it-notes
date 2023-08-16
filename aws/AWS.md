@@ -322,6 +322,11 @@
   - [Examples](#examples-5)
   - [Amazon MemoryDB for Redis](#amazon-memorydb-for-redis)
   - [MemoryDB for Redis vs ElastiCache](#memorydb-for-redis-vs-elasticache)
+- [Amazon Kinesis Core](#amazon-kinesis-core)
+  - [Kinesis Client Library (KCL)](#kinesis-client-library-kcl)
+  - [Amazon Kinesis Data Streams](#amazon-kinesis-data-streams)
+  - [Kinesis Data Firehose](#kinesis-data-firehose)
+  - [Kinesis Data Analytics](#kinesis-data-analytics)
 
 # AWS Certification
 
@@ -7284,4 +7289,61 @@ Cluster mode enabled :
 - MemoryDB offers higher performance with lower latency
 - MemoryDB offers strong consistency for primary nodes and eventual consistency for replica nodes
 - With ElastiCache there can be some inconsistency and latency depending on the engine and caching strategy
+
+# Amazon Kinesis Core
+
+![](images/kinesis_1.png)
+
+- Producers send data to Kinesis, data is stored in Shards for 24 hours (by default, up to 7 days)
+- Consumers then take the data and process it data can then be saved into another AWS service
+- Real time (~200ms)
+
+![](images/kinesis_2.png)
+
+## Kinesis Client Library (KCL)
+
+The Kinesis Client Library (KCL) helps you consume and process data from a Kinesis data stream
+
+![](images/kinesis_3.png)
+
+- Each shard is processed by exactly one KCL worker and has exactly one corresponding record processor
+- One worker can process any number of shards, so it's fine if the number of shards exceeds the number of instances
+
+![](images/kinesis_4.png)
+
+- The KCL is different from the Kinesis Data Streams API that is available in the AWS SDKs
+- The Kinesis Data Streams API helps you manage many aspects of Kinesis Data Streams (including creating streams, resharding , and putting and getting records)
+- The KCL provides a layer of abstraction specifically for processing data in a consumer role
+
+
+## Amazon Kinesis Data Streams
+
+![](images/kinesis_5.png)
+
+## Kinesis Data Firehose
+
+- Producers send data to Firehose
+- There are no Shards, completely automated (scalability is elastic)
+- Firehose data is sent to another AWS service for storing, data can be optionally processed/transformed using AWS Lambda
+- Near real time delivery (~60 seconds latency)
+
+![](images/kinesis_6.png)
+
+Kinesis Data Firehose destinations:
+- RedShift (via an intermediate S3 bucket)
+- Elasticsearch
+- Amazon S3
+- Splunk
+- Datadog
+- MongoDB
+- New Relic
+- HTTP Endpoint
+
+## Kinesis Data Analytics
+
+- Provides real time SQL processing for streaming data
+- Provides analytics for data coming in from Kinesis Data Streams and Kinesis Data Firehose
+- Destinations can be Kinesis Data Streams, Kinesis Data Firehose, or AWS Lambda
+
+![](images/kinesis_7.png)
 
