@@ -303,6 +303,17 @@
   - [Amazon Code Star](#amazon-code-star)
   - [AWS Cloud9](#aws-cloud9)
   - [AWS Amplify and AppSync](#aws-amplify-and-appsync)
+- [Amazon Relational Database Service (RDS)](#amazon-relational-database-service-rds)
+  - [Amazon RDS Backup and Recovery](#amazon-rds-backup-and-recovery)
+    - [Automated Backups](#automated-backups)
+    - [Amazon RDS Manual Backups (Snapshot)](#amazon-rds-manual-backups-snapshot)
+    - [Amazon RDS Maintenance Windows](#amazon-rds-maintenance-windows)
+  - [Examples](#examples-4)
+    - [create mysql database](#create-mysql-database)
+    - [create manual snapshot](#create-manual-snapshot)
+    - [create multi-AZ replicas](#create-multi-az-replicas)
+  - [Amazon Aurora](#amazon-aurora)
+  - [Amazon RDS Security](#amazon-rds-security)
 
 # AWS Certification
 
@@ -7017,3 +7028,160 @@ Provides intelligent recommendations for improving application performance, effi
 - AppSync is fully managed and eliminates the operational overhead of managing cache clusters
 
 ![](images/devops_02.png)
+
+# Amazon Relational Database Service (RDS)
+
+![](images/rds_1.png)
+
+
+RDS supports the following database engines:
+- Amazon Aurora
+- MySQL
+- MariaDB
+- Oracle
+- Microsoft SQL Server
+- PostgreSQL
+
+![](images/rds_2.png)
+
+![](images/rds_3.png)
+
+- RDS uses EC2 instances, so you must choose an instance family/type
+- RDS is an Online Transaction Processing (OLTP) type of database
+- Easy to setup, highly available, fault tolerant, and scalable
+- Common use cases include online stores and banking systems
+- You can encrypt your Amazon RDS instances and snapshots at rest by enabling the encryption option for your Amazon RDS DB instance (during creation)
+- Encryption uses AWS Key Management Service (KMS)
+- Scales up by increasing instance size (compute and storage)
+- Read replicas option for read heavy workloads (scales out for reads/queries only)
+- Disaster recovery with Multi AZ option
+
+## Amazon RDS Backup and Recovery
+
+### Automated Backups
+
+![](images/rds_4.png)
+
+### Amazon RDS Manual Backups (Snapshot)
+
+- Backs up the entire DB instance, not just individual databases
+- For single AZ DB instances there is a brief suspension of I/O
+- For Multi AZ SQL Server, I/O activity is briefly suspended on primary
+- For Multi AZ MariaDB, MySQL, Oracle and PostgreSQL the snapshot is taken from the standby
+- Snapshots do not expire (no retention period)
+
+### Amazon RDS Maintenance Windows
+
+- Operating system and DB patching can require taking the database offline
+- These tasks take place during a maintenance window
+- By default a weekly maintenance window is configured
+- You can choose your own maintenance window
+
+![](images/rds_5.png)
+
+## Examples
+
+### create mysql database
+
+![](images/rds_6.png)
+
+![](images/rds_7.png)
+
+![](images/rds_8.png)
+
+![](images/rds_9.png)
+
+![](images/rds_01.png)
+
+![](images/rds_02.png)
+
+![](images/rds_03.png)
+
+![](images/rds_04.png)
+
+### create manual snapshot
+
+![](images/rds_05.png)
+
+![](images/rds_06.png)
+
+![](images/rds_07.png)
+
+### create multi-AZ replicas
+
+create a read-only replica
+
+![](images/rds_08.png)
+
+![](images/rds_09.png)
+
+create a stand-by replica
+
+![](images/rds_001.png)
+
+![](images/rds_002.png)
+
+![](images/rds_003.png)
+
+![](images/rds_004.png)
+
+reboot the primary with failover to switch master to stand-by
+
+![](images/rds_005.png)
+
+![](images/rds_006.png)
+
+## Amazon Aurora
+
+- Amazon Aurora is an AWS database offering in the RDS family
+- Amazon Aurora is a MySQL and PostgreSQL compatible relational database built for the cloud
+- Amazon Aurora is up to five times faster than standard MySQL databases and three times faster than standard PostgreSQL databases
+- Amazon Aurora features a distributed, fault tolerant, self healing storage system that auto scales up to 128TB per database instance
+
+![](images/rds_007.png)
+
+**High performance and scalability**. Offers high performance, self healing storage that scales up to 128TB, point in time
+recovery and continuous backup to S3
+
+**DB compatibility**. Compatible with existing MySQL and PostgreSQL open source databases 
+
+**Aurora Replicas** In-region read scaling and failover target up to 15 (can use Auto Scaling)
+
+**MySQL Read Replicas** Cross-region cluster with read scaling and failover target up to 5 (each can have up to 15 Aurora Replicas)
+
+**Global Database** Cross-region cluster with read scaling (fast replication / low latency reads). Can remove secondary and promote
+
+**Multi-Master** Scales out writes within a region. In preview currently and will not appear on the exam
+
+**Serverless** On-demand, autoscaling configuration for Amazon Aurora does not support read replicas or public IPs (can only access through VPC or Direct Connect not VPN)
+
+| Feature                                         | Aurora Replica                | MySQL Replica              |
+|-------------------------------------------------|-------------------------------|-----------------------------|
+| Number of replicas                              | Up to 15                      | Up to 5                    |
+| Replication type                                | Asynchronous (milliseconds)   | Asynchronous (seconds)      |
+| Performance impact on primary                   | Low                           | High                       |
+| Replica location                                | In region                     | Cross region               |
+| Act as failover target                          | Yes (no data loss)            | Yes (potentially minutes of data loss) |
+| Automated failover                              | Yes                           | No                         |
+| Support for user-defined replication delay      | No                            | Yes                        |
+| Support for different data or schema vs. primary| No                            | Yes                        |
+
+## Amazon RDS Security
+
+![](images/rds_008.png)
+
+- Encryption at rest can be enabled includes DB storage, backups, read replicas and snapshots
+- You can only enable encryption for an Amazon RDS DB instance when you create it, not after the DB instance is created
+- DB instances that are encrypted can't be modified to disable encryption
+- Uses AES 256 encryption and encryption is transparent with minimal performance impact
+- RDS for Oracle and SQL Server is also supported using Transparent Data Encryption (TDE) (may have performance impact)
+- AWS KMS is used for managing encryption keys
+- You **can not** have:
+  - An encrypted read replica of an unencrypted DB instance
+  - An unencrypted read replica of an encrypted DB instance
+- Read replicas of encrypted primary instances are encrypted
+- The same KMS key is used if in the same Region as the primary 
+- If the read replica is in a different Region, a different KMS key is used
+- You can't restore an unencrypted backup or snapshot to an encrypted DB instance
+
+![](images/rds_009.png)
