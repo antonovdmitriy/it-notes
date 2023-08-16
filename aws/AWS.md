@@ -314,6 +314,14 @@
     - [create multi-AZ replicas](#create-multi-az-replicas)
   - [Amazon Aurora](#amazon-aurora)
   - [Amazon RDS Security](#amazon-rds-security)
+- [Amazon ElastiCache](#amazon-elasticache)
+  - [Amazon ElastiCache Use Cases](#amazon-elasticache-use-cases)
+  - [Amazon ElastiCache Scalability](#amazon-elasticache-scalability)
+    - [Memcached](#memcached)
+    - [Redis](#redis)
+  - [Examples](#examples-5)
+  - [Amazon MemoryDB for Redis](#amazon-memorydb-for-redis)
+  - [MemoryDB for Redis vs ElastiCache](#memorydb-for-redis-vs-elasticache)
 
 # AWS Certification
 
@@ -7185,3 +7193,95 @@ recovery and continuous backup to S3
 - You can't restore an unencrypted backup or snapshot to an encrypted DB instance
 
 ![](images/rds_009.png)
+
+# Amazon ElastiCache
+
+- Fully managed implementations **Redis** and **Memcached**
+- ElastiCache is a key/value store
+- In-memory database offering high performance and low latency
+- Can be put in front of databases such as RDS and DynamoDB
+- ElastiCache nodes run on Amazon EC2 instances, so you must choose an instance family/type
+
+![](images/cache_1.png)
+
+| Feature                                        | Memcached                                        | Redis (cluster mode disabled)                        | Redis (cluster mode enabled)                        |
+|------------------------------------------------|--------------------------------------------------|------------------------------------------------------|-----------------------------------------------------|
+| Data persistence                               | No                                               | Yes                                                  | Yes                                                 |
+| Data types                                     | Simple                                           | Complex                                              | Complex                                             |
+| Data partitioning                              | Yes                                              | No                                                   | Yes                                                 |
+| Encryption                                     | No                                               | Yes                                                  | Yes                                                 |
+| High availability (replication)                | No                                               | Yes                                                  | Yes                                                 |
+| Multi-AZ                                       | Yes, place nodes in multiple AZs. No failover or replication | Yes, with auto-failover. Uses read replicas (0-5 per shard) | Yes, with auto-failover. Uses read replicas (0-5 per shard) |
+| Scaling                                        | Up (node type); out (add nodes)                  | Up (node type); out (add replica)                    | Up (node type); out (add shards)                    |
+| Multithreaded                                  | Yes                                              | No                                                   | No                                                  |
+| Backup and restore                             | No (and no snapshots)                            | Yes, automatic and manual snapshots                  | Yes, automatic and manual snapshots                 |
+
+## Amazon ElastiCache Use Cases
+
+- Data that is relatively **static** and **frequently accessed**
+- Applications that are tolerant of stale data
+- Data is slow and expensive to get compared to cache retrieval
+- Require push button scalability for memory, writes and reads
+- Often used for storing session state
+
+| Use Case                 | Benefit                                                                                                                                                     |
+|--------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Web session store        | In cases with load balanced web servers, store web session information in Redis so if a server is lost, the session info is not lost, and another web server can pick it up        |
+| Database caching         | Use Memcached in front of AWS RDS to cache popular queries to offload work from RDS and return results faster to users                                        |
+| Leaderboards             | Use Redis to provide a live leaderboard for millions of users of your mobile app                                                                             |
+| Streaming data dashboards| Provide a landing spot for streaming sensor data on the factory floor, providing live real-time dashboard displays                                            |
+
+## Amazon ElastiCache Scalability
+
+### Memcached
+
+- Add nodes to a cluster
+- Scale vertically (node type) must create a new cluster manually
+
+![](images/cache_2.png)
+
+### Redis
+
+- Cluster mode disabled :
+  - Add replica or change node type creates a new cluster and migrates data
+
+![](images/cache_4.png)
+
+Cluster mode enabled :
+- Online resharding to add or remove shards; vertical scaling to change node type
+- Offline resharding to add or remove shards change node type or upgrade engine (more flexible than online)
+
+![](images/cache_3.png)
+
+## Examples
+
+![](images/cache_5.png)
+
+![](images/cache_6.png)
+
+![](images/cache_7.png)
+
+![](images/cache_8.png)
+
+![](images/cache_9.png)
+
+![](images/cache_01.png)
+
+## Amazon MemoryDB for Redis
+
+- Redis compatible, durable, in memory database service that delivers ultra-fast performance
+- Entire dataset is stored in memory - entire DB solution
+- Purpose built for modern applications with microservices architectures
+- Build applications using the same flexible and friendly Redis data structures, APIs, and commands
+- Microsecond read and single digit millisecond write latency and high-throughput
+- Data stored durably across multiple AZs using a distributed transactional log
+- Supports write scaling with sharding and read scaling by adding replicas
+
+## MemoryDB for Redis vs ElastiCache
+
+- Use ElastiCache for caching DB queries
+- Use MemoryDB for a full DB solution combining DB and cache 
+- MemoryDB offers higher performance with lower latency
+- MemoryDB offers strong consistency for primary nodes and eventual consistency for replica nodes
+- With ElastiCache there can be some inconsistency and latency depending on the engine and caching strategy
+
