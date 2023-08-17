@@ -363,6 +363,7 @@
   - [AWS Systems Manager Session Manager](#aws-systems-manager-session-manager)
   - [AWS Systems Manager Parameter Store](#aws-systems-manager-parameter-store)
 - [AWS Secrets Manager](#aws-secrets-manager)
+  - [AWS CLI commands for Secrets Manager](#aws-cli-commands-for-secrets-manager)
 - [Amazon Cognito](#amazon-cognito)
 - [AWS Web Application Firewall (WAF)](#aws-web-application-firewall-waf)
 
@@ -7862,6 +7863,22 @@ Systems Manager Components:
 | Key/Value Type              | String or Binary (encrypted)                    | String, StringList, SecureString         |
 | Hierarchical Keys           | No                                              | Yes                                      |
 | Price                       | Charges apply per secret                        | Free for standard, charges for advanced  |
+
+## AWS CLI commands for Secrets Manager
+
+```bash
+aws secretsmanager list-secrets
+
+aws secretsmanager create-secret --name dev-db-secret --description "This is the password for the development DB" --secret-string "MySecretSecureStringXYZ"
+
+aws secretsmanager get-secret-value --secret-id dev-db-secret
+
+aws secretsmanager describe-secret --secret-id dev-db-secret
+
+aws secretsmanager update-secret --secret-id dev-db-secret --secret-string "NewSecretStringXYZ"
+
+aws secretsmanager delete-secret --secret-id dev-db-secret
+```
 
 # Amazon Cognito
 
