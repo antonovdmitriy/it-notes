@@ -343,8 +343,28 @@
   - [Features](#features-2)
   - [Amazon CloudWatch Metrics](#amazon-cloudwatch-metrics)
   - [Amazon CloudWatch Alarms](#amazon-cloudwatch-alarms)
-    - [PutMetricData CLI Command](#putmetricdata-cli-command)
-    - [Trigger CloudWatch Alarm](#trigger-cloudwatch-alarm)
+  - [Amazon CloudWatch Logs](#amazon-cloudwatch-logs)
+  - [The Unified CloudWatch Agent](#the-unified-cloudwatch-agent)
+- [AWS CloudTrail](#aws-cloudtrail)
+  - [CloudTrail Types of Events](#cloudtrail-types-of-events)
+- [AWS Key Management Service (KMS)](#aws-key-management-service-kms)
+  - [Alternative Key Stores](#alternative-key-stores)
+  - [AWS Managed KMS Keys](#aws-managed-kms-keys)
+  - [Data Encryption Keys](#data-encryption-keys)
+  - [KMS Keys and Automatic Rotation](#kms-keys-and-automatic-rotation)
+  - [Manual Rotation](#manual-rotation)
+  - [Additional Exam Tips](#additional-exam-tips)
+  - [AWS KMS API and CLI](#aws-kms-api-and-cli)
+  - [Throttling and Caching](#throttling-and-caching)
+- [AWS Certificate Manager (ACM)](#aws-certificate-manager-acm)
+- [AWS Systems Manager](#aws-systems-manager)
+  - [AWS Systems Manager Patch Manager](#aws-systems-manager-patch-manager)
+  - [AWS Systems Manager Compliance](#aws-systems-manager-compliance)
+  - [AWS Systems Manager Session Manager](#aws-systems-manager-session-manager)
+  - [AWS Systems Manager Parameter Store](#aws-systems-manager-parameter-store)
+- [AWS Secrets Manager](#aws-secrets-manager)
+- [Amazon Cognito](#amazon-cognito)
+- [AWS Web Application Firewall (WAF)](#aws-web-application-firewall-waf)
 
 # AWS Certification
 
@@ -7567,18 +7587,317 @@ Metric alarm states:
 
 ![](images/cloudwatch_2.png)
 
-### PutMetricData CLI Command
+## Amazon CloudWatch Logs
 
-```bash
-aws cloudwatch put-metric-data --metric-name bytes --namespace MyCustomNameSpace --unit Bytes --value 242678092 --dimensions InstanceId=INSTANCE-ID,InstanceType=t2.micro --region us-east-1
-```
+![](images/cloudwatch_3.png)
 
-```bash
-aws cloudwatch put-metric-data --metric-name latency --namespace MyCustomNameSpace --unit Milliseconds --value 24 --dimensions InstanceId=INSTANCE-ID,InstanceType=t2.micro --region us-east-1
-```
+## The Unified CloudWatch Agent
 
-### Trigger CloudWatch Alarm
+The unified CloudWatch agent enables you to do the following:
+- Collect internal system level metrics from Amazon EC2 instances across operating systems
+- Collect system level metrics from on premises servers
+- Retrieve custom metrics from your applications or services using the StatsD and collectd protocols
+- Collect logs from Amazon EC2 instances and on-premises servers (Windows / Linux)
 
-```bash
-aws cloudwatch put-metric-data --metric-name latency --namespace MyCustomNameSpace --unit Milliseconds --value 35 --dimensions InstanceId=INSTANCE-ID,InstanceType=t2.micro --region us-east-1
-```
+Agent must be installed on the server
+
+Can be installed on:
+- Amazon EC2 instances
+- On-premises servers
+- Linux, Windows Server, or macOS
+
+# AWS CloudTrail
+
+- CloudTrail logs API activity for auditing
+- By default, management events are logged and retained for 90 days
+- A CloudTrail Trail logs any events to S3 for indefinite retention
+- Trail can be within Region or all Regions
+- CloudWatch Events can triggered based on API calls in CloudTrail
+- Events can be streamed to CloudWatch Logs
+
+![](images/cloudtrail_1.png)
+
+## CloudTrail Types of Events
+
+- **Management events** provide information about management operations that are performed on resources in your AWS account
+- **Data events** provide information about the resource operations performed on or in a resource
+- **Insights events** identify and respond to unusual activity associated with write API calls by continuously analyzing CloudTrail management events
+
+# AWS Key Management Service (KMS)
+
+- Create and managed symmetric and asymmetric encryption keys
+- The KMS keys are protected by hardware security modules (HSMs)
+
+![](images/kms_1.png)
+
+- KMS keys are the primary resources in AWS KMS
+- Used to be known as “customer master keys” or CMKs
+- The KMS key also contains the key material used to encrypt and decrypt data
+- By default, AWS KMS creates the key material for a KMS key
+- You can also import your own key material
+- A KMS key can encrypt data up to 4KB in size
+- A KMS key can generate, encrypt and decrypt Data Encryption Keys (DEKs)
+
+## Alternative Key Stores
+
+**External Key Store**
+
+- Keys can be stored outside of AWS to meet regulatory requirements
+- You can create a KMS key in an AWS KMS external key store (XKS)
+- All keys are generated and stored in an external key manager
+- When using an XKS, key material never leaves your HSM Custom Key Store
+
+**Custom Key Store**
+
+- You can create KMS keys in an AWS CloudHSM custom key store
+- All keys are generated and stored in an AWS CloudHSM cluster that you own and manage
+- Cryptographic operations are performed solely in the AWS CloudHSM cluster you own and manage
+- Custom key stores are not available for asymmetric KMS keys
+
+## AWS Managed KMS Keys
+
+- Created, managed, and used on your behalf by an AWS service that is integrated with AWS KMS
+- You cannot manage these KMS keys, rotate, them, or change their key policies
+- You also cannot use AWS managed KMS keys in cryptographic operations directly; the service that creates them uses them on your behalf
+
+## Data Encryption Keys
+
+- Data keys are encryption keys that you can use to encrypt large amounts of data
+- You can use AWS KMS keys to generate, encrypt, and decrypt data keys
+- AWS KMS does not store, manage, or track your data keys, or perform cryptographic operations with data keys
+- You must use and manage data keys outside of AWS KMS
+
+## KMS Keys and Automatic Rotation
+
+| Type of KMS Key          | Can view | Can manage | Used only for my AWS account | Automatic rotation          |
+|--------------------------|----------|------------|------------------------------|-----------------------------|
+| Customer managed key     | Yes      | Yes        | Yes                          | Optional. Every 365 days    |
+| AWS managed key          | Yes      | No         | Yes                          | Required. Every 365 days    |
+| AWS owned key            | No       | No         | No                           | Varies                      |
+
+- You cannot enable or disable key rotation for AWS owned keys
+- Automatic key rotation is supported only on symmetric encryption KMS keys
+- with key material that AWS KMS generates `Origin = AWS_KMS`
+- Automatic rotation generates new key material every year optional for customer managed keys
+- Rotation only changes the key material used for encryption, the KMS key remains the same
+
+![](images/kms_2.png)
+
+With automatic key rotation:
+
+- The properties of the KMS key, including its key ID, key ARN, region, policies, and permissions, do not change when the key is rotated
+- You do not need to change applications or aliases that refer to the key ID or key ARN of the KMS key
+- After you enable key rotation, AWS KMS rotates the KMS key automatically every year
+
+Automatic key rotation is not supported on the following types of KMS keys (Note: You can rotate these KMS keys manually):
+- Asymmetric KMS keys
+- HMAC KMS keys
+- KMS keys in custom key stores
+- KMS keys with imported key material
+
+## Manual Rotation
+
+- Manual rotation is creating a new KMS key with a different key ID
+- You must then update your applications with the new key ID
+- You can use an alias to represent a KMS key so you don’t need to modify your application code
+
+![](images/kms_3.png)
+
+## Additional Exam Tips
+
+- To share snapshots with another account you must specify `Decrypt` and `CreateGrant` permissions
+- The `kms:ViaService` condition key can be used to limit key usage to specific AWS services
+- Cryptographic erasure means removing the ability to decrypt data and can be achieved when using imported key material and deleting that key material
+- You must use the `DeletelmportedKeyMaterial` API to remove the key material
+- An `InvalidKeyId` exception when using SSM Parameter Store indicates the KMS key is not enabled
+- Make sure you know the differences between AWS managed and customer managed KMS keys and automatic vs manual rotation
+
+## AWS KMS API and CLI
+
+**Encrypt** (`aws kms encrypt`)
+
+- Encrypts plaintext into ciphertext by using a KMS key
+- You can encrypt small amounts of arbitrary data, such as a personal identifier or database password, or other sensitive information
+- You can use the Encrypt operation to move encrypted data from one AWS region to another
+
+**Decrypt** (`aws kms decrypt`)
+
+- Decrypts ciphertext that was encrypted by an KMS key using any of the following operations:
+  - `Encrypt`
+  - `GenerateDataKey`
+  - `GenerateDataKeyPair`
+  - `GenerateDataKeyWithoutPlaintext`
+  - `GenerateDataKeyPairWithoutPlaintext`
+
+**Re-encrypt** (`aws kms re-encrypt`)
+
+- Decrypts ciphertext and then re-encrypts it entirely within AWS KMS
+- You can use this operation to change the KMS key under which data is encrypted, such as when you manually rotate a KMS key or change the KMS key that protects a ciphertext
+- You can also use it to re-encrypt ciphertext under the same KMS key, such as to change the encryption context of a ciphertext
+
+Enable-key-rotation:
+- Enables automatic rotation of the key material for the specified symmetric KMS key
+- You cannot perform this operation on a KMS key in a different AWS account
+
+**GenerateDataKey** (`aws kms generate-data-key`)
+
+- Generates a unique symmetric data key
+- This operation returns a plaintext copy of the data key and a copy that is encrypted under a KMS key that you specify
+- You can use the plaintext key to encrypt your data outside of AWS KMS and store the encrypted data key with the encrypted data
+
+**GenerateDataKeyWithoutPlaintext** (`generate-data-key-without-plaintext`)
+
+- Generates a unique symmetric data key
+- This operation returns a data key that is encrypted under a KMS key that you specify
+- To request an asymmetric data key pair, use the `GenerateDataKeyPair` or `GenerateDataKeyPairWithoutPlaintext` operations
+
+## Throttling and Caching
+
+AWS KMS has two types of quotas:
+- Resource quotas
+- Request quotas
+
+If you exceed a resource limit, requests to create an additional resource of that type generate an LimitExceededException error message
+
+Request quotas apply to API actions such as `Encrypt` , `Decrypt` , `ReEncrypt` , and `GenerateDataKey`
+
+To prevent throttling, you can:
+- Implement a backoff and retry strategy
+- Request a service quota increase
+- Implement data key caching
+
+Data key caching stores data keys and related cryptographic material in a cache
+
+Useful if your application:
+- Can reuse data keys
+- Generates numerous data keys
+- Runs cryptographic operations that are unacceptably slow, expensive, limited, or resource intensive
+
+You can create a local cache using the AWS Encryption SDK and the `LocalCryptoMaterialsCache` feature
+
+# AWS Certificate Manager (ACM)
+
+- Create, store and renew SSL/TLS X.509 certificates
+- Single domains, multiple domain names and wildcards
+- Integrates with several AWS services including:
+  - Elastic Load Balancing
+  - Amazon CloudFront
+  - AWS Elastic Beanstalk
+  - AWS Nitro Enclaves
+  - AWS CloudFormation
+
+- Public certificates are signed by the AWS public Certificate Authority
+- You can also create a Private CA with ACM
+- Can then issue private certificates
+- You can also import certificates from third-party issuers
+
+# AWS Systems Manager
+
+Manages many AWS resources including Amazon EC2, Amazon S3, Amazon RDS etc.
+
+Systems Manager Components:
+- Automation
+- Run Command
+- Inventory
+- Patch Manager
+- Session Manager
+- Parameter Store
+
+![](images/manager_1.png)
+
+![](images/manager_2.png)
+
+![](images/manager_3.png)
+
+## AWS Systems Manager Patch Manager
+
+- Helps you select and deploy operating system and software patches automatically across large groups of Amazon EC2 or on premises instances
+- Patch baselines:
+  - Set rules to auto approve select categories of patches to be installed
+  - Specify a list of patches that override these rules and are automatically approved or rejected
+- You can also schedule maintenance windows for your patches so that they are only applied during predefined times
+- Systems Manager helps ensure that your software is up to date and meets your compliance policies
+
+## AWS Systems Manager Compliance
+
+- AWS Systems Manager lets you scan your managed instances for patch compliance and configuration inconsistencies
+- You can collect and aggregate data from multiple AWS accounts and Regions, and then drill down into specific resources that aren’t compliant
+- By default, AWS Systems Manager displays data about patching and associations
+- You can also customize the service and create your own compliance types based on your requirements (must use the AWS CLI, AWS Tools for Windows PowerShell, or the SDKs)
+
+## AWS Systems Manager Session Manager
+
+- Secure remote management of your instances at scale without logging into your servers
+- Replaces the need for bastion hosts, SSH, or remote PowerShell
+- Integrates with IAM for granular permissions
+- All actions taken with Systems Manager are recorded by AWS CloudTrail
+- Can store session logs in an S3 and output to CloudWatch Logs
+- Requires IAM permissions for EC2 instance to access SSM, S3, and CloudWatch Logs
+
+## AWS Systems Manager Parameter Store
+
+- Parameter Store provides secure, hierarchical storage for configuration data management and secrets management
+- Highly scalable, available, and durable
+- Store data such as passwords, database strings, and license codes as parameter values
+- Store values as plaintext (unencrypted data) or ciphertext (encrypted data)
+- Reference values by using the unique name that you specified when you created the parameter
+- No native rotation of keys (difference with AWS Secrets Manager which does it automatically)
+
+![](images/manager_4.png)
+
+# AWS Secrets Manager
+
+- Stores and rotate secrets safely without the need for code deployments
+- Secrets Manager offers automatic rotation of credentials (built in) for:
+  - Amazon RDS (MySQL, PostgreSQL, and Amazon Aurora)
+  - Amazon Redshift
+  - Amazon DocumentDB
+- For other services you can write your own AWS Lambda function for automatic rotation
+
+![](images/secrets_1.png)
+
+| Feature                     | Secrets Manager                                 | SSM Parameter Store                       |
+|-----------------------------|--------------------------------------------------|------------------------------------------|
+| Automatic Key Rotation      | Yes, built-in for some services, use Lambda for others | No native key rotation; can use custom Lambda |
+| Key/Value Type              | String or Binary (encrypted)                    | String, StringList, SecureString         |
+| Hierarchical Keys           | No                                              | Yes                                      |
+| Price                       | Charges apply per secret                        | Free for standard, charges for advanced  |
+
+# Amazon Cognito
+
+![](images/cognito_1.png)
+
+![](images/cognito_2.png)
+
+![](images/cognito_3.png)
+
+# AWS Web Application Firewall (WAF)
+
+- AWS WAF is a web application firewall
+- WAF lets you create rules to filter web traffic based on conditions that include IP addresses, HTTP headers and body, or custom URIs
+- WAF makes it easy to create rules that block common web exploits like SQL injection and cross site scripting
+
+![](images/waf_1.png)
+
+- **Web ACLs** You use a web access control list (ACL) to protect a set of AWS resources
+- **Rules** Each rule contains a statement that defines the inspection criteria, and an action to take if a web request meets the criteria
+- **Rule groups** You can use rules individually or in reusable rule groups
+- **IP Sets** An IP set provides a collection of IP addresses and IP address ranges that you want to use together in a rule statement
+- **Regex pattern set** A regex pattern set provides a collection of regular expressions that you want to use together in a rule statement
+
+A **rule action** tells AWS WAF what to do with a web request when it matches the criteria defined in the rule:
+- **Count**. AWS WAF counts the request but doesn't determine whether to allow it or block it. With this action, AWS WAF continues processing the remaining rules in the web ACL
+- **Allow** AWS WAF allows the request to be forwarded to the AWS resource for processing and response
+- **Block** AWS WAF blocks the request and the AWS resource responds with an HTTP 403 (Forbidden) status code
+
+**Match** statements compare the web request or its origin against conditions that you provide
+
+| Match Statement          | Description                                                                                      |
+|--------------------------|--------------------------------------------------------------------------------------------------|
+| Geographic match         | Inspects the request's country of origin                                                         |
+| IP set match             | Inspects the request against a set of IP addresses and address ranges                            |
+| Regex pattern set        | Compares regex patterns against a specified request component                                    |
+| Size constraint          | Checks size constraints against a specified request component                                    |
+| SQLi attack              | Inspects for malicious SQL code in a specified request component                                 |
+| String match             | Compares a string to a specified request component                                               |
+| XSS scripting attack     | Inspects for cross-site scripting attacks in a specified request component                       |
