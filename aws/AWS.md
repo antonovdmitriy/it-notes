@@ -5,7 +5,6 @@
   - [Advice for the Amazon exams](#advice-for-the-amazon-exams)
   - [Common links to cert path](#common-links-to-cert-path)
   - [Resources for](#resources-for)
-- [Zones and Regions](#zones-and-regions)
 - [IAM](#iam)
   - [Access control methods](#access-control-methods)
   - [MFA](#mfa)
@@ -88,9 +87,10 @@
   - [s3 cli](#s3-cli)
   - [assuming a role](#assuming-a-role)
 - [Networking](#networking)
-    - [VPS (Virtual private cloud)](#vps-virtual-private-cloud)
-    - [availiablity zones](#availiablity-zones)
-    - [Subnets](#subnets)
+  - [Zones and Regions](#zones-and-regions)
+  - [VPS (Virtual private cloud)](#vps-virtual-private-cloud)
+  - [availiablity zones](#availiablity-zones)
+  - [Subnets](#subnets)
     - [Routing accross VPS and outside](#routing-accross-vps-and-outside)
     - [Internet access](#internet-access)
     - [Connect to the public AWS endpoint](#connect-to-the-public-aws-endpoint)
@@ -383,11 +383,6 @@ You should have three times to solve every task. Starting from first to last.:
 
 ## Resources for 
 
-# Zones and Regions
-
-AWS houses its computers in more than 60 data centers spread around the world as shown in Figure 1-2. In AWS terminology, each data center corresponds to an Availability Zone (AZ), and clusters of data centers in close proximity to each other are grouped into regions. AWS has more than 20 different regions, across 5 continents.
-
-A compelling aspect of Amazon’s region model is that each region is largely independent, logistically and from a software management point of view. That means that if a physical problem like a power outage, or a software problem like a deployment bug, happens in one region, the others will almost certainly be unaffected. 
 
 # IAM
 
@@ -2069,10 +2064,16 @@ aws ec2 describe-instances --profile my_profile
 
 # Networking
 
+## Zones and Regions
+
+AWS houses its computers in more than 60 data centers spread around the world as shown in Figure 1-2. In AWS terminology, each data center corresponds to an Availability Zone (AZ), and clusters of data centers in close proximity to each other are grouped into regions. AWS has more than 20 different regions, across 5 continents.
+
+A compelling aspect of Amazon’s region model is that each region is largely independent, logistically and from a software management point of view. That means that if a physical problem like a power outage, or a software problem like a deployment bug, happens in one region, the others will almost certainly be unaffected. 
+
 ![](images/networking_1.png)
 
 
-### VPS (Virtual private cloud)
+## VPS (Virtual private cloud)
 
 **VPS** is a logically isolated portion of the AWS cloud within a region. A virtual network dedicated to AWS account. 
 
@@ -2088,11 +2089,11 @@ We can create diffrent VPS within a region. There is a default limit 5 to an amo
 
 ![](images/networking_2.png)
 
-### availiablity zones
+## availiablity zones
 
 Within a region there are **availiablity zones** (AZ). This is physically isolated area like a datacenter. 
 
-### Subnets 
+## Subnets 
 
 Within AV there are **subnets**. They can be public or private. 
 
@@ -5754,6 +5755,16 @@ How it works:
 
 ![](images/sf_2.png)
 
+In the Amazon States Language, these fields filter and control the flow of JSON from state to state:
+
+- InputPath
+- OutputPath
+- ResultPath
+- Parameters
+- ResultSelector
+
+Use **ResultPath** to combine a task result with task input, or to select one of these. The path you provide to ResultPath controls what information passes to the output. Use ResultPath in a Catch to include the error with the original input, instead of replacing it.
+
 # Amazon EventBridge
 
 ![](images/event_bridge_1.png)
@@ -6861,7 +6872,7 @@ IdentityFile ~/.ssh/Your-Private-Key-File-Name-Here
 
 **Build environment** the operating system, language runtime, and tools that CodeBuild uses for the build
 
-**Build Specification** a YAML file that describes the collection of commands and settings for CodeBuild to run a build
+**Build Specification** a YAML file that describes the collection off commands and settings for CodeBuild to run a build
 
 | Option                | Description                                                                                         | Phase Type |
 |-----------------------|-----------------------------------------------------------------------------------------------------|------------|
