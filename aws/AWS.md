@@ -7,6 +7,8 @@
   - [Resources for](#resources-for)
 - [IAM](#iam)
   - [Access control methods](#access-control-methods)
+    - [Role based access control (RBAC)](#role-based-access-control-rbac)
+    - [Attribute-based access control (ABAC)](#attribute-based-access-control-abac)
   - [MFA](#mfa)
   - [STS (Security Token Service)](#sts-security-token-service)
   - [Start on IAM](#start-on-iam)
@@ -386,6 +388,8 @@ You should have three times to solve every task. Starting from first to last.:
 
 # IAM
 
+![](images/iam_2.png)
+
 Service to create:
 - users (up to 5000 users in IAM)
 - groups (sets of users). Users can be a member of up to 10 groups
@@ -402,7 +406,7 @@ It's not possible to craate IAM entries for a specific region, only for all of t
 
 ## Access control methods 
 
-Role based access control (RBAC)
+### Role based access control (RBAC)
 
 Groups of users organized by job role. Permissions link to the group. User inherits permissions from the group. And principle of least previleges - the minimum permissions to get job done. 
 
@@ -418,9 +422,10 @@ There are a lot of preconfigured job-function policies like:
 - System administrator
 - View-only user
 
-Attribute-based access control (ABAC)
+### Attribute-based access control (ABAC)
 
-Permisson according to conditions. Users has a group and tags like metadata, for example department. And policy has condition on group and department tag. And it can have condition with tags which selected resources. Database has a tag environemnt and value production or test. And guy from admin group and with department DBAdmins can reboot database that has Environemnt tag like Production but not Test Database which has another value of the tag Environment.
+- Permisson according to conditions. 
+- Users has a group and tags like metadata, for example department. And policy has condition on group and department tag. And it can have condition with tags which selected resources. Database has a tag environemnt and value production or test. And guy from admin group and with department DBAdmins can reboot database that has Environemnt tag like Production but not Test Database which has another value of the tag Environment.
 
 ## MFA
 
