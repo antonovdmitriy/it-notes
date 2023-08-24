@@ -25,6 +25,8 @@
   - [Security access](#security-access)
 - [EBS Elastic block storage](#ebs-elastic-block-storage)
 - [EFS Elastic file system](#efs-elastic-file-system)
+  - [Using Amazon EFS with Lambda](#using-amazon-efs-with-lambda)
+  - [Example](#example)
 - [S3 Simple storage service](#s3-simple-storage-service)
   - [Overview](#overview)
   - [Accessing s3](#accessing-s3)
@@ -42,7 +44,7 @@
     - [Encription](#encription)
   - [S3 Event Notifications](#s3-event-notifications)
   - [Storage classes](#storage-classes)
-  - [Example](#example)
+  - [Example](#example-1)
   - [Preassigned temporary url](#preassigned-temporary-url)
   - [Log bucket events to the another bucket](#log-bucket-events-to-the-another-bucket)
   - [CORS with S3 bucket](#cors-with-s3-bucket)
@@ -52,6 +54,7 @@
   - [Sign cookies](#sign-cookies)
   - [CloudFront origin access identity OAI](#cloudfront-origin-access-identity-oai)
   - [Cloudfront OAC](#cloudfront-oac)
+  - [Origin response trigger](#origin-response-trigger)
   - [Example static website](#example-static-website)
 - [Route 53](#route-53)
 - [CloudFormation](#cloudformation)
@@ -67,7 +70,8 @@
     - [Intrinsic functions](#intrinsic-functions)
       - [Ref](#ref)
       - [Fn::GetAtt](#fngetatt)
-    - [Fn:FindInMap](#fnfindinmap)
+      - [Fn:FindInMap](#fnfindinmap)
+  - [Pseudo parameters](#pseudo-parameters)
 - [Elastic Beanstalk](#elastic-beanstalk)
   - [Deployment options](#deployment-options)
     - [All at once](#all-at-once)
@@ -148,6 +152,7 @@
   - [AWS SAM CLI](#aws-sam-cli)
     - [Installation](#installation)
     - [Features](#features)
+    - [SAM Policy Templates](#sam-policy-templates)
     - [Commands](#commands)
     - [Environment Variables and SAM](#environment-variables-and-sam)
   - [Lambda Function Method Signatures](#lambda-function-method-signatures)
@@ -159,12 +164,14 @@
     - [Monitoring](#monitoring)
     - [Logging](#logging)
     - [Tracing with X-Ray](#tracing-with-x-ray)
+      - [X-Ray on ECS/EKS/Fargate:](#x-ray-on-ecseksfargate)
   - [Lambda in a VPC](#lambda-in-a-vpc)
   - [Lambda Function as a Target for an ALB](#lambda-function-as-a-target-for-an-alb)
   - [Security](#security-1)
   - [Best practicies](#best-practicies)
   - [Servless application repository](#servless-application-repository)
-    - [Example pricing](#example-pricing)
+  - [Example pricing](#example-pricing)
+  - [Database proxy for Amazon RDS](#database-proxy-for-amazon-rds)
   - [Spring cloud functions](#spring-cloud-functions)
     - [Main idea.](#main-idea)
     - [documentations and examples](#documentations-and-examples)
@@ -220,6 +227,7 @@
   - [Amazon DynamoDB Accelerator (DAX)](#amazon-dynamodb-accelerator-dax)
     - [DAX vs ElastiCache](#dax-vs-elasticache)
   - [Amazon DynamoDB Global Tables](#amazon-dynamodb-global-tables)
+  - [Amazon DynamoDB Encryption Client](#amazon-dynamodb-encryption-client)
 - [SQS](#sqs)
   - [Queue types](#queue-types)
     - [Standart Queue](#standart-queue)
@@ -259,6 +267,7 @@
     - [Resource Based Policies](#resource-based-policies)
     - [Lambda Authorizer](#lambda-authorizer)
     - [Cognito User Pool Authorizer](#cognito-user-pool-authorizer)
+  - [Logging](#logging-1)
 - [ECS](#ecs)
   - [Features](#features-1)
   - [Components](#components)
@@ -277,7 +286,7 @@
     - [Service auto scaling](#service-auto-scaling)
     - [Cluster auto scaling](#cluster-auto-scaling)
   - [Amazon ECS with ALB](#amazon-ecs-with-alb)
-  - [Example](#example-1)
+  - [Example](#example-2)
   - [Amazon Elastic Container Registry (ECR)](#amazon-elastic-container-registry-ecr)
     - [Pushing an Image to a Private Repository](#pushing-an-image-to-a-private-repository)
     - [create an image and push to the ecr](#create-an-image-and-push-to-the-ecr)
@@ -292,11 +301,17 @@
 - [Copilot](#copilot)
 - [AWS CI/CD Tools](#aws-cicd-tools)
   - [Code Commit](#code-commit)
+    - [Authentication and Access Control](#authentication-and-access-control)
+    - [Authorization](#authorization)
+    - [Notifications](#notifications)
   - [Code Pipeline](#code-pipeline)
     - [Example pipeline codecommit and beanstalk](#example-pipeline-codecommit-and-beanstalk)
   - [Code Build](#code-build)
     - [AWS CodeBuild Components](#aws-codebuild-components)
-  - [Example](#example-2)
+    - [Specifying Build Commands](#specifying-build-commands)
+    - [CodeBuild Local Build](#codebuild-local-build)
+    - [Customized Build Environments](#customized-build-environments)
+  - [Example](#example-3)
   - [AWS CodeDeploy](#aws-codedeploy)
     - [Blue/Green Traffic Shifting](#bluegreen-traffic-shifting)
   - [Amazon CodeGuru](#amazon-codeguru)
@@ -304,7 +319,9 @@
     - [Amazon CodeGuru Profiler](#amazon-codeguru-profiler)
   - [Amazon Code Star](#amazon-code-star)
   - [AWS Cloud9](#aws-cloud9)
+  - [AWS CodeArtifact](#aws-codeartifact)
   - [AWS Amplify and AppSync](#aws-amplify-and-appsync)
+    - [AWS AppSync’s API Cache](#aws-appsyncs-api-cache)
 - [Amazon Relational Database Service (RDS)](#amazon-relational-database-service-rds)
   - [Amazon RDS Backup and Recovery](#amazon-rds-backup-and-recovery)
     - [Automated Backups](#automated-backups)
@@ -322,6 +339,9 @@
     - [Memcached](#memcached)
     - [Redis](#redis)
   - [Examples](#examples-5)
+  - [Caching strategies](#caching-strategies)
+    - [Lazy Loading](#lazy-loading)
+    - [Write Through](#write-through)
   - [Amazon MemoryDB for Redis](#amazon-memorydb-for-redis)
   - [MemoryDB for Redis vs ElastiCache](#memorydb-for-redis-vs-elasticache)
 - [Amazon Kinesis Core](#amazon-kinesis-core)
@@ -347,11 +367,13 @@
   - [Amazon CloudWatch Alarms](#amazon-cloudwatch-alarms)
   - [Amazon CloudWatch Logs](#amazon-cloudwatch-logs)
   - [The Unified CloudWatch Agent](#the-unified-cloudwatch-agent)
+  - [VPC Flow logs](#vpc-flow-logs)
 - [AWS CloudTrail](#aws-cloudtrail)
   - [CloudTrail Types of Events](#cloudtrail-types-of-events)
 - [AWS Key Management Service (KMS)](#aws-key-management-service-kms)
   - [Alternative Key Stores](#alternative-key-stores)
   - [AWS Managed KMS Keys](#aws-managed-kms-keys)
+  - [CMK](#cmk)
   - [Data Encryption Keys](#data-encryption-keys)
   - [KMS Keys and Automatic Rotation](#kms-keys-and-automatic-rotation)
   - [Manual Rotation](#manual-rotation)
@@ -367,6 +389,7 @@
 - [AWS Secrets Manager](#aws-secrets-manager)
   - [AWS CLI commands for Secrets Manager](#aws-cli-commands-for-secrets-manager)
 - [Amazon Cognito](#amazon-cognito)
+  - [Adaptive authentication](#adaptive-authentication)
 - [AWS Web Application Firewall (WAF)](#aws-web-application-firewall-waf)
 
 # AWS Certification
@@ -443,7 +466,14 @@ You can use Google Authenticator or a physical token which is possile to order f
 
 What if you have an app on an EC2 instance and want to get access to S3 bucket. We need to create an instance profile and connect it to the IAM role. then to add trust policy and after that AWS STS could get temporary security credentials for ec2 instance. This credentionals includes AccessKeyId, Expiration, SecretAccessKey, SessionToken. 
 
+You can use the following AWS CLI commands to work with instance profiles in an AWS account:
 
+- Create an instance profile: `aws iam create-instance-profile`
+- Add a role to an instance profile: `aws iam add-role-to-instance-profile`
+- List instance profiles: `aws iam list-instance-profiles, aws iam list-instance-profiles-for-role`
+- Get information about an instance profile: `aws iam get-instance-profile`
+- Remove a role from an instance profile: `aws iam remove-role-from-instance-profile`
+- Delete an instance profile: `aws iam delete-instance-profile` 
 
 ## Start on IAM
 
@@ -781,6 +811,7 @@ It is possible to create snaphots of the EBS volumes. Actually it saved on the S
 
 Default volume created with a new EC2 instance, but it fade away after termination of the instance. 
 
+Amazon EBS volumes are not encrypted by default without additional configuration.but can be encrypted for all current generation instance types and specific previous generation instance types. 
 
 
 # EFS Elastic file system
@@ -789,7 +820,17 @@ Default volume created with a new EC2 instance, but it fade away after terminati
 
 it is possible connect on-premice data center to EFS using direct connect or VPN
 
+## Using Amazon EFS with Lambda
 
+Lambda integrates with Amazon Elastic File System (Amazon EFS) to support secure, shared file system access for Lambda applications. You can configure functions to mount a file system during initialization with the NFS protocol over the local network within a VPC. Lambda manages the connection and encrypts all traffic to and from the file system.
+
+The file system and the Lambda function must be in the same region. A Lambda function in one account can mount a file system in a different account. For this scenario, you configure VPC peering between the function VPC and the file system VPC.
+
+Amazon EFS supports file locking to prevent corruption if multiple functions try to write to the same file system at the same time. Locking in Amazon EFS follows the NFS v4.1 protocol for advisory locking, and enables your applications to use both whole file and byte range locks.
+
+Amazon EFS provides options to customize your file system based on your application's need to maintain high performance at scale. There are three primary factors to consider: the number of connections, throughput (in MiB per second), and IOPS.
+
+## Example
 ![Shared folder via EFS](images/efs_1.png)
 
 Создадим файловую систему через efs
@@ -888,6 +929,8 @@ Use S3 bucket policies if:
 - You want a simple way to grant cross account access to your S3 environment, without using IAM roles
 -  Your IAM policies are reaching the size limits
 - You prefer to keep access control policies in the S3 environment
+
+By adding a condition to the S3 bucket policy that requires `aws:SecureTransport`, you are mandating that all interactions with the bucket must be encrypted in transit using SSL/TLS.
 
 ### Example using ACL
 
@@ -1100,13 +1143,13 @@ Adds MFA requirement for bucket owners to the following operations:
 - Changing the versioning state of a bucket
 - Permanently deleting an object version
 
-The `x-amz-mfa`` request header must be included in the above requests
+The `x-amz-mfa` request header must be included in the above requests
 
 The second factor is a token generated by a hardware device or software program
 
-Requires `versioning`` to be enabled on the bucket
+Requires `versioning` to be enabled on the bucket
 
-`Versioning`` can be enabled by:
+`Versioning` can be enabled by:
   - Bucket owners (root account)
   - AWS account that created the bucket
   - Authorized IAM users
@@ -1304,10 +1347,8 @@ Enabled through setting:
 - S3 Automatically scales to high request rates with at least (per prefix):
   - 3,500 PUT/COPY/POST/DELETE requests/second
   - 5,500 GET/HEAD requests/second
-
 - Can increase read and write performance by using parallelization across multiple prefixes
 - To increase uploads over long distances, use Amazon S3 Transfer Acceleration
-
 - Byte Range fetches use the Range HTTP header to transfer only specified byte range from an object
 - Combine S3 and EC2 in the same AWS Region
 - Use the latest version of the AWS SDKs
@@ -1347,6 +1388,18 @@ Possible it can be deprecated soon.
 ## Cloudfront OAC
 
 ![](images/cloudfront_5.png)
+
+## Origin response trigger
+
+When CloudFront receives an HTTP response from the origin server, if there is an origin-response trigger associated with the cache behavior, you can modify the HTTP response to override what was returned from the origin.
+
+Some common scenarios for updating HTTP responses include the following:
+
+   • Changing the status to set an HTTP 200 status code and creating static body content to return to the viewer when an origin returns an error status code (4xx or 5xx)
+
+   • Changing the status to set an HTTP 301 or HTTP 302 status code, to redirect the user to another website when an origin returns an error status code (4xx or 5xx)
+
+When you're working with the HTTP response, Lambda@Edge does not expose the body that is returned by the origin server to the origin-response trigger. You can generate a static content body by setting it to the desired value, or remove the body inside the function by setting the value to be empty. If you don't update the body field in your function, the original body returned by the origin server is returned back to viewer.
 
 ## Example static website 
 
@@ -1679,7 +1732,7 @@ Resources:
           SourceSecurityGroupName: !GetAtt myELB.SourceSecurityGroup.GroupName
 ```
 
-### Fn:FindInMap
+#### Fn:FindInMap
 
 returns the value corresponding to keys in a two-level map that is declared in the Mappings section
 
@@ -1714,6 +1767,11 @@ Resources:
         - HVM64
       InstanceType: m1.small
 ```
+
+## Pseudo parameters
+
+In AWS CloudFormation, the `AWS::Region` pseudo parameter automatically resolves to the Region where the stack is being created or updated. This makes it the most operationally efficient way to determine the Region in which the template is being deployed, as it doesn't require any additional input, processing, or external service calls.
+
 # Elastic Beanstalk
 
 Managed web apps. Abstraction on vpc, subnets, auto scaling groups and alb. 
@@ -1840,7 +1898,7 @@ Additional sections of a configuration file let you configure the EC2 instances 
 
 ## SSL/TLS
 
-- SSL/TLS certificates can be assignedto an environment’s Elastic Load Balancer
+- SSL/TLS certificates can be assigned to an environment’s Elastic Load Balancer
 - Can use AWS Certificate Manager (ACM)
 - The connections between clients and the load balancer are secured
 - Backend connections between the load balancer and EC2 instances are not secured
@@ -2042,13 +2100,13 @@ aws s3 ls s3://mytestbucket-323423dsdfl
 to remove a bucket. But only for an empty bucket
 
 ```bash
-aws s2 rb s3://mytestbucket-323423dsdfl
+aws s3 rb s3://mytestbucket-323423dsdfl
 ```
 
 to forced remove a bucket 
 
 ```bash
-aws s2 rb s3://mytestbucket-323423dsdfl --force
+aws s3 rb s3://mytestbucket-323423dsdfl --force
 ```
 
 ## assuming a role
@@ -2067,11 +2125,14 @@ and then use this profile to assume a role
 aws ec2 describe-instances --profile my_profile
 ```
 
+
+The AWS CLI `aws sts assume role` command will enable the Developer to assume the role and gain temporary security credentials. The Developer can then use those security credentials to troubleshoot access issues that are affecting the application.
+
 # Networking
 
 ## Zones and Regions
 
-AWS houses its computers in more than 60 data centers spread around the world as shown in Figure 1-2. In AWS terminology, each data center corresponds to an Availability Zone (AZ), and clusters of data centers in close proximity to each other are grouped into regions. AWS has more than 20 different regions, across 5 continents.
+AWS houses its computers in more than 60 data centers spread around the world. In AWS terminology, each data center corresponds to an Availability Zone (AZ), and clusters of data centers in close proximity to each other are grouped into regions. AWS has more than 20 different regions, across 5 continents.
 
 A compelling aspect of Amazon’s region model is that each region is largely independent, logistically and from a software management point of view. That means that if a physical problem like a power outage, or a software problem like a deployment bug, happens in one region, the others will almost certainly be unaffected. 
 
@@ -2100,7 +2161,7 @@ Within a region there are **availiablity zones** (AZ). This is physically isolat
 
 ## Subnets 
 
-Within AV there are **subnets**. They can be public or private. 
+Within AZ there are **subnets**. They can be public or private. 
 
 It is not possible to create a subnet across many AZ. But you can spread load on different AZ and subnets within them. 
 
@@ -3079,17 +3140,14 @@ After that:
   - All the function settings, including the environment variables
   - A unique Amazon Resource Name (ARN) to identify this version
 of the function
-
 - You can use versions to manage the deployment of your AWS Lambda functions
 - For example, you can publish a new version of a function
 for beta testing without affecting users of the stable
 production version
-
 - You work on `$LATEST`` which is the latest version of the code this is mutable (changeable)
 - When you're ready to publish a Lambda function you create a version (these are numbered)
 - Numbered versions are assigned a number starting with 1 and subsequent versions are incremented by 1
 - Versions are immutable (code cannot be edited)
-
 - Each version has its own ARN
 - This allows you to effectively manage them for different environments like Production, Staging or Development
 
@@ -3149,7 +3207,7 @@ aws lambda invoke --invocation-type RequestResponse --function-name myFunc:2 out
 ```
 ![](images/lambda_9.png)
 
-5. Let's crate an alias an split load 50/50 between two versions
+5. Let's create an alias an split load 50/50 between two versions
 
 ![](images/lambda_10.png)
 
@@ -3304,6 +3362,16 @@ There are several resources types:
 - `AWS::Serverless::HttpApi` (API Gateway HTTP)
 - `AWS::Serverless::LayerVersion` (Lambda layer)
 
+
+### SAM Policy Templates
+
+SAM Policy Templates are a list of templates to apply permissions to your Lambda functions.
+
+Examples:
+- `S3ReadPolicy`
+- `SQSPollerPolicy`
+- `DynamoDBCrudPolicy`
+
 ### Commands
 
 ```bash
@@ -3316,6 +3384,8 @@ Alternatively
 aws cloudformation package --template-file template.yaml --s3-bucket dctlabs --output-template-file packaged template.yaml
 aws cloudformation deploy --template-file packaged-template.yaml --stack-name my-cf-stack
 ```
+
+Using the `sam local invoke` command with the specific Lambda function as an argument, you can execute the function locally.
 
 ### Environment Variables and SAM
 
@@ -3400,6 +3470,8 @@ If the concurrency limit is exceeded throttling occurs with error "Rate exceeded
 
 ### Provisioned Concurrency
 
+Setting the provisioned concurrency of the function to 1 ensures that only one instance of the function will be operating at any given time
+
 - When provisioned concurrency is allocated, the function scales with the same burst behavior as standard concurrency
 - After it's allocated, provisioned concurrency serves incoming requests with very low latency
 - When all provisioned concurrency is in use, the function scales up normally to handle any additional requests
@@ -3431,6 +3503,13 @@ Lambda sends metrics to Amazon CloudWatch for performance monitoring
 - The daemon works in conjunction with the AWS X-Ray SDKs so that data sent by the SDKs can reach the X-Ray service
 - When you trace your Lambda function, the X-Ray daemon automatically runs in the Lambda environment to gather trace data and send it to X Ray
 - The function needs permissions to write to X-Ray in the execution role
+
+#### X-Ray on ECS/EKS/Fargate:
+
+- Create a Docker image that runs the daemon or use the official X-Ray Docker image.
+- Ensure port mappings and network settings are correct and IAM task roles are defined.
+
+In Amazon ECS, create a Docker image that runs the X-Ray daemon, upload it to a Docker image repository, and then deploy it to your Amazon ECS cluster. You can use port mappings and network mode settings in your task definition file to allow your application to communicate with the daemon container.
 
 ## Lambda in a VPC
 
@@ -3527,7 +3606,7 @@ a set of open application to use.
 
 ![](images/lambda_14.png)
 
-### Example pricing
+## Example pricing
 
 First, let’s think back to the photo resizer  Let’s say that we set that function to use 1.5GB RAM, it takes on average 10 seconds to run, and it processes 10,000 photos per day. Lambda pricing consists of two parts—request pricing, which is $0.20 per million requests, and duration pricing, which is $0.0000166667 per gigabyte-second. Therefore we need to calculate both parts to estimate cost for our photo resizer:
 
@@ -3550,6 +3629,15 @@ Now let’s look back to our web API. Let’s say we set the web API Lambda func
 
 In other words, we need to spend $27/month to handle 10 requests/second average, and this system could happily could peak to 10x that rate, without breaking a sweat (or increasing the costs).
 
+## Database proxy for Amazon RDS
+
+RDS Proxy acts as an intermediary between your application and an RDS database. RDS Proxy establishes and manages the necessary connection pools to your database so that your application creates fewer database connections.
+
+You can use RDS Proxy for any application that makes SQL calls to your database. But in the context of serverless, we focus on how this improves the Lambda experience. The proxy handles all database traffic that normally flows from your Lambda functions directly to the database.
+
+Your Lambda functions interact with RDS Proxy instead of your database instance. It handles the connection pooling necessary for scaling many simultaneous connections created by concurrent Lambda functions. This allows your Lambda applications to reuse existing connections, rather than creating new connections for every function invocation.
+
+The RDS Proxy scales automatically so that your database instance needs less memory and CPU resources for connection management. It also uses warm connection pools to increase performance. With RDS Proxy, you no longer need code that handles cleaning up idle connections and managing connection pools. Your function code is cleaner, simpler, and easier to maintain.
 
 ## Spring cloud functions
 
@@ -5581,6 +5669,10 @@ we need to add new attibute (column) with expiry date with linux-epoch time. And
 
 ![](images/dynamodb_global_3.png)
 
+## Amazon DynamoDB Encryption Client
+
+In addition to encryption at rest, which is a server-side encryption feature, AWS provides the Amazon DynamoDB Encryption Client. This client-side encryption library enables you to protect your table data before submitting it to DynamoDB. With server-side encryption, your data is encrypted in transit over an HTTPS connection, decrypted at the DynamoDB endpoint, and then re-encrypted before being stored in DynamoDB. Client-side encryption provides end-to-end protection for your data from its source to storage in DynamoDB.
+
 # SQS
 
 ![](images/sqs_1.png)
@@ -5978,6 +6070,18 @@ identifier
 - It also lets you configure throttling limits and quota limits that are enforced on individual client API keys
 - You can use API keys together with usage plans or Lambda authorizers to control access to your APIs
 
+- API keys are alphanumeric string values that you distribute to application developer customers to grant access to your API. 
+- You can use API keys together with usage plans or Lambda authorizers to control access to your APIs. 
+- API Gateway can generate API keys on your behalf, or you can import them from a CSV file. You can generate an API key in API Gateway, or import it into API Gateway from an external source.
+- To associate the newly created key with a usage plan the `CreatUsagePlanKey` API can be called. This creates a usage plan key for adding an existing API key to a usage plan.
+
+
+In your WebSocket API, incoming JSON messages are directed to backend integrations based on routes that you configure. (Non-JSON messages are directed to a $default route that you configure.)
+
+A route includes a route key, which is the value that is expected once a route selection expression is evaluated. The routeSelectionExpression is an attribute defined at the API level. It specifies a JSON property that is expected to be present in the message payload.
+
+For example, if your JSON messages contain an action property and you want to perform different actions based on this property, your route selection expression might be `${request.body.action}`. Your routing table would specify which action to perform by matching the value of the action property against the custom route key values that you have defined in the table.
+
 ## API Gateway Access Control
 
 There are several mechanisms for controlling and managing access to an API:
@@ -6017,6 +6121,16 @@ There are several mechanisms for controlling and managing access to an API:
 - You create an authorizer of the `COGNITO_USER_POOLS` type and then configure an API method to use that authorizer
 
 ![](images/gateway_15.png)
+
+
+
+## Logging
+
+There are two types of API logging in CloudWatch: execution logging and access logging. In execution logging, API Gateway manages the CloudWatch Logs. The process includes creating log groups and log streams, and reporting to the log streams any caller's requests and responses.
+
+The logged data includes errors or execution traces (such as request or response parameter values or payloads), data used by Lambda authorizers, whether API keys are required, whether usage plans are enabled, and so on.
+
+In access logging, you, as an API Developer, want to log who has accessed your API and how the caller accessed the API. You can create your own log group or choose an existing log group that could be managed by API Gateway.
 
 # ECS
 
@@ -6780,13 +6894,18 @@ and libraries
 - Maintains version history
 - Manages updates from multiple sources
 - Enables collaboration
-- CodeCommit repositories are private
+- **CodeCommit repositories are private**
 - CodeCommit scales seamlessly
+- Repositories are automatically encrypted at rest through AWS Key Management Service (AWS KMS) using customer-specific keys.
 - CodeCommit is integrated with Jenkins, CodeBuild and other CI tools
 - You can transfer your files to and from AWS CodeCommit using HTTPS or SSH
 - Repositories are automatically encrypted at rest through AWS Key Management Service (AWS KMS) using customer specific keys
-- You need to configure your Git client to communicate with CodeCommit repositories
 
+### Authentication and Access Control
+
+- AWS CodeCommit uses AWS IAM to control and monitor who can access data as well as how, when, and where they can access it.
+- CodeCommit helps monitor your repositories via AWS CloudTrail and AWS CloudWatch.
+- You need to configure your Git client to communicate with CodeCommit repositories
 - IAM supports CodeCommit with three types of credentials:
 
   - **Git credentials** an IAM generated user name and password pair you can use to communicate with CodeCommit repositories over HTTPS
@@ -6812,6 +6931,31 @@ IdentityFile ~/.ssh/Your-Private-Key-File-Name-Here
 
 ![](images/devops_8.png)
 
+### Authorization
+
+- IAM policies for authorizing access for users/roles to repositories.
+- CodeCommit only supports identity-based policies, not resource-based policies.
+- You can attach tags to CodeCommit resources or pass tags in a request to CodeCommit.
+- To control access based on tags, you provide tag information in the condition element of a policy using the `codecommit:ResourceTag/key-name`, `aws:RequestTag/key-name`, or `aws:TagKeys` condition keys.
+
+### Notifications
+
+You can trigger notifications in CodeCommit using **AWS SNS** or **AWS Lambda** or **AWS CloudWatch Event** rules.
+
+Notifications are in relation to pull request and comment events – triggers are related to pushing to a branch or creating / deleting a branch.
+
+Use cases for notifications **SNS** / **AWS Lambda**:
+
+- Deletion of branches.
+- Trigger for pushes that happen in the master branch.
+- Notify external build system.
+- Trigger AWS Lambda function to perform codebase analysis.
+
+Use cases for **CloudWatch Event Rules**:
+
+- Trigger for pull request updates (created / updated / deleted / commented).
+- Commit comment events.
+- CloudWatch Event Rules go into an SNS Topic.
 
 ## Code Pipeline
 
@@ -6860,12 +7004,20 @@ IdentityFile ~/.ssh/Your-Private-Key-File-Name-Here
 ## Code Build
 
 - AWS CodeBuild is a fully managed continuous integration (CI) service
+- With CodeBuild, you don’t need to provision, manage, and scale your own build servers.
+- CodeBuild is an alternative to other build tools such as Jenkins.
+- AWS CodeBuild runs your builds in preconfigured build environments that contain the operating system, programming language runtime, and build tools (e.g., Apache Maven, Gradle, npm) required to complete the task.
+- It is possible to extend capabilities by leveraging your own Docker images.
 - Compiles source code, runs tests, and produces software packages that are ready to deploy
 - CodeBuild scales continuously and processes multiple builds concurrently
 - You pay based on the time it takes to complete the builds
-- CodeBuild takes source code from GitHub, CodeCommit, CodePipeline , S3
-- Build instructions can be defined in the code `buildspec.yml`
+- CodeBuild takes source code from **GitHub**, **CodeCommit**, **CodePipeline** , **S3**
+- Build instructions can be defined in the code `buildspec.yml` **in the root of your source code**
 - Output logs can be sent to Amazon S3 & Amazon CloudWatch Logs
+- There are metrics to monitor CodeBuild statistics.
+- You can use CloudWatch alarms to detect failed builds and trigger SNS notifications.
+- CodeBuild is integrated with KMS for encryption of build artifacts, IAM for build permissions, VPC for network security, and CloudTrail for logging API calls.
+- Builds can be defined within CodePipeline or CodeBuild itself.
 
 ### AWS CodeBuild Components
 
@@ -6877,7 +7029,15 @@ IdentityFile ~/.ssh/Your-Private-Key-File-Name-Here
 
 **Build environment** the operating system, language runtime, and tools that CodeBuild uses for the build
 
+AWS CodeBuild provides build environments for Java, Python, Node.js, Ruby, Go, Android, .NET Core for Linux, and Docker.
+
 **Build Specification** a YAML file that describes the collection off commands and settings for CodeBuild to run a build
+
+### Specifying Build Commands
+
+- The build specification is a YAML file that lets you choose the commands to run at each phase of the build and other settings.
+- You can override the default buildspec file name and location
+
 
 | Option                | Description                                                                                         | Phase Type |
 |-----------------------|-----------------------------------------------------------------------------------------------------|------------|
@@ -6888,6 +7048,71 @@ IdentityFile ~/.ssh/Your-Private-Key-File-Name-Here
 | `phases/pre_build`    | Commands to run before the build                                                                     | Optional   |
 | `phases/build`        | Commands to run during the build                                                                     | Optional   |
 | `phases/post_build`   | Commands to run after the build                                                                      | Optional   |
+
+```yml
+version: 0.2
+
+phases:
+
+install:
+
+runtime-versions:
+
+docker: 18
+
+pre_build:
+
+commands:
+
+- echo Logging in to Amazon ECR...
+
+- $(aws ecr get-login --no-include-email --region $AWS_DEFAULT_REGION)
+
+build:
+
+commands:
+
+- echo Build started on `date`
+
+- echo Building the Docker image...
+
+- docker build -t $IMAGE_REPO_NAME:$IMAGE_TAG .
+
+- docker tag $IMAGE_REPO_NAME:$IMAGE_TAG $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG
+
+post_build:
+
+commands:
+
+- echo Build completed on `date`
+
+- echo Pushing the Docker image...
+
+- docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG
+```
+
+You can define environment variables:
+- Plaintext variables.
+- Secure secrets using the SSM Parameter store
+
+**Artifacts**: these get uploaded to S3 (encrypted with KMS).
+
+**Cache**: files to cache (usually dependencies) to S3 for future builds.
+
+### CodeBuild Local Build
+
+In case you need to do deep troubleshooting beyond analyzing log files.
+
+Can run CodeBuild locally on your computer using Docker.
+
+Leverages the **CodeBuild agent**.
+
+### Customized Build Environments
+You can bring your own build environments to use with AWS CodeBuild, such as for the Microsoft .NET Framework.
+
+You can package the runtime and tools for your build into a Docker image and upload it to a public Docker Hub repository or Amazon EC2 Container Registry (Amazon ECR).
+
+When you create a new build project, you can specify the location of your Docker image, and CodeBuild will pull the image and use it as the build project configuration.
 
 ## Example 
 
@@ -7077,6 +7302,20 @@ Provides intelligent recommendations for improving application performance, effi
 - Provides a range of debugging tools to identify and fix errors in code
 - Integrates with many AWS services including AWS Lambda, Amazon EC2, and AWS CodePipeline
 
+## AWS CodeArtifact
+
+- AWS CodeArtifact is a fully managed artifact repository service.
+- You can use AWS CodeArtifact to securely store, publish, and share software packages.
+- CodeArtifact can be configured to automatically fetch software packages and dependencies from public artifact repositories.
+- CodeArtifact works with commonly used package managers and build tools like:
+  -  Maven
+  -  Gradle
+  -  npm 
+  -  yarn
+  -  twine
+  -  pip 
+  -  NuGet
+  
 ## AWS Amplify and AppSync
 
 - Tools and features for building full-stack applications on AWS
@@ -7096,6 +7335,21 @@ Provides intelligent recommendations for improving application performance, effi
 - AppSync is fully managed and eliminates the operational overhead of managing cache clusters
 
 ![](images/devops_02.png)
+
+### AWS AppSync’s API Cache 
+
+provides three options: 
+- None
+- Full request caching
+- Per-resolver caching
+
+Cache encryption comes in the following two flavors. These are similar to the settings that ElastiCache for Redis allows. You can enable the encryption settings only when first enabling caching for your AWS AppSync API.
+
+Encryption in transit – Requests between AWS AppSync, the cache, and data sources (except insecure HTTP data sources) are encrypted at the network level. Because there is some processing needed to encrypt and decrypt the data at the endpoints, in-transit encryption can impact performance.
+
+Encryption at rest – Data saved to disk from memory during swap operations are encrypted at the cache instance. This setting also impacts performance.
+
+To invalidate cache entries, you can make a flush cache API call using either the AWS AppSync console or the AWS Command Line Interface (AWS CLI).
 
 # Amazon Relational Database Service (RDS)
 
@@ -7327,6 +7581,24 @@ Cluster mode enabled :
 
 ![](images/cache_01.png)
 
+## Caching strategies
+
+There are two caching strategies available: Lazy Loading and Write-Through:
+
+### Lazy Loading
+- Loads the data into the cache only when necessary (if a cache miss occurs).
+- Lazy loading avoids filling up the cache with data that won’t be requested.
+- If requested data is in the cache, ElastiCache returns the data to the application.
+- If the data is not in the cache or has expired, ElastiCache returns a null.
+- The application then fetches the data from the database and writes the data received into the cache so that it is available for next time.
+- Data in the cache can become stale if Lazy Loading is implemented without other strategies (such as TTL)
+
+### Write Through
+- When using a write-through strategy, the cache is updated whenever a new write or update is made to the underlying database.
+- Allows cache data to remain up to date.
+- This can add wait time to write operations in your application.
+- Without a TTL you can end up with a lot of cached data that is never read.
+
 ## Amazon MemoryDB for Redis
 
 - Redis compatible, durable, in memory database service that delivers ultra-fast performance
@@ -7336,6 +7608,10 @@ Cluster mode enabled :
 - Microsecond read and single digit millisecond write latency and high-throughput
 - Data stored durably across multiple AZs using a distributed transactional log
 - Supports write scaling with sharding and read scaling by adding replicas
+
+Service-linked roles are tied to the resource with predefined permissions. The default policy associated Amazon MemoryDB for Redis is `AmazonMemoryDBFullAccess`. This comes pre-provisioned with permission that the service requires to create a service link that is used to create resources and access other AWS resources and services.
+
+You might decide not to use the default policy and instead to use a custom-managed policy. In this case, make sure that you have either permissions to call `iam:createServiceLinkedRole` or that you have created the MemoryDB service-linked role.
 
 ## MemoryDB for Redis vs ElastiCache
 
@@ -7556,6 +7832,8 @@ Deployment strategies:
 - `AppConfig.AllAtOnce` all targets at once
 - `AppConfig.Linear50PercentEvery30Seconds` 50% of targets every 30 seconds
 
+AWS AppConfig will automatically encrypt data at rest using AWS owned keys and AWS Key Management Service (KMS). This layer cannot be disabled or altered by the customer. The customer can add a second layer of encryption protection that they can control and manage using customer managed keys.
+
 # Amazon CloudWatch
 
 CloudWatch is used for performance monitoring, alarms, log collection and automated actions
@@ -7623,6 +7901,16 @@ Can be installed on:
 - On-premises servers
 - Linux, Windows Server, or macOS
 
+## VPC Flow logs
+
+VPC Flow Logs is a feature that enables you to capture information about the IP traffic going to and from network interfaces in your VPC. Flow log data can be published to the following locations: Amazon CloudWatch Logs, Amazon S3, or Amazon Kinesis Data Firehose. After you create a flow log, you can retrieve and view the flow log records in the log group, bucket, or delivery stream that you configured.
+
+Flow logs can help you with a number of tasks, such as:
+
+- Diagnosing overly restrictive security group rules
+- Monitoring the traffic that is reaching your instance
+- Determining the direction of the traffic to and from the network interfaces
+
 # AWS CloudTrail
 
 - CloudTrail logs API activity for auditing
@@ -7677,12 +7965,25 @@ Can be installed on:
 - You cannot manage these KMS keys, rotate, them, or change their key policies
 - You also cannot use AWS managed KMS keys in cryptographic operations directly; the service that creates them uses them on your behalf
 
+
+If Amazon EC2 instance is saving files on a proprietary network-attached file system and this will not have support for AWS managed CMKs.
+
+## CMK 
+
+With AWS KMS you can encrypt files directly with a customer master key (CMK). A CMK can encrypt up to 4KB (4096 bytes) of data in a single encrypt, decrypt, or reencrypt operation. As CMKs cannot be exported from KMS this is a very safe way to encrypt small amounts of data.
+
+Customer managed CMKs are CMKs in your AWS account that you create, own, and manage. You have full control over these CMKs, including establishing and maintaining their key policies, IAM policies, and grants, enabling and disabling them, rotating their cryptographic material, adding tags, creating aliases that refer to the CMK, and scheduling the CMKs for deletion.
+
 ## Data Encryption Keys
 
 - Data keys are encryption keys that you can use to encrypt large amounts of data
 - You can use AWS KMS keys to generate, encrypt, and decrypt data keys
 - AWS KMS does not store, manage, or track your data keys, or perform cryptographic operations with data keys
 - You must use and manage data keys outside of AWS KMS
+
+
+Data keys are encryption keys that you can use to encrypt data, including large amounts of data and other data encryption keys. You can use AWS KMS CMKs to generate, encrypt, and decrypt data keys. However, AWS KMS does not store, manage, or track your data keys, or perform cryptographic operations with data keys. You must use and manage data keys outside of AWS KMS – this is potentially less secure as you need to manage the security of these keys.
+
 
 ## KMS Keys and Automatic Rotation
 
@@ -7903,6 +8204,20 @@ aws secretsmanager delete-secret --secret-id dev-db-secret
 ![](images/cognito_2.png)
 
 ![](images/cognito_3.png)
+
+## Adaptive authentication
+
+With adaptive authentication, you can configure your user pool to block suspicious sign-ins or add second factor authentication in response to an increased risk level.
+
+For each sign-in attempt, Amazon Cognito generates a risk score for how likely the sign-in request is to be from a compromised source. This risk score is based on many factors, including whether it detects a new device, user location, or IP address.
+
+For each risk level, you can choose from the following options:
+
+- Allow - Users can sign in without an additional factor.
+- Optional MFA - Users who have a second factor configured must complete a second factor challenge to sign in.
+- Require MFA - Users who have a second factor configured must complete a second factor challenge to sign in. Amazon Cognito blocks sign-in for users who don't have a second factor configured.
+- Block - Amazon Cognito blocks all sign-in attempts at the designated risk level.
+
 
 # AWS Web Application Firewall (WAF)
 
