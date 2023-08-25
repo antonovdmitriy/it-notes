@@ -163,8 +163,6 @@
   - [Metrics, tracing, logs](#metrics-tracing-logs)
     - [Monitoring](#monitoring)
     - [Logging](#logging)
-    - [Tracing with X-Ray](#tracing-with-x-ray)
-      - [X-Ray on ECS/EKS/Fargate:](#x-ray-on-ecseksfargate)
   - [Lambda in a VPC](#lambda-in-a-vpc)
   - [Lambda Function as a Target for an ALB](#lambda-function-as-a-target-for-an-alb)
   - [Security](#security-1)
@@ -305,6 +303,8 @@
     - [Authorization](#authorization)
     - [Notifications](#notifications)
   - [Code Pipeline](#code-pipeline)
+    - [Notifications](#notifications-1)
+    - [Troubleshooting](#troubleshooting)
     - [Example pipeline codecommit and beanstalk](#example-pipeline-codecommit-and-beanstalk)
   - [Code Build](#code-build)
     - [AWS CodeBuild Components](#aws-codebuild-components)
@@ -313,11 +313,23 @@
     - [Customized Build Environments](#customized-build-environments)
   - [Example](#example-3)
   - [AWS CodeDeploy](#aws-codedeploy)
+    - [EC2/On Premises:](#ec2on-premises)
+    - [AWS Lambda:](#aws-lambda-1)
+    - [Amazon ECS:](#amazon-ecs)
+    - [In-place deployment:](#in-place-deployment)
     - [Blue/Green Traffic Shifting](#bluegreen-traffic-shifting)
+      - [AWS Lambda](#aws-lambda-2)
+    - [Amazon ECS](#amazon-ecs-1)
+      - [EC2/OnPremises\*\*](#ec2onpremises)
+    - [AppSpec File](#appspec-file)
+      - [EC2/On-Premises AppSpec.yaml](#ec2on-premises-appspecyaml)
+      - [AppSpec.yaml for ECS](#appspecyaml-for-ecs)
+      - [AppSpec.yaml for AWS Lambda](#appspecyaml-for-aws-lambda)
+    - [Revision](#revision)
   - [Amazon CodeGuru](#amazon-codeguru)
     - [Amazon CodeGuru Reviewer](#amazon-codeguru-reviewer)
     - [Amazon CodeGuru Profiler](#amazon-codeguru-profiler)
-  - [Amazon Code Star](#amazon-code-star)
+  - [Amazon CodeStar](#amazon-codestar)
   - [AWS Cloud9](#aws-cloud9)
   - [AWS CodeArtifact](#aws-codeartifact)
   - [AWS Amplify and AppSync](#aws-amplify-and-appsync)
@@ -391,6 +403,24 @@
 - [Amazon Cognito](#amazon-cognito)
   - [Adaptive authentication](#adaptive-authentication)
 - [AWS Web Application Firewall (WAF)](#aws-web-application-firewall-waf)
+- [Tracing with X-Ray](#tracing-with-x-ray)
+  - [X-Ray on EC2 / On-premises:](#x-ray-on-ec2--on-premises)
+  - [Lambda](#lambda)
+  - [X-Ray on ECS/EKS/Fargate:](#x-ray-on-ecseksfargate)
+  - [Elastic Beanstal](#elastic-beanstal)
+  - [Key X-Ray terminology](#key-x-ray-terminology)
+    - [Trace](#trace)
+    - [Segments](#segments)
+    - [Subsegments](#subsegments)
+    - [Annotations:](#annotations)
+    - [Sampling](#sampling)
+    - [Metadata:](#metadata-1)
+  - [Annotations and Filtering](#annotations-and-filtering)
+  - [X-Ray Daemon](#x-ray-daemon)
+  - [X-Ray SDK](#x-ray-sdk)
+- [AWS Fault Injection Simulator](#aws-fault-injection-simulator)
+- [AWS Resource Access Manager](#aws-resource-access-manager)
+  - [Key benefits:](#key-benefits)
 
 # AWS Certification
 
@@ -3491,25 +3521,6 @@ Lambda sends metrics to Amazon CloudWatch for performance monitoring
 
 - Execution logs are stored in Amazon CloudWatch Logs
 - The Lambda function execution role must have permissions (IAM) to allow writes to CloudWatch Logs
-
-### Tracing with X-Ray
-
-- You can use AWS X-Ray to visualize the components of your application, identify performance bottlenecks, and troubleshoot requests that resulted in an error
--  Your Lambda functions send trace data to X-Ray, and X-Ray processes the data to generate a service map and searchable trace summaries
-
-![](images/lambda_metrics_2.png)
-
-- The AWS X-Ray Daemon is a software application that gathers raw segment data and relays it to the AWS X-Ray service
-- The daemon works in conjunction with the AWS X-Ray SDKs so that data sent by the SDKs can reach the X-Ray service
-- When you trace your Lambda function, the X-Ray daemon automatically runs in the Lambda environment to gather trace data and send it to X Ray
-- The function needs permissions to write to X-Ray in the execution role
-
-#### X-Ray on ECS/EKS/Fargate:
-
-- Create a Docker image that runs the daemon or use the official X-Ray Docker image.
-- Ensure port mappings and network settings are correct and IAM task roles are defined.
-
-In Amazon ECS, create a Docker image that runs the X-Ray daemon, upload it to a Docker image repository, and then deploy it to your Amazon ECS cluster. You can use port mappings and network mode settings in your task definition file to allow your application to communicate with the daemon container.
 
 ## Lambda in a VPC
 
@@ -6981,6 +6992,16 @@ Use cases for **CloudWatch Event Rules**:
 - **Transitions**
   - The progressing from one stage to another inside of a pipeline- 
 
+### Notifications
+
+- CodePipeline state changes happen in AWS CloudWatch Events which can create SNS notifications
+- Notifications may include failed pipelines or cancelled stages.
+- You can also audit API calls with AWS CloudTrail.
+
+### Troubleshooting
+
+If CodePipeline cannot perform an action, check that the IAM service role attached to the pipeline has the correct permissions.
+
 ### Example pipeline codecommit and beanstalk
 
 ![](images/devops_9.png)
@@ -7186,7 +7207,12 @@ and then push our approval stage.
 ## AWS CodeDeploy
 
 - CodeDeploy is a deployment service that automates application deployments
-- Deploys to Amazon EC2 instances, on-premises instances, serverless Lambda functions, and Amazon ECS
+- Deploys to 
+  - Amazon EC2 instances
+  - on-premises instances
+  - Lambda functions
+  - Amazon ECS
+- Similar open source tools include Ansible, Terraform, Chef, Puppet etc.
 - You can deploy a nearly unlimited variety of application content, including:
   - Serverless AWS Lambda functions
   - Web and configuration files
@@ -7194,6 +7220,14 @@ and then push our approval stage.
   - Packages
   - Scripts
   - Multimedia files
+- CodeDeploy can be connected to CodePipeline and use artifacts from there.
+- CodeDeploy can deploy application content that stored in:
+  - Amazon S3 buckets
+  - GitHub repositories
+  - Bitbucket repositories.
+- You do not need to make changes to your existing code before you can use CodeDeploy.
+- Can be used to automatically deploy applications to many EC2 instances.
+- Integrates with various CI/CD tools including Jenkins, GitHub, Atlassian, AWS CodePipeline as well as config management tools like Ansible, Puppet and Chef.
 
 - CodeDeploy application contains information about what to deploy and how to deploy it
 - Need to choose the compute platform:
@@ -7201,21 +7235,30 @@ and then push our approval stage.
   - AWS Lambda
   - Amazon ECS
 
-EC2/On Premises:
+### EC2/On Premises:
 - Amazon EC2, on premises servers, or both
-- Traffic is directed using an in place or blue/green deployment type
+- CodeDeploy does not provision the resources – it deploys applications not EC2 instances.
+- EC2 instances are identified by CodeDeploy by using tags or an Auto Scaling Group name.
+- Each Amazon EC2 instance must have the correct IAM instance profile attached.
+- The CodeDeploy agent must be installed and running on each instance
+- The agent continuously polls for work to do.
+- CodeDeploy sends the `appspec.yml` file (which must be at the root of your source code).
+- The application code is pulled from GitHub or S3.
+- CodeDeploy agent will report of success / failure of deployment on the instance.
+- EC2 instances are grouped by deployment group (e.g. dev, test, prod).
+- Traffic is directed using an **in place** or **blue/green** deployment type
 ![](images/devops_35.png)
 
-AWS Lambda:
+### AWS Lambda:
 - Used to deploy applications that consist of an updated version of a Lambda function
 - You can manage the way in which traffic is shifted to the updated Lambda function versions during a deployment by choosing a **canary**, **linear**, or **all-at-once** configuration
 
 ![](images/devops_36.png)
 
-Amazon ECS:
+### Amazon ECS:
 
 - Used to deploy an Amazon ECS containerized application as a task set
-- CodeDeploy performs a blue/green deployment by installing an updated version of the application as a new replacement task set
+- CodeDeploy performs a **blue/green** deployment by installing an updated version of the application as a new replacement task set
 - CodeDeploy reroutes production traffic from the original application task set to the replacement task set
 - The original task set is terminated after a successful deployment
 - You can manage the way in which traffic is shifted to the updated task set during a deployment by choosing a
@@ -7223,11 +7266,42 @@ Amazon ECS:
 
 ![](images/devops_37.png)
 
+### In-place deployment:
+
+- The application on each instance in the deployment group is stopped, the latest application revision is installed, and the new version of the application is started and validated.
+- You can use a load balancer so that each instance is deregistered during its deployment and then restored to service after the deployment is complete.
+- Only deployments that use the EC2/On-Premises compute platform can use in-place deployments.
+
+- The application on each instance in the deployment group is stopped, the latest application revision is installed, and the new version of the application is started and validated.
+- You can use a load balancer so that each instance is deregistered during its deployment and then restored to service after the deployment is complete.
+- Only deployments that use the EC2/On-Premises compute platform can use in-place deployments.
+
 ### Blue/Green Traffic Shifting
 
-- **AWS Lambda**: Traffic is shifted from one version of a Lambda function to a new version of the same Lambda function
-- **Amazon ECS**: Traffic is shifted from a task set in your Amazon ECS service to an updated, replacement task set in the same Amazon ECS service
-- **EC2/OnPremises**: Traffic is shifted from one set of instances in the original environment to a replacement set of instances
+#### AWS Lambda
+
+- Traffic is shifted from your current serverless environment to one with your updated Lambda function versions.
+- You can specify Lambda functions that perform validation tests and choose the way in which the traffic shifting occurs.
+- All AWS Lambda compute platform deployments are blue/green deployments.
+For this reason, you do not need to specify a deployment type.
+
+### Amazon ECS
+
+- Traffic is shifted from the task set with the original version of an application in an Amazon ECS service to a replacement task set in the same service.
+- You can set the traffic shifting to **linear** or **canary** through the deployment configuration.
+- The protocol and port of a specified load balancer listener is used to reroute production traffic.
+- During a deployment, a test listener can be used to serve traffic to the replacement task set while validation tests are run.
+
+#### EC2/OnPremises**
+
+Traffic is shifted from one set of instances in the original environment to a replacement set of instances
+
+The instances in a deployment group (the original environment) are replaced by a different set of instances (the replacement environment) using these steps:
+- Instances are provisioned for the replacement environment.
+- The latest application revision is installed on the replacement instances.
+- An optional wait time occurs for activities such as application testing and system verification.
+- Instances in the replacement environment are registered with an Elastic Load Balancing load balancer, causing traffic to be rerouted to them.
+- Instances in the original environment are deregistered and can be terminated or kept running for other uses.
 
 Note: All AWS Lambda and Amazon ECS deployments are blue/green. An EC2/On-Premises deployment can be in place or blue/green
 
@@ -7238,6 +7312,160 @@ For **Amazon ECS** and **AWS Lambda** there are three ways traffic can be shifte
 - **Linear** Traffic is shifted in equal increments with an equal number of minutes between each increment. You can choose from predefined linear options that specify the percentage of traffic shifted in each increment and the number of minutes between each increment
 
 - **All-at-once** All traffic is shifted from the original Amazon ECS task set / Lambda function to the updated Amazon ECS task set / Lambda function all at once
+
+### AppSpec File
+
+The application specification file (AppSpec file) is a YAML-formatted, or JSON-formatted file used by CodeDeploy to manage a deployment.
+
+The AppSpec file defines the deployment actions you want AWS CodeDeploy to execute.
+
+The name of the AppSpec file for an EC2/On-Premises deployment must be `appspec.yml`. The name of the AppSpec file for an Amazon ECS or AWS Lambda deployment must be `appspec.yaml` or `appspec.yml`.
+
+#### EC2/On-Premises AppSpec.yaml
+
+The following code sample shows the format of an appspec.yml file for an Amazon EC2 instance with WordPress:
+
+```yml
+version: 0.0
+
+os: linux
+
+files:
+
+- source: /
+
+destination: /var/www/html/WordPress
+
+hooks 
+
+BeforeInstall:
+
+- location: scripts/install_dependencies.sh
+
+timeout: 300
+
+runas: root
+
+AfterInstall:
+
+- location: scripts/change_permissions.sh
+
+timeout: 300
+
+runas: root
+
+ApplicationStart:
+
+- location: scripts/start_server.sh
+
+- location: scripts/create_test_db.sh
+
+timeout: 300
+
+runas: root
+
+ApplicationStop:
+
+- location: scripts/stop_server.sh
+
+timeout: 300
+
+runas: root
+```
+
+The files section specifies how to source and copy from S3 / GitHub to the filesystem.
+
+hooks are a set of instructions to be run to deploy the new version (hooks have timeouts).
+
+#### AppSpec.yaml for ECS
+
+The Amazon ECS task definition file must be specified with its ARN in the TaskDefinition instruction in the AppSpec file.
+
+The container and port in your replacement task set where your Application Load Balancer or Network Load Balancer reroutes traffic during a deployment must be specified with the LoadBalancerInfo instruction in the AppSpec file.
+
+Here is an example of an AppSpec file written in YAML for deploying an Amazon ECS service
+
+```yml
+version: 0.0
+
+Resources:
+
+- TargetService:
+
+Type: AWS::ECS::Service
+
+Properties:
+
+TaskDefinition: "arn:aws:ecs:us-east-1:111222333444:task-definition/my-task-definition-family-name:1"
+
+LoadBalancerInfo:
+
+ContainerName: "SampleApplicationName"
+
+ContainerPort: 80
+
+# Optional properties
+
+PlatformVersion: "LATEST"
+
+NetworkConfiguration:
+
+AwsvpcConfiguration:
+
+Subnets: ["subnet-1234abcd","subnet-5678abcd"]
+
+SecurityGroups: ["sg-12345678"]
+
+AssignPublicIp: "ENABLED"
+
+Hooks:
+
+- BeforeInstall: "LambdaFunctionToValidateBeforeInstall"
+
+- AfterInstall: "LambdaFunctionToValidateAfterTraffic"
+
+- AfterAllowTestTraffic: "LambdaFunctionToValidateAfterTestTrafficStarts"
+
+- BeforeAllowTraffic: "LambdaFunctionToValidateBeforeAllowingProductionTraffic"
+
+- AfterAllowTraffic: "LambdaFunctionToValidateAfterAllowingProductionTraffic"
+```
+
+#### AppSpec.yaml for AWS Lambda
+
+```yml
+version: 0.0
+
+Resources:
+
+- myLambdaFunction:
+
+Type: AWS::Lambda::Function
+
+Properties:
+
+Name: "myLambdaFunction"
+
+Alias: "myLambdaFunctionAlias"
+
+CurrentVersion: "1"
+
+TargetVersion: "2"
+
+Hooks:
+
+- BeforeAllowTraffic: "LambdaFunctionToValidateBeforeTrafficShift"
+
+- AfterAllowTraffic: "LambdaFunctionToValidateAfterTrafficShift"
+```
+
+### Revision
+
+When updating to a new version a Revision includes everything needed to deploy the new version: 
+- AppSpec file
+- application files
+- executables
+- config files.
 
 ## Amazon CodeGuru
 
@@ -7270,7 +7498,7 @@ Provides intelligent recommendations for improving application performance, effi
   - Identify application performance issues
   - Understand your application's heap utilization over time
 
-## Amazon Code Star 
+## Amazon CodeStar 
 
 ![](images/devops_01.png)
 
@@ -7291,6 +7519,8 @@ Provides intelligent recommendations for improving application performance, effi
 - Compiles and packages source code with CodeBuild
 - A preconfigured pipeline is used through CodePipeline
 - Automated deployments with CodeDeploy and CloudFormation
+
+Exam tip: If an exam scenario requires a unified development toolchain, and mentions collaboration between team members, synchronization, and centralized management of the CI/CD pipeline this will be CodeStar rather than CodePipeline or CodeCommit.
 
 ## AWS Cloud9
 
@@ -8249,3 +8479,152 @@ A **rule action** tells AWS WAF what to do with a web request when it matches th
 | SQLi attack              | Inspects for malicious SQL code in a specified request component                                 |
 | String match             | Compares a string to a specified request component                                               |
 | XSS scripting attack     | Inspects for cross-site scripting attacks in a specified request component                       |
+
+# Tracing with X-Ray
+
+- You can use X-Ray to analyze both applications in development and in production, from simple three-tier applications to complex microservices applications consisting of thousands of services.
+- X-Ray should not be used as an audit or compliance tool because it does not guarantee data completeness.
+- You can use AWS X-Ray to visualize the components of your application, identify performance bottlenecks, and troubleshoot requests that resulted in an error
+
+- AWS X-Ray supports applications running on:
+  - Amazon Elastic Compute Cloud (Amazon EC2).
+  - Amazon EC2 Container Service (Amazon ECS).
+  - AWS Lambda.
+  - AWS Elastic Beanstalk.
+
+- AWS X-Ray supports tracing for applications that are written in Node.js, Java, and .NET.
+- The X-Ray SDK captures metadata for requests made to MySQL and PostgreSQL databases (self-hosted, Amazon RDS, Amazon Aurora), and Amazon DynamoDB.
+- It also captures metadata for requests made to Amazon SQS and SNS.
+- The X-Ray SDK is installed in your application and forwards to the X-Ray daemon which forwards to the X-Ray API.
+
+## X-Ray on EC2 / On-premises:
+
+- Linux system must run the X-Ray daemon.
+- IAM instance role if EC2, other AWS credentials on on-premises instance.
+
+## Lambda 
+
+-  Your Lambda functions send trace data to X-Ray, and X-Ray processes the data to generate a service map and searchable trace summaries
+- Make sure the X-Ray integration is ticked in the Lambda configuration (Lambda will run the daemon).
+- IAM role is the Lambda role.
+
+![](images/lambda_metrics_2.png)
+
+- When you trace your Lambda function, the X-Ray daemon automatically runs in the Lambda environment to gather trace data and send it to X Ray
+- The function needs permissions to write to X-Ray in the execution role
+
+## X-Ray on ECS/EKS/Fargate:
+
+- Create a Docker image that runs the daemon or use the official X-Ray Docker image.
+- Ensure port mappings and network settings are correct and IAM task roles are defined.
+
+In Amazon ECS, create a Docker image that runs the X-Ray daemon, upload it to a Docker image repository, and then deploy it to your Amazon ECS cluster. You can use port mappings and network mode settings in your task definition file to allow your application to communicate with the daemon container.
+
+## Elastic Beanstal
+
+- Set configuration in the Elastic Beanstalk console.
+- Or use the Beanstalk extension (`.ebextensions/xray-daemon.config`)
+
+## Key X-Ray terminology
+
+### Trace
+
+An X-Ray trace is a set of data points that share the same trace ID.
+
+
+### Segments
+
+- An X-Ray segment encapsulates all the data points for a single component (for example, authorization service) of the distributed application.
+- Segments include system-defined and user-defined data in the form of annotations and are composed of one or more sub-segments that represent remote calls made from the service.
+
+### Subsegments
+
+- Subsegments provide more granular timing information and details about downstream calls that your application made to fulfill the original request.
+- A subsegment can contain additional details about a call to an AWS service, an external HTTP API, or an SQL database.
+- You can even define arbitrary subsegments to instrument specific functions or lines of code in your application.
+- For services that don’t send their own segments, like Amazon DynamoDB, X-Ray uses subsegments to generate inferred segments and downstream nodes on the service map.
+- This lets you see all your downstream dependencies, even if they don’t support tracing, or are external.
+
+### Annotations:
+
+- An X-Ray annotation is system-defined, or user-defined data associated with a segment.
+- System-defined annotations include data added to the segment by AWS services, whereas user-defined annotations are metadata added to a segment by a developer.
+- A segment can contain multiple annotations.
+- These are key / value pairs used to index traces and use with filters.
+- Use annotations to record information on segments or subsegments that you want indexed for search.
+
+### Sampling
+
+- To provide a performant and cost-effective experience, X-Ray does not collect data for every request that is sent to an application.
+- Instead, it collects data for a statistically significant number of requests.
+
+### Metadata:
+
+Key / value pairs, not indexed and not used for searching.
+
+Exam tip: Remember that annotations can be used for adding system or user-defined data to segments and subsegments that you want to index for search. Metadata is not indexed and cannot be used for searching.
+
+## Annotations and Filtering
+
+- AWS X-Ray lets you add annotations to data emitted from specific components or services in your application.
+- You can use this to append business-specific metadata that help you better diagnose issues.
+- You can also view and filter data for traces by properties such as annotation value, average latencies, HTTP response status, timestamp, database table used, and more.
+
+## X-Ray Daemon
+
+- The AWS X-Ray Daemon is a software application that gathers raw segment data and relays it to the AWS X-Ray service
+
+- The daemon works in conjunction with the AWS X-Ray SDKs so that data sent by the SDKs can reach the X-Ray service
+
+The X-Ray daemon agent has a config to send traces cross account:
+
+- Make sure the IAM permissions are correct – the agent will assume a role.
+- This allows to have a central account for all your application tracing.
+
+
+## X-Ray SDK
+
+The X-Ray SDK is installed in your application and forwards to the X-Ray daemon which forwards to the X-Ray API.
+
+You can then visualize what is happening in the X-Ray console.
+
+The X-Ray SDK provides:
+
+Interceptors to add your code to trace incoming HTTP requests.
+Client handlers to instrument AWS SDK client that your application uses to call other AWS services.
+An HTTP client to use to instrument calls to other internal and external HTTP web services.
+Code must be instrumented to use the AWS X-Ray SDK.
+
+The IAM role must be correct to send traces to X-Ray.
+
+# AWS Fault Injection Simulator
+
+- AWS Fault Injection Simulator is a fully managed service for running fault injection experiments on AWS.
+
+- Makes it easier to improve an application’s performance, observability, and resiliency.
+
+- Fault injection experiments are used in chaos engineering, which is the practice of stressing an application in testing or production environments by creating disruptive events.
+
+- Fault injection experiment helps teams create the real-world conditions needed to uncover the hidden bugs, monitoring blind spots, and performance bottlenecks that are difficult to find in distributed systems.
+
+# AWS Resource Access Manager
+
+- AWS Resource Access Manager (RAM) is a service that enables you to share AWS resources easily and securely with any AWS account or within your AWS Organization.
+- You can share:
+  - AWS Transit Gateways
+  - Subnets
+  - AWS License Manager configurations 
+  - Amazon Route 53 Resolver rules resources with RAM.
+- RAM eliminates the need to create duplicate resources in multiple accounts, reducing the operational overhead of managing those resources in every single account you own.
+- You can create resources centrally in a multi-account environment, and use RAM to share those resources across accounts in three simple steps:
+  1. Create a Resource Share.
+  1. Specify resources.
+  1. Specify accounts.
+- RAM is available at no additional charge.
+
+
+## Key benefits:
+
+- Reduce Operational Overhead – Procure AWS resources centrally and use RAM to share resources such as subnets or License Manager configurations with other accounts. This eliminates the need to provision duplicate resources in every account in a multi-account environment.
+- Improve Security and Visibility – RAM leverages existing policies and permissions set in AWS Identity and Access Management (IAM) to govern the consumption of shared resources. RAM also provides comprehensive visibility into shared resources to set alarms and visualize logs through integration with Amazon CloudWatch and AWS CloudTrail.
+- Optimize Costs – Sharing resources such as AWS License Manager configurations across accounts allows you to leverage licenses in multiple parts of your company to increase utilization and optimize costs.
