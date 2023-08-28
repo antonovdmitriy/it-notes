@@ -383,12 +383,17 @@
 - [AWS CloudTrail](#aws-cloudtrail)
   - [CloudTrail Types of Events](#cloudtrail-types-of-events)
 - [AWS Key Management Service (KMS)](#aws-key-management-service-kms)
+  - [AWS KMS Keys (customer master keys (CMKs))](#aws-kms-keys-customer-master-keys-cmks)
+    - [AWS Managed KMS keys](#aws-managed-kms-keys)
+    - [Customer managed KMS keys:](#customer-managed-kms-keys)
+    - [AWS Owned KMS Keys](#aws-owned-kms-keys)
+    - [Data Encryption Keys](#data-encryption-keys)
   - [Alternative Key Stores](#alternative-key-stores)
-  - [AWS Managed KMS Keys](#aws-managed-kms-keys)
-  - [CMK](#cmk)
-  - [Data Encryption Keys](#data-encryption-keys)
   - [KMS Keys and Automatic Rotation](#kms-keys-and-automatic-rotation)
   - [Manual Rotation](#manual-rotation)
+  - [Key Deletion](#key-deletion)
+  - [Key Management with KMS](#key-management-with-kms)
+  - [Data Encryption Scenarios](#data-encryption-scenarios)
   - [Additional Exam Tips](#additional-exam-tips)
   - [AWS KMS API and CLI](#aws-kms-api-and-cli)
   - [Throttling and Caching](#throttling-and-caching)
@@ -402,6 +407,7 @@
   - [AWS CLI commands for Secrets Manager](#aws-cli-commands-for-secrets-manager)
 - [Amazon Cognito](#amazon-cognito)
   - [Adaptive authentication](#adaptive-authentication)
+  - [User Datasets](#user-datasets)
 - [AWS Web Application Firewall (WAF)](#aws-web-application-firewall-waf)
 - [Tracing with X-Ray](#tracing-with-x-ray)
   - [X-Ray on EC2 / On-premises:](#x-ray-on-ec2--on-premises)
@@ -421,6 +427,7 @@
 - [AWS Fault Injection Simulator](#aws-fault-injection-simulator)
 - [AWS Resource Access Manager](#aws-resource-access-manager)
   - [Key benefits:](#key-benefits)
+- [AWS Macie](#aws-macie)
 
 # AWS Certification
 
@@ -8160,18 +8167,86 @@ Flow logs can help you with a number of tasks, such as:
 
 # AWS Key Management Service (KMS)
 
+- AWS Key Management Store (KMS) is a managed service that enables you to easily encrypt your data.
+- AWS KMS provides a highly available key storage, management, and auditing solution for you to encrypt data within your own applications and control the encryption of stored data across AWS services.
 - Create and managed symmetric and asymmetric encryption keys
-- The KMS keys are protected by hardware security modules (HSMs)
+- AWS KMS allows you to centrally manage and securely store your keys. These are known as AWS KMS keys formerly known as customer master keys (CMKs).
+- KMS is validated by many compliance schemes (e.g. PCI DSS Level 1, FIPS 140-2 Level 2).
+
+Exam tip: Encryption keys are regional.
 
 ![](images/kms_1.png)
 
+
+## AWS KMS Keys (customer master keys (CMKs))
+
+- The KMS keys are protected by hardware security modules (HSMs)
 - KMS keys are the primary resources in AWS KMS
+- AWS KMS supports symmetric and asymmetric KMS keys.
 - Used to be known as “customer master keys” or CMKs
 - The KMS key also contains the key material used to encrypt and decrypt data
 - By default, AWS KMS creates the key material for a KMS key
 - You can also import your own key material
 - A KMS key can encrypt data up to 4KB in size
 - A KMS key can generate, encrypt and decrypt Data Encryption Keys (DEKs)
+- KMS keys are created in AWS KMS. Symmetric KMS keys and the private keys of asymmetric KMS keys never leave AWS KMS unencrypted.
+- By default, AWS KMS creates the key material for a KMS key.
+- A KMS key can never be exported from KMS (CloudHSM allows this).
+
+A KMS key consists of:
+- Alias.
+- Creation date.
+- 
+- Description.
+- Key state.
+- Key material (either customer provided or AWS provided).
+
+The KMS key includes metadata
+- key ID
+- creation date
+- description
+- key state.
+
+
+### AWS Managed KMS keys
+
+- AWS managed KMS keys are KMS keys in your account that are created, managed, and used on your behalf by an AWS service that is integrated with AWS KMS.
+- KMS keys managed by AWS are used by AWS services that interact with KMS to encrypt data.
+- They can only be used by the service that created them within a particular region.
+- They are created on the first time you implement encryption using that service.
+- You cannot manage these KMS keys, rotate them, or change their key policies.
+- You also cannot use AWS managed KMS keys in cryptographic operations directly; the service that creates them uses them on your behalf.
+- You do not pay a monthly fee for AWS managed KMS keys. They can be subject to fees for use in excess of the free tier, but some AWS services cover these costs for you.
+
+If Amazon EC2 instance is saving files on a proprietary network-attached file system and this will not have support for AWS managed CMKs.
+
+
+### Customer managed KMS keys:
+
+- Customer managed KMS keys are KMS keys in your AWS account that you create, own, and manage.
+- You have full control over these KMS keys, including establishing and maintaining their key policies, IAM policies, and grants, enabling and disabling them, rotating their cryptographic material, adding tags, creating aliases that refer to the KMS key, and scheduling the KMS keys for deletion.
+- You can perform rotation, governing access, and key policy configuration.
+- You are able to enable and disable the key when it is no longer required.
+- Customer managed KMS keys incur a monthly fee and a fee for use in excess of the free tier.
+
+### AWS Owned KMS Keys
+
+- AWS owned KMS keys are a collection of KMS keys that an AWS service owns and manages for use in multiple AWS accounts.
+- Although AWS owned KMS keys are not in your AWS account, an AWS service can use its AWS owned KMS keys to protect the resources in your account.
+- You do not need to create or manage the AWS owned KMS keys.
+- However, you cannot view, use, track, or audit them.
+- You are not charged a monthly fee or usage fee for AWS owned KMS keys and they do not count against the AWS KMS quotas for your account.
+
+### Data Encryption Keys
+
+- Data keys are encryption keys that you can use to encrypt large amounts of data
+- You can use AWS KMS keys to generate, encrypt, and decrypt data keys
+- AWS KMS does not store, manage, or track your data keys, or perform cryptographic operations with data keys
+- You must use and manage data keys outside of AWS KMS
+
+Data keys are encryption keys that you can use to encrypt data, including large amounts of data and other data encryption keys. You can use AWS KMS CMKs to generate, encrypt, and decrypt data keys. However, AWS KMS does not store, manage, or track your data keys, or perform cryptographic operations with data keys. You must use and manage data keys outside of AWS KMS – this is potentially less secure as you need to manage the security of these keys.
+
+If the user requesting data from the AWS service is authorized to decrypt under your master key policy, the service will receive the decrypted data key from KMS with which it can decrypt your data and return it in plaintext.
 
 ## Alternative Key Stores
 
@@ -8189,30 +8264,6 @@ Flow logs can help you with a number of tasks, such as:
 - Cryptographic operations are performed solely in the AWS CloudHSM cluster you own and manage
 - Custom key stores are not available for asymmetric KMS keys
 
-## AWS Managed KMS Keys
-
-- Created, managed, and used on your behalf by an AWS service that is integrated with AWS KMS
-- You cannot manage these KMS keys, rotate, them, or change their key policies
-- You also cannot use AWS managed KMS keys in cryptographic operations directly; the service that creates them uses them on your behalf
-
-
-If Amazon EC2 instance is saving files on a proprietary network-attached file system and this will not have support for AWS managed CMKs.
-
-## CMK 
-
-With AWS KMS you can encrypt files directly with a customer master key (CMK). A CMK can encrypt up to 4KB (4096 bytes) of data in a single encrypt, decrypt, or reencrypt operation. As CMKs cannot be exported from KMS this is a very safe way to encrypt small amounts of data.
-
-Customer managed CMKs are CMKs in your AWS account that you create, own, and manage. You have full control over these CMKs, including establishing and maintaining their key policies, IAM policies, and grants, enabling and disabling them, rotating their cryptographic material, adding tags, creating aliases that refer to the CMK, and scheduling the CMKs for deletion.
-
-## Data Encryption Keys
-
-- Data keys are encryption keys that you can use to encrypt large amounts of data
-- You can use AWS KMS keys to generate, encrypt, and decrypt data keys
-- AWS KMS does not store, manage, or track your data keys, or perform cryptographic operations with data keys
-- You must use and manage data keys outside of AWS KMS
-
-
-Data keys are encryption keys that you can use to encrypt data, including large amounts of data and other data encryption keys. You can use AWS KMS CMKs to generate, encrypt, and decrypt data keys. However, AWS KMS does not store, manage, or track your data keys, or perform cryptographic operations with data keys. You must use and manage data keys outside of AWS KMS – this is potentially less secure as you need to manage the security of these keys.
 
 
 ## KMS Keys and Automatic Rotation
@@ -8251,6 +8302,43 @@ Automatic key rotation is not supported on the following types of KMS keys (Note
 
 ![](images/kms_3.png)
 
+## Key Deletion
+
+You can schedule a customer master key and associated metadata that you created in AWS KMS for deletion, with a configurable waiting period from 7 to 30 days.
+
+This waiting period allows you to verify the impact of deleting a key on your applications and users that depend on it.
+
+The default waiting period is 30 days.
+
+You can cancel key deletion during the waiting period.
+
+## Key Management with KMS
+
+You can perform the following key management functions in AWS KMS:
+
+- Create keys with a unique alias and description.
+- Import your own key material.
+- Define which IAM users and roles can manage keys.
+- Define which IAM users and roles can use keys to encrypt and decrypt data.
+- Choose to have AWS KMS automatically rotate your keys on an annual basis.
+- Temporarily disable keys so they cannot be used by anyone.
+- Re-enable disabled keys.
+- Delete keys that you no longer use.
+- Audit use of keys by inspecting logs in AWS CloudTrail.
+- Create custom key stores*.
+- Connect and disconnect custom key stores*.
+- Delete custom key stores*.
+
+ The use of custom key stores requires CloudHSM resources to be available in your account.
+
+ ## Data Encryption Scenarios
+
+ Typically, data is encrypted in one of the following three scenarios:
+
+- You can use KMS APIs directly to encrypt and decrypt data using your master keys stored in KMS.
+- You can choose to have AWS services encrypt your data using your master keys stored in KMS. In this case data is encrypted using data keys that are protected by your master keys in KMS.
+- You can use the AWS Encryption SDK that is integrated with AWS KMS to perform encryption within your own applications, whether they operate in AWS or not.
+
 ## Additional Exam Tips
 
 - To share snapshots with another account you must specify `Decrypt` and `CreateGrant` permissions
@@ -8259,6 +8347,8 @@ Automatic key rotation is not supported on the following types of KMS keys (Note
 - You must use the `DeletelmportedKeyMaterial` API to remove the key material
 - An `InvalidKeyId` exception when using SSM Parameter Store indicates the KMS key is not enabled
 - Make sure you know the differences between AWS managed and customer managed KMS keys and automatic vs manual rotation
+
+
 
 ## AWS KMS API and CLI
 
@@ -8287,7 +8377,7 @@ Enable-key-rotation:
 - Enables automatic rotation of the key material for the specified symmetric KMS key
 - You cannot perform this operation on a KMS key in a different AWS account
 
-**GenerateDataKey** (`aws kms generate-data-key`)
+**GenerateDataKey** (`aws kms generate-data-key`) 
 
 - Generates a unique symmetric data key
 - This operation returns a plaintext copy of the data key and a copy that is encrypted under a KMS key that you specify
@@ -8396,11 +8486,23 @@ Systems Manager Components:
 # AWS Secrets Manager
 
 - Stores and rotate secrets safely without the need for code deployments
+- Users and applications retrieve secrets with a call to Secrets Manager APIs, eliminating the need to hardcode sensitive information in plain text.
 - Secrets Manager offers automatic rotation of credentials (built in) for:
   - Amazon RDS (MySQL, PostgreSQL, and Amazon Aurora)
   - Amazon Redshift
   - Amazon DocumentDB
 - For other services you can write your own AWS Lambda function for automatic rotation
+- Also, the service is extensible to other types of secrets, including API keys and OAuth tokens. In addition, Secrets Manager enables you to control access to secrets using fine-grained permissions and audit secret rotation centrally for resources in the AWS Cloud, third-party services, and on-premises.
+- AWS Secrets Manager encrypts secrets at rest using encryption keys that you own and store in AWS Key Management Service (KMS).
+- When you retrieve a secret, Secrets Manager decrypts the secret and transmits it securely over TLS to your local environmen
+- You can control access to the secret using fine-grained IAM policies and resource-based policies.
+- You can also tag secrets individually and apply tag-based access controls.
+- With AWS Secrets Manager, you can rotate secrets on a schedule or on demand by using the Secrets Manager console, AWS SDK, or AWS CLI.
+- For example, to rotate a database password, you provide the database type, rotation frequency, and master database credentials when storing the password in Secrets Manager.
+- You can store and retrieve secrets using the AWS Secrets Manager console, AWS SDK, AWS CLI, or AWS CloudFormation.  
+- You can configure VPC endpoints to keep traffic between your VPC and Secrets Manager within the AWS network.
+- You can also use Secrets Manager client-side caching libraries to improve the availability and reduce the latency of using your secrets.
+- AWS Secrets Manager enables you to audit and monitor secrets through integration with AWS logging, monitoring, and notification services.
 
 ![](images/secrets_1.png)
 
@@ -8410,6 +8512,7 @@ Systems Manager Components:
 | Key/Value Type              | String or Binary (encrypted)                    | String, StringList, SecureString         |
 | Hierarchical Keys           | No                                              | Yes                                      |
 | Price                       | Charges apply per secret                        | Free for standard, charges for advanced  |
+
 
 ## AWS CLI commands for Secrets Manager
 
@@ -8448,6 +8551,11 @@ For each risk level, you can choose from the following options:
 - Require MFA - Users who have a second factor configured must complete a second factor challenge to sign in. Amazon Cognito blocks sign-in for users who don't have a second factor configured.
 - Block - Amazon Cognito blocks all sign-in attempts at the designated risk level.
 
+## User Datasets
+
+Amazon Cognito lets you save end user data in datasets containing key-value pairs. This data is associated with an Amazon Cognito identity, so that it can be accessed across logins and devices. To sync this data between the Amazon Cognito service and an end user’s devices, invoke the synchronize method. Each dataset can have a maximum size of 1 MB. You can associate up to 20 datasets with an identity.
+
+The Amazon Cognito Sync client creates a local cache for the identity data. Your app talks to this local cache when it reads and writes keys. This guarantees that all of your changes made on the device are immediately available on the device, even when you are offline. When the synchronize method is called, changes from the service are pulled to the device, and any local changes are pushed to the service. At this point the changes are available to other devices to synchronize.
 
 # AWS Web Application Firewall (WAF)
 
@@ -8628,3 +8736,8 @@ The IAM role must be correct to send traces to X-Ray.
 - Reduce Operational Overhead – Procure AWS resources centrally and use RAM to share resources such as subnets or License Manager configurations with other accounts. This eliminates the need to provision duplicate resources in every account in a multi-account environment.
 - Improve Security and Visibility – RAM leverages existing policies and permissions set in AWS Identity and Access Management (IAM) to govern the consumption of shared resources. RAM also provides comprehensive visibility into shared resources to set alarms and visualize logs through integration with Amazon CloudWatch and AWS CloudTrail.
 - Optimize Costs – Sharing resources such as AWS License Manager configurations across accounts allows you to leverage licenses in multiple parts of your company to increase utilization and optimize costs.
+
+# AWS Macie
+
+Amazon Macie is a fully managed data privacy and security service that uses machine learning and pattern matching to discover and protect sensitive data in AWS, such as PII. This includes being able to scan CloudWatch logs for PII
+
