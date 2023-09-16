@@ -15,14 +15,46 @@
   - [Generate secret key](#generate-secret-key)
   - [Billing](#billing)
   - [Assuming AWS role](#assuming-aws-role)
+- [AWS Organizations](#aws-organizations)
+  - [Service control policies (scp)](#service-control-policies-scp)
+  - [AWS Control Tower](#aws-control-tower)
 - [EC2 (Elastic compute cloud)](#ec2-elastic-compute-cloud)
   - [Create simple vm](#create-simple-vm)
   - [Simple network rules](#simple-network-rules)
   - [Horizontal scalling via create another ec2 instance](#horizontal-scalling-via-create-another-ec2-instance)
   - [Horisonal scalling with auto scale groups](#horisonal-scalling-with-auto-scale-groups)
+    - [Health checks](#health-checks)
+    - [Health check grace period](#health-check-grace-period)
+    - [Group metrics (ASG)](#group-metrics-asg)
+    - [Basic monitoring (Instances)](#basic-monitoring-instances)
+    - [Detailed monitoring (Instances)](#detailed-monitoring-instances)
+    - [Scaling strategies](#scaling-strategies)
+    - [Cooldowns](#cooldowns)
+    - [ermination Policy](#ermination-policy)
+    - [Termination Protection](#termination-protection)
+    - [Standby State](#standby-state)
+    - [Lifecycle Hooks](#lifecycle-hooks)
+    - [Examples](#examples)
   - [User data](#user-data)
   - [Metadata](#metadata)
   - [Security access](#security-access)
+  - [Placement Groups](#placement-groups)
+    - [Cluster](#cluster)
+    - [Spread](#spread)
+    - [Partition](#partition)
+    - [Differences](#differences)
+  - [Billing and provisioning](#billing-and-provisioning)
+    - [On demand](#on-demand)
+    - [Spot](#spot)
+    - [Reserved](#reserved)
+    - [Comparison](#comparison)
+    - [Limits](#limits)
+  - [On-Demand Capacity Reservations](#on-demand-capacity-reservations)
+  - [Dedicated hosts and instances](#dedicated-hosts-and-instances)
+    - [Dedicated hosts](#dedicated-hosts)
+    - [Dedicated instances](#dedicated-instances)
+    - [Use cases](#use-cases)
+  - [Saving plans](#saving-plans)
 - [EBS Elastic block storage](#ebs-elastic-block-storage)
 - [EFS Elastic file system](#efs-elastic-file-system)
   - [Using Amazon EFS with Lambda](#using-amazon-efs-with-lambda)
@@ -41,7 +73,7 @@
   - [MFA](#mfa-1)
     - [S3 Multi Factor Authentication Delete (MFA Delete)](#s3-multi-factor-authentication-delete-mfa-delete)
     - [MFA protected API access (not only s3)](#mfa-protected-api-access-not-only-s3)
-    - [Encription](#encription)
+    - [Encryption](#encryption)
   - [S3 Event Notifications](#s3-event-notifications)
   - [Storage classes](#storage-classes)
   - [Example](#example-1)
@@ -50,6 +82,8 @@
   - [CORS with S3 bucket](#cors-with-s3-bucket)
   - [S3 Optimization patterns](#s3-optimization-patterns)
 - [CloudFront (CDN)](#cloudfront-cdn)
+  - [Origins](#origins)
+  - [High availability with Origin Failover](#high-availability-with-origin-failover)
   - [Sign URL](#sign-url)
   - [Sign cookies](#sign-cookies)
   - [CloudFront origin access identity OAI](#cloudfront-origin-access-identity-oai)
@@ -59,7 +93,7 @@
 - [Route 53](#route-53)
 - [CloudFormation](#cloudformation)
   - [Nested stacks](#nested-stacks)
-  - [Examples](#examples)
+  - [Examples](#examples-1)
   - [Template features](#template-features)
     - [Resources](#resources)
     - [Parameters](#parameters)
@@ -93,6 +127,8 @@
   - [s3 cli](#s3-cli)
   - [assuming a role](#assuming-a-role)
 - [Networking](#networking)
+  - [IP and Mask](#ip-and-mask)
+  - [Choosing right CIDR](#choosing-right-cidr)
   - [Zones and Regions](#zones-and-regions)
   - [VPS (Virtual private cloud)](#vps-virtual-private-cloud)
   - [availiablity zones](#availiablity-zones)
@@ -103,7 +139,7 @@
     - [NAT for private subnets](#nat-for-private-subnets)
     - [connect on-premises data center](#connect-on-premises-data-center)
     - [Firewall](#firewall)
-    - [Examples](#examples-1)
+    - [Examples](#examples-2)
 - [Load balancing ELB](#load-balancing-elb)
   - [ALB - Applicaton load balancer](#alb---applicaton-load-balancer)
     - [Routing ALB](#routing-alb)
@@ -112,14 +148,18 @@
     - [NLB routing](#nlb-routing)
   - [CLB - Classic load balancer](#clb---classic-load-balancer)
   - [GLB - Gataway load balancer](#glb---gataway-load-balancer)
-  - [Comparison](#comparison)
+  - [Comparison](#comparison-1)
   - [Session info](#session-info)
+  - [Cross-Zone Load Balancing](#cross-zone-load-balancing)
+  - [ELB Security](#elb-security)
+    - [ALB](#alb)
+    - [NLB](#nlb)
 - [Serverless](#serverless)
   - [BaaS (Backend as a service)](#baas-backend-as-a-service)
   - [FaaS (Function as a service)](#faas-function-as-a-service)
   - [AWS Lambda](#aws-lambda)
   - [How lambda can be invoked](#how-lambda-can-be-invoked)
-  - [Examples](#examples-2)
+  - [Examples](#examples-3)
     - [Web API](#web-api)
     - [File processing](#file-processing)
   - [Other](#other)
@@ -190,7 +230,7 @@
   - [DynamoDB Partitions and Primary Keys](#dynamodb-partitions-and-primary-keys)
     - [Partition key](#partition-key)
     - [Composite key](#composite-key)
-    - [Limits](#limits)
+    - [Limits](#limits-1)
     - [Best practices for partition keys:](#best-practices-for-partition-keys)
   - [DynamoDB Consistency Models](#dynamodb-consistency-models)
     - [Eventually consistent reads](#eventually-consistent-reads)
@@ -213,7 +253,7 @@
       - [Use Filter-Expression Parameter:](#use-filter-expression-parameter)
       - [Use Key-Conditions Parameter:](#use-key-conditions-parameter)
       - [Use Key-Condition-Expression Parameter:](#use-key-condition-expression-parameter)
-  - [Examples](#examples-3)
+  - [Examples](#examples-4)
   - [DynamoDB LSI and GSI](#dynamodb-lsi-and-gsi)
     - [DynamoDB Local Secondary Index (LSI)](#dynamodb-local-secondary-index-lsi)
     - [DynamoDB Global Secondary Index (GSI)](#dynamodb-global-secondary-index-gsi)
@@ -339,7 +379,7 @@
     - [Automated Backups](#automated-backups)
     - [Amazon RDS Manual Backups (Snapshot)](#amazon-rds-manual-backups-snapshot)
     - [Amazon RDS Maintenance Windows](#amazon-rds-maintenance-windows)
-  - [Examples](#examples-4)
+  - [Examples](#examples-5)
     - [create mysql database](#create-mysql-database)
     - [create manual snapshot](#create-manual-snapshot)
     - [create multi-AZ replicas](#create-multi-az-replicas)
@@ -350,7 +390,7 @@
   - [Amazon ElastiCache Scalability](#amazon-elasticache-scalability)
     - [Memcached](#memcached)
     - [Redis](#redis)
-  - [Examples](#examples-5)
+  - [Examples](#examples-6)
   - [Caching strategies](#caching-strategies)
     - [Lazy Loading](#lazy-loading)
     - [Write Through](#write-through)
@@ -662,6 +702,37 @@ it's possible to switch back
 
 ![](images/iam_role_15.png)
 
+# AWS Organizations
+  
+![](images/org_1.png)
+
+- AWS organizations allows you to consolidate multiple AWS accounts into an organization that you create and centrally manage
+- Available in two feature sets:
+  - Consolidated Billing
+  - All features
+- Includes root accounts and organizational units
+- Policies are applied to root accounts or OUs
+- Consolidated billing includes:
+  - Paying Account – independent and cannot access resources of other accounts
+  - Linked Accounts – all linked accounts are independent
+
+![](images/org_2.png)
+
+## Service control policies (scp)
+
+![](images/org_3.png)
+
+## AWS Control Tower
+
+![](images/org_4.png)
+
+- Control Tower creates a well-architected multiaccount baseline based on best practices
+- This is known as a landing zone
+- Guardrails are used for governance and compliance:
+  - Preventive guardrails are based on SCPs and disallow API actions
+  - Detective guardrails are implemented using AWS Config rules and Lambda functions and monitor and govern compliance
+- The root user in the management account can perform actions that guardrails would disallow
+
 
 # EC2 (Elastic compute cloud)
 
@@ -748,6 +819,82 @@ sudo apt-get install apache2
 
 ## Horisonal scalling with auto scale groups
 
+![](images/ec2_scaling_21.png)
+
+- EC2 Auto Scaling launches and terminates instances dynamically
+- Scaling is horizontal (scales out)
+- Provides elasticity and scalability
+- Responds to EC2 status checks and CloudWatch metrics
+- Can scale based on demand (performance) or on a schedule
+- **Scaling policies** define how to respond to changes in demand
+- **Auto Scaling groups** define collections of EC2 instances that are scaled and managed together
+
+### Health checks
+
+- EC2 = EC2 status checks
+- ELB = Uses the ELB health checks in addition to EC2
+status checks
+
+### Health check grace period
+
+- How long to wait before checking the health status of the instance
+- Auto Scaling does not act on health checks until grace period expires
+
+### Group metrics (ASG)
+
+- Data points about the Auto Scaling group
+- 1-minute granularity
+- No charge
+- Must be enabled
+
+### Basic monitoring (Instances)
+
+- 5-minute granularity
+- No Charge
+
+### Detailed monitoring (Instances)
+
+- 1-minute granularity
+- Charges apply
+
+### Scaling strategies
+
+![](images/ec2_scaling_22.png)
+
+![](images/ec2_scaling_23.png)
+
+![](images/ec2_scaling_24.png)
+
+![](images/ec2_scaling_25.png)
+
+
+
+### Cooldowns 
+
+Used with simple scaling policy to prevent Auto Scaling from launching or terminating before effects of previous activities are visible. Default value is 300 seconds (5 minutes)
+
+### ermination Policy 
+
+Controls which instances to terminate first when a scale-in event occurs
+
+### Termination Protection 
+
+Prevents Auto Scaling from terminating protected instances
+
+### Standby State 
+
+Used to put an instance in the **InService** state into the **Standby** state, update or troubleshoot the instance
+
+### Lifecycle Hooks
+
+Used to perform custom actions by pausing instances as the ASG launches or terminates them
+
+Use case:
+- Run a script to download and install software after launching
+- Pause an instance to process data before a scale-in (termination)
+
+### Examples
+
 1. Create a launch template for ec2 instance
 
 ![](images/ec2_scaling_1.png)
@@ -827,6 +974,161 @@ Let's picture we want to access from ec2 instance to s3 bucket. There are two wa
 ![](images/ec2_sec_1.png)
 
 ![](images/ec2_sec_2.png)
+
+## Placement Groups
+
+Placement groups are a logical grouping of instances in one of the following configurations.
+
+### Cluster 
+
+![](images/ec2_placement_1.png)
+
+- clusters instances into a low-latency group in a single AZ:
+- A cluster placement group is a logical grouping of instances within a single Availability Zone.
+- Cluster placement groups are recommended for applications that benefit from low network latency, high network throughput, or both, and if most of the network traffic is between the instances in the group.
+
+### Spread
+
+![](images/ec2_placement_2.png)
+
+- spreads instances across underlying hardware (can span AZs):
+- A spread placement group is a group of instances that are each placed on distinct underlying hardware.
+- Spread placement groups are recommended for applications that have a small number of critical instances that should be kept separate from each other.
+
+### Partition
+
+![](images/ec2_placement_3.png)
+
+- Partition divides each group into logical segments called partitions:
+- Amazon EC2 ensures that each partition within a placement group has its own set of racks.
+- Each rack has its own network and power source. No two partitions within a placement group share the same racks, allowing you to isolate the impact of hardware failure within your application.
+- Distributed and replicated NoSQL database; requires separate hardware for node groups
+- Partition placement groups can be used to deploy large distributed and replicated workloads, such as HDFS, HBase, and Cassandra, across distinct racks
+
+### Differences
+
+<table><tbody><tr><td>&nbsp;</td><td><strong>Clustered</strong></td><td><strong>Spread</strong></td><td><strong>Partition</strong></td></tr><tr><td>What</td><td>Instances are placed into a low-latency group within a single AZ</td><td>Instances are spread across underlying hardware</td><td>Instances are grouped into logical segments called partitions which use distinct hardware</td></tr><tr><td>When</td><td>Need low network latency and/or high network throughput</td><td>Reduce the risk of simultaneous instance failure if underlying hardware fails</td><td>Need control and visibility into instance placement</td></tr><tr><td>Pros</td><td>Get the most out of enhanced networking Instances</td><td>Can span multiple AZs</td><td>Reduces likelihood of correlated failures for large workloads.</td></tr><tr><td>Cons</td><td>Finite capacity: recommend launching all you might need up front</td><td>Maximum of 7 instances running per group, per AZ</td><td>Partition placement groups are not supported for Dedicated Hosts</td></tr></tbody></table>
+
+
+
+## Billing and provisioning
+
+![](images/ec2_billing_1.png)
+
+There are several options for how you consume and pay for Amazon EC2 instances.
+
+### On demand
+
+- Pay for hours used with no commitment.
+- Low cost and flexibility with no upfront cost.
+- Ideal for auto scaling groups and unpredictable workloads.
+- Good for dev/test.
+
+### Spot
+
+![](images/ec2_billing_4.png)
+
+- Amazon EC2 Spot Instances let you take advantage of unused EC2 capacity in the AWS cloud.
+- Spot Instances are available at up to a 90% discount compared to On-Demand prices.
+- You can use Spot Instances for various stateless, fault-tolerant, or flexible applications such as big data, containerized workloads, CI/CD, web servers, high-performance computing (HPC), and other test & development workloads.
+- You can request Spot Instances by using the Spot management console, CLI, API or the same interface that is used for launching On-Demand instances by indicating the option to use Spot.
+- You can also select a Launch Template or a pre-configured or custom Amazon Machine Image (AMI), configure security and network access to your Spot instance, choose from multiple instance types and locations, use static IP endpoints, and attach persistent block storage to your Spot instances.
+- New pricing model: The Spot price is determined by long term trends in supply and demand for EC2 spare capacity.
+- You don’t have to bid for Spot Instances in the new pricing model, and you just pay the Spot price that’s in effect for the current hour for the instances that you launch.
+- Spot Instances receive a two-minute interruption notice when these instances are about to be reclaimed by EC2, because EC2 needs the capacity back.
+- Instances are not interrupted because of higher competing bids.
+- To reduce the impact of interruptions and optimize Spot Instances, diversify, and run your application across multiple capacity pools.
+- Each instance family, each instance size, in each Availability Zone, in every Region is a separate Spot pool.
+- You can use the RequestSpotFleet API operation to launch thousands of Spot Instances and diversify resources automatically.
+- To further reduce the impact of interruptions, you can also set up Spot Instances and Spot Fleets to respond to an interruption notice by stopping or hibernating rather than terminating instances when capacity is no longer available.
+
+![](images/ec2_billing_5.png)
+
+### Reserved
+
+![](images/ec2_billing_2.png)
+
+- Purchase (or agree to purchase) usage of EC2 instances in advance for significant discounts over On-Demand pricing.
+- Provides a capacity reservation when used in a specific AZ.
+- AWS Billing automatically applies discounted rates when you launch an instance that matches your purchased RI.
+- Capacity is reserved for a term of 1 or 3 years.
+- EC2 has three RI types: **Standard**, **Convertible**, and **Scheduled**.
+- **Standard** = commitment of 1 or 3 years, charged whether it’s on or off.
+- **Scheduled** = reserved for specific periods of time, accrue charges hourly, billed in monthly increments over the term (1 year).
+- Scheduled RIs match your capacity reservation to a predictable recurring schedule.
+- For the differences between standard and convertible RIs, see the table below.
+- RIs are used for steady state workloads and predictable usage.
+- Ideal for applications that need reserved capacity.
+- Upfront payments can reduce the hourly rate.
+- Can switch AZ within the same region.
+- Can change the instance size within the same instance type.
+- Instance type modifications are supported for Linux only.
+- Cannot change the instance size of Windows RIs.
+- Billed whether running or not.
+- Can sell reservations on the AWS marketplace.
+- Can be used in Auto Scaling Groups.
+- Can be used in Placement Groups.
+- Can be shared across multiple accounts within Consolidated Billing.
+- If you don’t need your RI’s, you can try to sell them on the Reserved Instance Marketplace.
+
+<table><tbody><tr><td>&nbsp;</td><td>Standard</td><td>Convertible</td></tr><tr><td>Terms</td><td>1 year, 3 year</td><td>1 year, 3 year</td></tr><tr><td>Average discount off On-Demand price</td><td>40% – 60%</td><td>31% – 54%</td></tr><tr><td>Change AZ, instance size, networking type</td><td>Yes via ModifyReservedInstance API or console</td><td>Yes via ExchangeReservedInstance API or console</td></tr><tr><td>Change instance family, OS, tenancy, payment options</td><td>No</td><td>Yes</td></tr><tr><td>Benefit from price reductions</td><td>No</td><td>Yes</td></tr></tbody></table>
+
+### Comparison
+
+<table><tbody><tr><td><strong>On-Demand</strong></td><td><strong>Reserved</strong></td><td><strong>Spot</strong></td></tr><tr><td>No upfront fee</td><td>Options: No upfront, partial upfront or all upfront</td><td>No upfront fee</td></tr><tr><td>Charged by hour or second</td><td>Charged by hour or second</td><td>Charged by hour or second</td></tr><tr><td>No commitment</td><td>1-year or 3-year commitment</td><td>No commitment</td></tr><tr><td>Ideal for short term needs or unpredictable workloads</td><td>Ideal for steady-state workloads and predictable usage</td><td>Ideal for cost-sensitive, compute intensive use cases that can withstand interruption</td></tr></tbody></table>
+
+### Limits
+ 
+You are limited to running up to a total of 20 On-Demand instances across the instance family, purchasing 20 Reserved Instances, and requesting Spot Instances per your dynamic spot limit per region (by default).
+
+## On-Demand Capacity Reservations
+
+- Reserve compute capacity for your Amazon EC2 instances in a specific Availability Zone
+- Any duration can be specified
+- Mitigates against the risk of being unable to get On-Demand capacity
+- Does not require any term commitments and can be cancelled at any time
+- When you create a Capacity Reservation, you specify:
+  - The Availability Zone in which to reserve the capacity
+  - The number of instances for which to reserve capacity
+  - The instance attributes, including the instance type, tenancy, and platform/OS
+
+## Dedicated hosts and instances
+
+### Dedicated hosts
+
+- Physical servers dedicated just for your use.
+- You then have control over which instances are deployed on that host.
+- Available as On-Demand or with Dedicated Host Reservation.
+- Useful if you have server-bound software licenses that use metrics like per-core, per-socket, or per-VM.
+- Each dedicated host can only run one EC2 instance size and type.
+- Good for regulatory compliance or licensing requirements.
+- Predictable performance.
+- Complete isolation.
+- Most expensive option.
+- Billing is per host.
+
+### Dedicated instances
+
+- Virtualized instances on hardware just for you.
+- Also uses physically dedicated EC2 servers.
+- Does not provide the additional visibility and controls of dedicated hosts (e.g. how instances are placed on a server).
+- Billing is per instance.
+- May share hardware with other non-dedicated instances in the same account.
+- Available as On-Demand, Reserved Instances, and Spot Instances.
+- Cost additional $2 per hour per region.
+
+<table><tbody><tr><td><strong>Characteristic</strong></td><td><strong>Dedicated Instances</strong></td><td><strong>Dedicated Hosts</strong></td></tr><tr><td>Enables the use of dedicated physical servers</td><td>X</td><td>X</td></tr><tr><td>Per instance billing (subject to a $2 per region fee)</td><td>X</td><td>&nbsp;</td></tr><tr><td>Per host billing</td><td>&nbsp;</td><td>X</td></tr><tr><td>Visibility of sockets, cores, host ID</td><td>&nbsp;</td><td>X</td></tr><tr><td>Affinity between a host and instance</td><td>&nbsp;</td><td>X</td></tr><tr><td>Targeted instance placement</td><td>&nbsp;</td><td>X</td></tr><tr><td>Automatic instance placement</td><td>X</td><td>X</td></tr><tr><td>Add capacity using an allocation request</td><td>&nbsp;</td><td>X</td></tr></tbody></table>
+
+### Use cases
+
+![](images/ec2_billing_6.png)
+
+![](images/ec2_billing_7.png)
+
+
+## Saving plans
+
+![](images/ec2_billing_3.png)
 
 
 
@@ -1198,7 +1500,7 @@ MFA delete can be enabled by:
 
 ![](images/s3_mfa_1.png)
 
-### Encription
+### Encryption
 
 - All Amazon S3 buckets have encryption configured by default (from some moment of history)
 - All new object uploads to Amazon S3 are automatically encrypted
@@ -1401,6 +1703,22 @@ Enabled through setting:
 in cloudfront we create a distribution. 
 
 ![](images/cloudfront_2.png)
+
+## Origins
+
+An origin is the origin of the files that the CDN will distribute.
+
+Origins can be
+- S3 bucket
+- EC2 instance
+- Elastic Load Balancer,
+- Route 53 – can also be external (non-AWS).
+
+## High availability with Origin Failover
+
+- Can set up CloudFront with origin failover for scenarios that require high availability.
+- Uses an origin group in which you designate a primary origin for CloudFront plus a second origin that CloudFront automatically switches to when the primary origin returns specific HTTP status code failure responses.
+- Also works with Lambda@Edge functions.
 
 ## Sign URL
 
@@ -2167,6 +2485,40 @@ The AWS CLI `aws sts assume role` command will enable the Developer to assume th
 
 # Networking
 
+## IP and Mask
+
+![](images/ip_1.png)
+
+![](images/ip_2.png)
+
+![](images/ip_3.png)
+
+![](images/ip_4.png)
+
+## Choosing right CIDR
+
+- CIDR block size can be between /16 and /28
+- The CIDR block must not overlap with any existing CIDR block at's associated with the VPC
+- You cannot increase or decrease the size of an existing CIDR block
+- The first four and last IP address are not available for use
+- AWS recommend you use CIDR blocks from the RFC 1918 ranges
+
+![](images/ip_5.png)
+
+![](images/ip_6.png)
+
+Additional Considerations:
+- Ensure you have enough networks and hosts
+- Bigger CIDR blocks are typically better (more flexibility)
+- Smaller subnets are OK for most use cases
+- Consider deploying application tiers per subnet
+- Split your HA resources across subnets in different AZs
+- VPC Peering requires non-overlapping CIDR blocks
+- This is across all VPCs in all Regions / accounts you want to connect
+- **Avoid overlapping CIDR blocks as much as possible**
+
+![](images/ip_7.png)
+
 ## Zones and Regions
 
 AWS houses its computers in more than 60 data centers spread around the world. In AWS terminology, each data center corresponds to an Availability Zone (AZ), and clusters of data centers in close proximity to each other are grouped into regions. AWS has more than 20 different regions, across 5 continents.
@@ -2357,6 +2709,8 @@ then we need to create a security group
 
 # Load balancing ELB
 
+![](images/elb_1.png)
+
 ## ALB - Applicaton load balancer
 
 ![](images/elb_alb.png)
@@ -2476,6 +2830,34 @@ Use cases:
 ![](images/session_state_1.png)
 
 ![](images/session_state_2.png)
+
+## Cross-Zone Load Balancing
+
+- When cross-zone load balancing is enabled Each load balancer node distributes traffic across the registered
+targets in all enabled Availability Zones
+- When cross-zone load balancing is disabled Each load balancer node distributes traffic only across the registered
+targets in its Availability Zone
+- With Application Load Balancers, cross-zone load balancing is always enabled
+- With Network Load Balancers and Gateway Load Balancers, crosszone load balancing is disabled by default
+
+![](images/elb_cross_zone_1.png)
+
+![](images/elb_cross_zone_2.png)
+
+## ELB Security
+
+
+### ALB
+
+2 options
+
+![](images/elb_security_1.png)
+
+### NLB
+
+2 options
+
+![](images/elb_security_2.png)
 
 
 
