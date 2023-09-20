@@ -63,6 +63,7 @@
   - [Overview](#overview)
   - [Accessing s3](#accessing-s3)
   - [Security](#security)
+  - [Authorization process](#authorization-process)
     - [Example using ACL](#example-using-acl)
     - [Using IAM policies and bucket policies](#using-iam-policies-and-bucket-policies)
       - [List buckets (user policy)](#list-buckets-user-policy)
@@ -81,6 +82,14 @@
   - [Log bucket events to the another bucket](#log-bucket-events-to-the-another-bucket)
   - [CORS with S3 bucket](#cors-with-s3-bucket)
   - [S3 Optimization patterns](#s3-optimization-patterns)
+  - [S3 Copy API](#s3-copy-api)
+  - [Replication](#replication)
+  - [S3 Lifecycle Management](#s3-lifecycle-management)
+  - [S3 Multipart Upload](#s3-multipart-upload)
+  - [S3 Transfer Acceleration](#s3-transfer-acceleration)
+  - [S3 Select and Glacier Select](#s3-select-and-glacier-select)
+  - [Cross Account Access Methods](#cross-account-access-methods)
+  - [S3 Object lambda](#s3-object-lambda)
 - [CloudFront (CDN)](#cloudfront-cdn)
   - [Origins](#origins)
   - [High availability with Origin Failover](#high-availability-with-origin-failover)
@@ -91,6 +100,17 @@
   - [Origin response trigger](#origin-response-trigger)
   - [Example static website](#example-static-website)
 - [Route 53](#route-53)
+  - [Hosted zones](#hosted-zones)
+  - [Migration to/from Route 53](#migration-tofrom-route-53)
+  - [Routing policies](#routing-policies)
+    - [Simple](#simple)
+    - [Weighted](#weighted)
+    - [Latency routing](#latency-routing)
+    - [Failover Routing Policy](#failover-routing-policy)
+    - [Geolocation routing policy](#geolocation-routing-policy)
+    - [Multivalue Routing Policy](#multivalue-routing-policy)
+    - [Geo proximity route policy](#geo-proximity-route-policy)
+    - [IP-Based Routing Policy](#ip-based-routing-policy)
 - [CloudFormation](#cloudformation)
   - [Nested stacks](#nested-stacks)
   - [Examples](#examples-1)
@@ -129,17 +149,36 @@
 - [Networking](#networking)
   - [IP and Mask](#ip-and-mask)
   - [Choosing right CIDR](#choosing-right-cidr)
+  - [IPv6](#ipv6)
   - [Zones and Regions](#zones-and-regions)
   - [VPS (Virtual private cloud)](#vps-virtual-private-cloud)
   - [availiablity zones](#availiablity-zones)
   - [Subnets](#subnets)
     - [Routing accross VPS and outside](#routing-accross-vps-and-outside)
-    - [Internet access](#internet-access)
-    - [Connect to the public AWS endpoint](#connect-to-the-public-aws-endpoint)
+  - [Network interfaces](#network-interfaces)
+  - [Public, Private and Elastic IP Addresses](#public-private-and-elastic-ip-addresses)
+    - [Public IP address](#public-ip-address)
+    - [Private IP address](#private-ip-address)
+    - [Elastic IP address](#elastic-ip-address)
+  - [Connect to the public AWS endpoint](#connect-to-the-public-aws-endpoint)
+    - [Interface Endpoint](#interface-endpoint)
+    - [Gateway Endpoint](#gateway-endpoint)
+  - [Service provide model](#service-provide-model)
+  - [Internet access](#internet-access)
+    - [Nat for public subnets](#nat-for-public-subnets)
     - [NAT for private subnets](#nat-for-private-subnets)
-    - [connect on-premises data center](#connect-on-premises-data-center)
-    - [Firewall](#firewall)
-    - [Examples](#examples-2)
+  - [VPN Endpoint](#vpn-endpoint)
+  - [Firewall](#firewall)
+  - [VPC Peering](#vpc-peering)
+  - [Bastion](#bastion)
+  - [connect on-premises data center or office](#connect-on-premises-data-center-or-office)
+    - [Virtual Private Gateway](#virtual-private-gateway)
+    - [AWS Direct Connect](#aws-direct-connect)
+      - [AWS Direct connect gateway](#aws-direct-connect-gateway)
+    - [AWS Transit Gateway](#aws-transit-gateway)
+  - [VPN CloudHub architecture pattern](#vpn-cloudhub-architecture-pattern)
+  - [VPC Flow logs](#vpc-flow-logs)
+  - [Examples](#examples-2)
 - [Load balancing ELB](#load-balancing-elb)
   - [ALB - Applicaton load balancer](#alb---applicaton-load-balancer)
     - [Routing ALB](#routing-alb)
@@ -419,7 +458,6 @@
   - [Amazon CloudWatch Alarms](#amazon-cloudwatch-alarms)
   - [Amazon CloudWatch Logs](#amazon-cloudwatch-logs)
   - [The Unified CloudWatch Agent](#the-unified-cloudwatch-agent)
-  - [VPC Flow logs](#vpc-flow-logs)
 - [AWS CloudTrail](#aws-cloudtrail)
   - [CloudTrail Types of Events](#cloudtrail-types-of-events)
 - [AWS Key Management Service (KMS)](#aws-key-management-service-kms)
@@ -1271,6 +1309,10 @@ Use S3 bucket policies if:
 
 By adding a condition to the S3 bucket policy that requires `aws:SecureTransport`, you are mandating that all interactions with the bucket must be encrypted in transit using SSL/TLS.
 
+## Authorization process
+
+![](images/s3_security_1.png)
+
 ### Example using ACL
 
 let's crate a bucket with enabled acl
@@ -1696,6 +1738,78 @@ Enabled through setting:
   - Amazon ElastiCache (in memory cache)
 - Horizontally scale requests across S3 endpoints
 
+## S3 Copy API
+
+- Copy objects up to 5 GB in size
+- The copy operation can be used to:
+  - Generate additional copies of objects
+  - Rename objects
+  - Change the copy's storage class or encryption at rest status
+  - Move objects across AWS locations/regions
+  - Change object metadata
+
+## Replication
+
+![](images/s3_replication.png)
+
+## S3 Lifecycle Management
+
+There are two types of actions:
+- **Transition actions** - Define when objects transition to another storage class
+- **Expiration actions** - Define when objects expire (deleted by S3)
+
+You can transition from the following:
+- The S3 Standard storage class to any other storage class
+- Any storage class to the S3 Glacier or S3 Glacier Deep
+- chive storage classes
+- The S3 Standard-IA storage class to the S3 Intelligent-
+- ering or S3 One Zone-IA storage classes
+- The S3 Intelligent-Tiering storage class to the S3 One
+- ne-IA storage class
+- The S3 Glacier storage class to the S3 Glacier Deep Archive
+storage class
+
+![](images/s3_management.png)
+
+## S3 Multipart Upload
+
+- Multipart upload uploads objects in parts independently, in parallel and in any order
+- Performed using the S3 Multipart upload API
+- It is recommended for objects of 100 MB or larger
+- Can be used for objects from 5 MB up to 5 TB
+- Must be used for objects larger than 5 GB
+
+## S3 Transfer Acceleration
+
+Uses CloudFront edge locations to improve performance of transfers from client to S3 bucket
+
+![](images/s3_transfer_1.png)
+
+## S3 Select and Glacier Select
+
+Invocation sql select on s3 bucket and glacier
+
+![](images/s3_select_1.png)
+
+## Cross Account Access Methods
+
+- Resource-based policies and IAM policies for programmatic-only access to S3 bucket objects
+- Resource-based ACL and IAM policies for programmatic-only access to S3 bucket objects
+- Cross-account IAM roles for programmatic and console access to S3 bucket objects
+
+![](images/s3_cross_1.png)
+
+![](images/s3_cross_2.png)
+
+## S3 Object lambda
+
+- S3 Object Lambda uses Lambda functions to process the output of S3 GET requests
+- You can use your own functions or use the AWS prebuilt functions
+
+![](images/s3_lambda.png)
+
+![](images/s3_lambda_1.png)
+
 # CloudFront (CDN)
 
 ![](images/cloudfront_1.png)
@@ -1790,6 +1904,58 @@ after a couple of minutes it will be deployes around the world. It is possible t
 ![](images/route53_2.png)
 
 ![](images/route53_3.png)
+
+## Hosted zones
+
+A hosted zone represents a set of records belonging to a domain
+
+![](images/route53_4.png)
+
+![](images/route53_5.png)
+
+## Migration to/from Route 53
+
+- You can migrate from another DNS provider and can import records
+- You can migrate a hosted zone to another AWS account
+- You can migrate from Route 53 to another registrar
+- You can also associate a Route 53 hosted zone with a VPC in other account
+  - Authorize association with VPC in the second account.
+  - Create an association in the second account
+
+## Routing policies
+
+### Simple 
+
+![](images/route53_6.png)
+
+
+### Weighted
+
+![](images/route53_7.png)
+
+### Latency routing
+
+![](images/route53_8.png)
+
+### Failover Routing Policy
+
+![](images/route53_9.png)
+
+### Geolocation routing policy
+
+![](images/route53_11.png)
+
+### Multivalue Routing Policy
+
+![](images/route53_12.png)
+
+### Geo proximity route policy
+
+![](images/route53_13.png)
+
+### IP-Based Routing Policy
+
+![](images/route53_14.png)
 
 # CloudFormation
 
@@ -2519,6 +2685,18 @@ Additional Considerations:
 
 ![](images/ip_7.png)
 
+## IPv6
+
+![](images/ip_8.png)
+
+![](images/ip_9.png)
+
+![](images/ip_11.png)
+
+![](images/ip_12.png)
+
+
+
 ## Zones and Regions
 
 AWS houses its computers in more than 60 data centers spread around the world. In AWS terminology, each data center corresponds to an Availability Zone (AZ), and clusters of data centers in close proximity to each other are grouped into regions. AWS has more than 20 different regions, across 5 continents.
@@ -2562,25 +2740,80 @@ We can launch our resources (for example EC2 instance) in a subnets of our vps.
 
 **VPS router** takes care or routing within the VPS and outside of the VPS. It is attached to the VPS. We can add rules to **route table**. It is possible to create a route to traffic across different VPSs without using public Internet. 
 
-### Internet access 
+## Network interfaces
+
+![](images/network_interface_1.png)
+
+![](images/network_interface_2.png)
+
+
+## Public, Private and Elastic IP Addresses
+
+![](images/network_interface_3.png)
+
+### Public IP address 
+
+- Lost when the instance is stopped
+- Used in Public Subnets
+- No charge
+- Associated with a private IP address on the instance
+- Cannot be moved between instances
+
+### Private IP address 
+
+- Retained when the instance is stopped
+- Used in Public and Private Subnets
+
+### Elastic IP address 
+
+- Static Public IP address
+- You are charged if not used
+- Associated with a private IP address on the instance
+- Can be moved between instances and Elastic Network Adapters
+
+## Connect to the public AWS endpoint 
+
+**VPS endpont** to connect to public AWS endpoints via private addresses. For example to connecto to S3 bucket, that is a public AWS endpoint. 
+
+### Interface Endpoint 
+
+![](images/vpc_endpoint_1.png)
+
+- Elastic Network Interface with a Private IP
+- Uses DNS entries to redirect traffic
+- For API Gateway, CloudFormation, CloudWatch etc.
+- Security with Security Groups
+
+### Gateway Endpoint
+
+![](images/vpc_endpoint_2.png)
+
+- A gateway that is a target for a specific route
+- Uses prefix lists in the route table to redirect traffic
+- For Amazon S3, DynamoDB
+- Security with VPC Endpoint Policies
+
+## Service provide model
+
+![](images/service_provider.png)
+
+## Internet access 
 
 If we want to connect to Internet we need to configure **Internet Gateway** OR **Egress only Internet Gateway** for IPV6. It is attached to the VPS. This thing allow to get a connection to the Internet, but does not allows connection from Internet. 
 
-### Connect to the public AWS endpoint 
+### Nat for public subnets
 
-**VPS endpont** to connect to public AWS endpoints via private addresses. For example to connecto to S3 bucket, that is a public AWS endpoint. 
+![](images/nat_1.png)
 
 ### NAT for private subnets
 
 **NAT Instance** and **NAT Gateway** Allow instances in private subnets wich only have private IP addresses to be able to connect to the Internet. Network adress translation. 
 
-### connect on-premises data center
+## VPN Endpoint 
 
-If we want to set up VPN between on-premises data center and AWS we can create AWS VPN. There are two principal components to VPN : **Customer gateway** which is router and configuration in the on-premices data center. And then **Virtual Private Gateway** which is component one the AWS side. 
+![](images/vpn_1.png)
 
-**AWS Direct Connect** is another way to connect on-premices data centers to AWS. Is uses private connection with high speed and bandwidth and low latency.
-
-### Firewall
+## Firewall
 
 **Security groups** and **network ACL** are two different types of firewalls. 
 
@@ -2607,7 +2840,101 @@ SG source can be an IP address or SG ID
 SG is statefull. If the traffic is allowed out, outbound. Any return traffic comming in will automatically be allowed if it's assotiated with the same connection. 
 Whereas ACL is stateless. You need separate rule for outbound and the return traffic that's comming back inbound. 
 
-### Examples
+best practises
+
+![](images/security_group_4.png)
+
+## VPC Peering
+
+connect VPC in different Regions and accounts.
+
+![](images/vpc_peering_1.png)
+
+![](images/vpc_peering_2.png)
+
+## Bastion
+
+![](images/bastion_1.png)
+
+
+## connect on-premises data center or office
+
+If we want to set up VPN between on-premises data center and AWS we can create AWS VPN. There are two principal components to VPN : **Customer gateway** which is router and configuration in the on-premices data center. And then **Virtual Private Gateway** which is component one the AWS side. 
+
+### Virtual Private Gateway
+
+![](images/vpn_2.png)
+
+![](images/vpn_4.png)
+
+
+### AWS Direct Connect
+
+**AWS Direct Connect** is another way to connect on-premices data centers to AWS. It uses private connection with high speed and bandwidth and low latency.
+
+![](images/dx_1.png)
+
+AWS Direct Connect Benefits:
+
+- Private connectivity between AWS and your data center / office
+- Consistent network experience – increased speed/latency & bandwidth/throughput
+- Lower costs for organizations that transfer large volumes of data
+
+![](images/vpn_5.png)
+
+![](images/dx_2.png)
+
+![](images/dx_3.png)
+
+- Speeds from 50Mbps to 500Mbps can also be accessed via an APN partner
+- 100 Gbps is now featuring in select locations
+- DX Connections are NOT encrypted!
+- Use an **IPSec S2S VPN connection** over a VIF to add encryption in transit
+)
+
+#### AWS Direct connect gateway
+
+without DX Gateway.
+
+![](images/dx_5.png)
+
+with DX Gateway
+
+![](images/dx_6.png)
+
+![](images/dx_7.png)
+
+### AWS Transit Gateway
+
+![](images/transit_gateway_1.png)
+
+![](images/transit_gateway_2.png)
+
+![](images/transit_gateway_3.png)
+
+## VPN CloudHub architecture pattern
+
+![](images/vpn_3.png)
+
+
+## VPC Flow logs
+
+- VPC Flow Logs is a feature that enables you to capture information about the IP traffic going to and from network interfaces in your VPC. 
+- Flow log data can be published to the following locations: Amazon CloudWatch Logs, Amazon S3, or Amazon Kinesis Data Firehose. 
+- After you create a flow log, you can retrieve and view the flow log records in the log group, bucket, or delivery stream that you configured.
+
+Flow logs can help you with a number of tasks, such as:
+
+- Diagnosing overly restrictive security group rules
+- Monitoring the traffic that is reaching your instance
+- Determining the direction of the traffic to and from the network interfaces
+
+Flow logs can be created at the following levels:
+- VPC
+- Subnet
+- Network interface
+
+## Examples
 
 Let'c create VPS then two public and two private subnets in different availability zones. For private we will create route tables for our VPS attach them to our private and public subnets. 
 
@@ -8519,16 +8846,6 @@ Can be installed on:
 - Amazon EC2 instances
 - On-premises servers
 - Linux, Windows Server, or macOS
-
-## VPC Flow logs
-
-VPC Flow Logs is a feature that enables you to capture information about the IP traffic going to and from network interfaces in your VPC. Flow log data can be published to the following locations: Amazon CloudWatch Logs, Amazon S3, or Amazon Kinesis Data Firehose. After you create a flow log, you can retrieve and view the flow log records in the log group, bucket, or delivery stream that you configured.
-
-Flow logs can help you with a number of tasks, such as:
-
-- Diagnosing overly restrictive security group rules
-- Monitoring the traffic that is reaching your instance
-- Determining the direction of the traffic to and from the network interfaces
 
 # AWS CloudTrail
 
