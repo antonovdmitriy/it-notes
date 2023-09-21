@@ -55,14 +55,31 @@
     - [Dedicated instances](#dedicated-instances)
     - [Use cases](#use-cases)
   - [Saving plans](#saving-plans)
-- [EBS Elastic block storage](#ebs-elastic-block-storage)
-- [EFS Elastic file system](#efs-elastic-file-system)
-  - [Using Amazon EFS with Lambda](#using-amazon-efs-with-lambda)
-  - [Example](#example)
+- [Block and file storage](#block-and-file-storage)
+  - [EBS Elastic block storage](#ebs-elastic-block-storage)
+    - [Types of storage](#types-of-storage)
+    - [Snapshots](#snapshots)
+    - [Encryption](#encryption)
+    - [Amazon Data Lifecycle Manager (DLM)](#amazon-data-lifecycle-manager-dlm)
+    - [Using RAID with EBS](#using-raid-with-ebs)
+      - [RAID 0](#raid-0)
+      - [RAID 1](#raid-1)
+  - [Instance store](#instance-store)
+  - [EFS Elastic file system](#efs-elastic-file-system)
+    - [Security](#security)
+    - [Using Amazon EFS with Lambda](#using-amazon-efs-with-lambda)
+    - [Example](#example)
+  - [Amazon FSx](#amazon-fsx)
+    - [Amazon FSx for Windows File Server](#amazon-fsx-for-windows-file-server)
+    - [Amazon FSx for Lustre](#amazon-fsx-for-lustre)
+  - [AWS Storage Gateway](#aws-storage-gateway)
+    - [File Gateway](#file-gateway)
+    - [Volume Gateway](#volume-gateway)
+    - [Tape Gateway](#tape-gateway)
 - [S3 Simple storage service](#s3-simple-storage-service)
   - [Overview](#overview)
   - [Accessing s3](#accessing-s3)
-  - [Security](#security)
+  - [Security](#security-1)
   - [Authorization process](#authorization-process)
     - [Example using ACL](#example-using-acl)
     - [Using IAM policies and bucket policies](#using-iam-policies-and-bucket-policies)
@@ -74,7 +91,7 @@
   - [MFA](#mfa-1)
     - [S3 Multi Factor Authentication Delete (MFA Delete)](#s3-multi-factor-authentication-delete-mfa-delete)
     - [MFA protected API access (not only s3)](#mfa-protected-api-access-not-only-s3)
-    - [Encryption](#encryption)
+    - [Encryption](#encryption-1)
   - [S3 Event Notifications](#s3-event-notifications)
   - [Storage classes](#storage-classes)
   - [Example](#example-1)
@@ -92,15 +109,21 @@
   - [S3 Object lambda](#s3-object-lambda)
 - [CloudFront (CDN)](#cloudfront-cdn)
   - [Origins](#origins)
+  - [Amazon CloudFront Caching](#amazon-cloudfront-caching)
+  - [Path Patterns](#path-patterns)
+  - [Caching Based on Request Headers](#caching-based-on-request-headers)
   - [High availability with Origin Failover](#high-availability-with-origin-failover)
   - [Sign URL](#sign-url)
   - [Sign cookies](#sign-cookies)
   - [CloudFront origin access identity OAI](#cloudfront-origin-access-identity-oai)
   - [Cloudfront OAC](#cloudfront-oac)
   - [Origin response trigger](#origin-response-trigger)
+  - [CloudFront SSL/TLS](#cloudfront-ssltls)
+  - [Lambda@Edge](#lambdaedge)
   - [Example static website](#example-static-website)
 - [Route 53](#route-53)
   - [Hosted zones](#hosted-zones)
+  - [CNAME vs Alias Records](#cname-vs-alias-records)
   - [Migration to/from Route 53](#migration-tofrom-route-53)
   - [Routing policies](#routing-policies)
     - [Simple](#simple)
@@ -111,6 +134,10 @@
     - [Multivalue Routing Policy](#multivalue-routing-policy)
     - [Geo proximity route policy](#geo-proximity-route-policy)
     - [IP-Based Routing Policy](#ip-based-routing-policy)
+  - [Route 53 Resolver](#route-53-resolver)
+    - [Outbound Endpoints](#outbound-endpoints)
+    - [Inbound Endpoints](#inbound-endpoints)
+- [AWS Global Accelerator](#aws-global-accelerator)
 - [CloudFormation](#cloudformation)
   - [Nested stacks](#nested-stacks)
   - [Examples](#examples-1)
@@ -174,6 +201,7 @@
   - [connect on-premises data center or office](#connect-on-premises-data-center-or-office)
     - [Virtual Private Gateway](#virtual-private-gateway)
     - [AWS Direct Connect](#aws-direct-connect)
+      - [AWS Direct connect + VPN](#aws-direct-connect--vpn)
       - [AWS Direct connect gateway](#aws-direct-connect-gateway)
     - [AWS Transit Gateway](#aws-transit-gateway)
   - [VPN CloudHub architecture pattern](#vpn-cloudhub-architecture-pattern)
@@ -244,7 +272,7 @@
     - [Logging](#logging)
   - [Lambda in a VPC](#lambda-in-a-vpc)
   - [Lambda Function as a Target for an ALB](#lambda-function-as-a-target-for-an-alb)
-  - [Security](#security-1)
+  - [Security](#security-2)
   - [Best practicies](#best-practicies)
   - [Servless application repository](#servless-application-repository)
   - [Example pricing](#example-pricing)
@@ -1169,35 +1197,111 @@ You are limited to running up to a total of 20 On-Demand instances across the in
 ![](images/ec2_billing_3.png)
 
 
+# Block and file storage
 
-# EBS Elastic block storage
-К каждому инстансу ec2 подключается volume который можно расширять по мере необходимости. 
-Но он доступн в один момент времени только для одного инстанса. Можно делать периодические снепшоты с volume, т.е слепки файловой системы. Отличается от создание образов на основе инстанса т.к сохраняет только файловую систему.
+## EBS Elastic block storage
 
 Volumes attaches over network. It is not physical storage on the Ec2 instances. It is network block storage. 
 
-EBS volumes exists within AZ. And automatically replecated within the AZ
+EBS volumes exists within AZ. And automatically replicated within the AZ
 
-There are several types of EBS volumes.
+![](images/ebs_2.png)
+
+![](images/ebs_3.png)
+
+- Default volume created with a new EC2 instance, but it fade away after termination of the instance. 
+- EBS volume data persists independently of the life of the instance
+- EBS volumes do not need to be attached to an instance
+- You can attach multiple EBS volumes to an instance
+- You can use multi-attach to attach a volume to multiple instances but with some constraints
+- EBS volumes must be in the same AZ as the instances they are attached to
+- Root EBS volumes are deleted on termination by default
+- Extra non-boot volumes are not deleted on termination by default
 
 ![Volume view](images/ebs_1.png)
 
-Instance store is attached physically to EC2 instance but it is not persisent. They come with some instance types. They offer extreamely high performance. 
+### Types of storage
+
+There are several types of EBS volumes.
+
+![](images/ebs_4.png)
+
+![](images/ebs_5.png)
+
+### Snapshots
 
 It is possible to create snaphots of the EBS volumes. Actually it saved on the S3 - outside of the AZ of volume and instance. Each shaphost is incremental, it saves only changes between versions. 
 
-Default volume created with a new EC2 instance, but it fade away after termination of the instance. 
+![](images/ebs_6.png)
+
+it is possible to create an AMI from snapshot 
+
+![](images/ebs_7.png)
+
+### Encryption
 
 Amazon EBS volumes are not encrypted by default without additional configuration.but can be encrypted for all current generation instance types and specific previous generation instance types. 
 
+![](images/ebs_8.png)
 
-# EFS Elastic file system
+![](images/ebs_9.png)
+
+### Amazon Data Lifecycle Manager (DLM)
+
+- DLM automates the creation, retention, and deletion of EBS snapshots and EBS-backed AMIs
+- DLM helps with the following:
+  - Protects valuable data by enforcing a regular backup schedule
+  - Create standardized AMIs that can be refreshed at regular intervals
+  - Retain backups as required by auditors or internal compliance
+  - Reduce storage costs by deleting outdated backups
+  - Create disaster recovery backup policies that back up data to isolated accounts
+
+### Using RAID with EBS
+
+- RAID stands for Redundant Array of Independent disks
+- Not provided by AWS, you must configure through your operating system
+- RAID 0 and RAID 1 are potential options on EBS
+- RAID 5 and RAID 6 are not recommended by AWS
+
+#### RAID 0
+
+- RAID 0 is used for striping data across disks (performance):
+- Use 2 or more disks
+- If one disk fails, the entire RAID set fails
+
+#### RAID 1
+- RAID 1 is used for mirroring data across disks (redundancy / fault tolerance):
+- If one disk fails, the other disk is still working
+- Data gets sent to 2 EBS volumes at the same time
+
+## Instance store
+
+![](images/ebs_11.png)
+
+
+- Instance store volumes are high performance local disks that are physically attached to the host computer on which an EC2 instance runs
+- Instance stores are ephemeral which means the data is lost when powered off (non-persistent)
+- Instance stores are ideal for temporary storage of information that changes frequently, such as buffers, caches, or scratch data
+- Instance store volume root devices are created from AMI templates stored on S3
+- Instance store volumes cannot be detached/reattached
+
+## EFS Elastic file system
+
+![](images/efs_14.png)
+
+![](images/efs_15.png)
+
 Можно создать общую файловую систему, которую можно разделять между инстансами ec2.
 Итого имеем 2 инстанса, хотим сделать общую папку между ними. But only within one region and only for linux instances using NFS protocol. (/efs-mnt)  
 
 it is possible connect on-premice data center to EFS using direct connect or VPN
 
-## Using Amazon EFS with Lambda
+### Security 
+
+![](images/efs_16.png)
+
+
+### Using Amazon EFS with Lambda
 
 Lambda integrates with Amazon Elastic File System (Amazon EFS) to support secure, shared file system access for Lambda applications. You can configure functions to mount a file system during initialization with the NFS protocol over the local network within a VPC. Lambda manages the connection and encrypts all traffic to and from the file system.
 
@@ -1207,7 +1311,7 @@ Amazon EFS supports file locking to prevent corruption if multiple functions try
 
 Amazon EFS provides options to customize your file system based on your application's need to maintain high performance at scale. There are three primary factors to consider: the number of connections, throughput (in MiB per second), and IOPS.
 
-## Example
+### Example
 ![Shared folder via EFS](images/efs_1.png)
 
 Создадим файловую систему через efs
@@ -1253,6 +1357,72 @@ sudo mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,ret
 
 теперь можем шарить файлы между инстансами
 ![Shared folder via EFS](images/efs_13.png)
+
+## Amazon FSx
+
+- Amazon FSx provides fully managed thirdparty file systems
+- Amazon FSx provides you with two file systems to choose from:
+  - Amazon FSx for Windows File Server for Windows-based applications
+  - Amazon FSx for Lustre for compute-intensive workloads
+
+### Amazon FSx for Windows File Server
+
+- Provides a fully managed native Microsoft Windows file system
+- Full support for the SMB protocol, Windows NTFS, and Microsoft Active Directory (AD) integration
+- Supports Windows-native file system features:
+  - Access Control Lists (ACLs), shadow copies, and user quotas.
+  - NTFS file systems that can be accessed from up to thousands of compute instances using the SMB protocol
+- High availability: replicates data within an Availability Zone (AZ)
+- Multi-AZ: file systems include an active and standby file server in separate AZs
+
+![](images/fsx_1.png)
+
+### Amazon FSx for Lustre
+
+- High-performance file system optimized for fast processing of workloads such as:
+  - Machine learning
+  - High performance computing (HPC)
+  - Video processing
+  - Financial modeling
+  - Electronic design automation (EDA)
+- Works natively with S3, letting you transparently access your S3 objects as files
+- Your S3 objects are presented as files in your file system, and you can write your results back to S3
+- Provides a POSIX-compliant file system interface
+
+![](images/fsx_2.png)
+
+## AWS Storage Gateway
+
+![](images/storage_gateway_1.png)
+
+### File Gateway
+
+![](images/storage_gateway_2.png)
+
+- File gateway provides a virtual on-premises file server
+- Store and retrieve files as objects in Amazon S3
+- Use with on-premises applications, and EC2-based applications that need file storage in S3 for object based workloads
+- File gateway offers SMB or NFS-based access to data in Amazon S3 with local caching
+
+### Volume Gateway
+
+![](images/storage_gateway_3.png)
+
+- The volume gateway supports block-based volumes
+- Block storage – iSCSI protocol
+- **Cached Volume mode** – the entire dataset is stored on S3 and a cache of the most frequently accessed data is cached on-site
+- **Stored Volume mode** – the entire dataset is stored on-site and is asynchronously backed up to S3 (EBS point-in-time snapshots). Snapshots are incremental and compressed
+
+### Tape Gateway
+
+![](images/storage_gateway_4.png)
+
+- Used for backup with popular backup software
+- Each gateway is preconfigured with a media changer and tape drives. Supported by NetBackup, Backup Exec, Veeam etc.
+- When creating virtual tapes, you select one of the following sizes: 100 GB, 200 GB, 400 GB, 800 GB, 1.5 TB, and 2.5 TB
+- A tape gateway can have up to 1,500 virtual tapes with a maximum aggregate capacity of 1 PB
+- All data transferred between the gateway and AWS storage is encrypted using SSL
+- All data stored by tape gateway in S3 is encrypted server-side with Amazon S3-Managed Encryption Keys (SSE-S3)
 
 # S3 Simple storage service
 
@@ -1828,6 +1998,33 @@ Origins can be
 - Elastic Load Balancer,
 - Route 53 – can also be external (non-AWS).
 
+## Amazon CloudFront Caching
+
+![](images/cloudfront_13.png)
+
+![](images/cloudfront_14.png)
+
+- You can define a maximum Time To Live (TTL) and a default TTL
+- TTL is defined at the behavior level
+- This can be used to define different TTLs for different file types (e.g. png vs jpg)
+- After expiration, CloudFront checks the origin for any new requests (check the file is the latest version)
+- Headers can be used to control the cache:
+  - **Cache-Control max-age=(seconds)** - specify how long before CloudFront gets the object again from the origin server
+  - **Expires** – specify an expiration date and time
+
+## Path Patterns
+
+![](images/cloudfront_15.png)
+
+## Caching Based on Request Headers
+
+- You can configure CloudFront to forward headers in the viewer request to the origin
+- CloudFront can then cache multiple versions of an object based on the values in one or more request headers
+- Controlled in a behavior to do one of the following:
+   - Forward all headers to your origin (objects are not cached)
+  - Forward a whitelist of headers that you specify
+  - Forward only the default headers (doesn’t cache objects based on values in request headers)
+
 ## High availability with Origin Failover
 
 - Can set up CloudFront with origin failover for scenarios that require high availability.
@@ -1869,6 +2066,26 @@ Some common scenarios for updating HTTP responses include the following:
    • Changing the status to set an HTTP 301 or HTTP 302 status code, to redirect the user to another website when an origin returns an error status code (4xx or 5xx)
 
 When you're working with the HTTP response, Lambda@Edge does not expose the body that is returned by the origin server to the origin-response trigger. You can generate a static content body by setting it to the desired value, or remove the body inside the function by setting the value to be empty. If you don't update the body field in your function, the original body returned by the origin server is returned back to viewer.
+
+## CloudFront SSL/TLS
+
+![](images/cloudfront_16.png)
+
+![](images/cloudfront_17.png)
+
+## Lambda@Edge
+
+- Run Node.js and Python Lambda functions to customize the content CloudFront delivers
+- Executes functions closer to the viewer
+- Can be run at the following points
+  - After CloudFront receives a request from a viewer (viewer request)
+  - Before CloudFront forwards the request to the origin (origin request)
+  - After CloudFront receives the response from the origin (origin response)
+  - Before CloudFront forwards the response to the viewer (viewer response)
+
+![](images/cloudfront_18.png)
+
+
 
 ## Example static website 
 
@@ -1913,6 +2130,10 @@ A hosted zone represents a set of records belonging to a domain
 
 ![](images/route53_5.png)
 
+## CNAME vs Alias Records
+
+![](images/route53_17.png)
+
 ## Migration to/from Route 53
 
 - You can migrate from another DNS provider and can import records
@@ -1956,6 +2177,22 @@ A hosted zone represents a set of records belonging to a domain
 ### IP-Based Routing Policy
 
 ![](images/route53_14.png)
+
+## Route 53 Resolver
+
+### Outbound Endpoints
+
+![](images/route53_15.png)
+
+### Inbound Endpoints
+
+![](images/route53_16.png)
+
+# AWS Global Accelerator
+
+![](images/global_ax_1.png)
+
+
 
 # CloudFormation
 
@@ -2890,7 +3127,11 @@ AWS Direct Connect Benefits:
 - 100 Gbps is now featuring in select locations
 - DX Connections are NOT encrypted!
 - Use an **IPSec S2S VPN connection** over a VIF to add encryption in transit
-)
+
+#### AWS Direct connect + VPN
+
+![](images/dx_8.png)
+
 
 #### AWS Direct connect gateway
 
@@ -2916,6 +3157,7 @@ with DX Gateway
 
 ![](images/vpn_3.png)
 
+![](images/vpn_6.png)
 
 ## VPC Flow logs
 
