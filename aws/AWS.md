@@ -276,7 +276,6 @@
   - [Best practicies](#best-practicies)
   - [Servless application repository](#servless-application-repository)
   - [Example pricing](#example-pricing)
-  - [Database proxy for Amazon RDS](#database-proxy-for-amazon-rds)
   - [Spring cloud functions](#spring-cloud-functions)
     - [Main idea.](#main-idea)
     - [documentations and examples](#documentations-and-examples)
@@ -333,6 +332,12 @@
     - [DAX vs ElastiCache](#dax-vs-elasticache)
   - [Amazon DynamoDB Global Tables](#amazon-dynamodb-global-tables)
   - [Amazon DynamoDB Encryption Client](#amazon-dynamodb-encryption-client)
+- [Amazon RedShift (Data Warehouse)](#amazon-redshift-data-warehouse)
+- [Amazon Elastic Map Reduce (EMR)](#amazon-elastic-map-reduce-emr)
+- [Amazon DocumentDB (MongoDB)](#amazon-documentdb-mongodb)
+- [Amazon Keyspaces (Apache Cassandra)](#amazon-keyspaces-apache-cassandra)
+- [Amazon Neptune](#amazon-neptune)
+- [Amazon Quantum Ledger Database](#amazon-quantum-ledger-database)
 - [SQS](#sqs)
   - [Queue types](#queue-types)
     - [Standart Queue](#standart-queue)
@@ -399,10 +404,13 @@
     - [create fargate cluster and service](#create-fargate-cluster-and-service)
     - [codedeploy application and pipeline](#codedeploy-application-and-pipeline)
     - [implement blue/green update](#implement-bluegreen-update)
+  - [AppRunner](#apprunner)
 - [EKS](#eks)
   - [Amazon EKS Auto Scaling](#amazon-eks-auto-scaling)
   - [Amazon EKS Pod Networking](#amazon-eks-pod-networking)
   - [Amazon EKS and Elastic Load Balancing](#amazon-eks-and-elastic-load-balancing)
+  - [Amazon EKS Distro](#amazon-eks-distro)
+  - [Amazon ECS and EKS Anywhere](#amazon-ecs-and-eks-anywhere)
 - [Copilot](#copilot)
 - [AWS CI/CD Tools](#aws-cicd-tools)
   - [Code Commit](#code-commit)
@@ -451,7 +459,12 @@
     - [create manual snapshot](#create-manual-snapshot)
     - [create multi-AZ replicas](#create-multi-az-replicas)
   - [Amazon Aurora](#amazon-aurora)
+    - [Replicas](#replicas)
+    - [Global Database](#global-database)
+    - [Multi-master](#multi-master)
+    - [Aurora Serverless](#aurora-serverless)
   - [Amazon RDS Security](#amazon-rds-security)
+  - [Database proxy for Amazon RDS](#database-proxy-for-amazon-rds)
 - [Amazon ElastiCache](#amazon-elasticache)
   - [Amazon ElastiCache Use Cases](#amazon-elasticache-use-cases)
   - [Amazon ElastiCache Scalability](#amazon-elasticache-scalability)
@@ -479,6 +492,7 @@
   - [AWS Glue](#aws-glue)
 - [AWS CDK](#aws-cdk)
 - [AWS AppConfig](#aws-appconfig)
+- [AWS Config](#aws-config)
 - [Amazon CloudWatch](#amazon-cloudwatch)
   - [Use cases / benefits include:](#use-cases--benefits-include)
   - [Features](#features-2)
@@ -534,6 +548,15 @@
 - [AWS Resource Access Manager](#aws-resource-access-manager)
   - [Key benefits:](#key-benefits)
 - [AWS Macie](#aws-macie)
+- [Amazon Timestream](#amazon-timestream)
+- [AWS Data Exchange](#aws-data-exchange)
+- [AWS Data Pipeline](#aws-data-pipeline)
+- [AWS Lake Formation](#aws-lake-formation)
+  - [What is Data Lake?](#what-is-data-lake)
+  - [Data lake vs Data Warehouse](#data-lake-vs-data-warehouse)
+  - [Lake Formation](#lake-formation)
+- [Amazon Managed Streaming for Apache Kafka (MSK)](#amazon-managed-streaming-for-apache-kafka-msk)
+- [AWS OpsWorks](#aws-opsworks)
 
 # AWS Certification
 
@@ -2228,6 +2251,8 @@ A target account is the account into which you create update delete one or more 
 Nested stacks allow re-use of CloudFormation code for common use cases
 
 Create a standart template for each common use case and reference it from within your CloudFormation template
+
+![](images/cloudformation_01.png)
 
 ## Examples
 
@@ -4598,16 +4623,6 @@ Now let’s look back to our web API. Let’s say we set the web API Lambda func
 
 In other words, we need to spend $27/month to handle 10 requests/second average, and this system could happily could peak to 10x that rate, without breaking a sweat (or increasing the costs).
 
-## Database proxy for Amazon RDS
-
-RDS Proxy acts as an intermediary between your application and an RDS database. RDS Proxy establishes and manages the necessary connection pools to your database so that your application creates fewer database connections.
-
-You can use RDS Proxy for any application that makes SQL calls to your database. But in the context of serverless, we focus on how this improves the Lambda experience. The proxy handles all database traffic that normally flows from your Lambda functions directly to the database.
-
-Your Lambda functions interact with RDS Proxy instead of your database instance. It handles the connection pooling necessary for scaling many simultaneous connections created by concurrent Lambda functions. This allows your Lambda applications to reuse existing connections, rather than creating new connections for every function invocation.
-
-The RDS Proxy scales automatically so that your database instance needs less memory and CPU resources for connection management. It also uses warm connection pools to increase performance. With RDS Proxy, you no longer need code that handles cleaning up idle connections and managing connection pools. Your function code is cleaner, simpler, and easier to maintain.
-
 ## Spring cloud functions
 
 ### Main idea.
@@ -6642,6 +6657,83 @@ we need to add new attibute (column) with expiry date with linux-epoch time. And
 
 In addition to encryption at rest, which is a server-side encryption feature, AWS provides the Amazon DynamoDB Encryption Client. This client-side encryption library enables you to protect your table data before submitting it to DynamoDB. With server-side encryption, your data is encrypted in transit over an HTTPS connection, decrypted at the DynamoDB endpoint, and then re-encrypted before being stored in DynamoDB. Client-side encryption provides end-to-end protection for your data from its source to storage in DynamoDB.
 
+# Amazon RedShift (Data Warehouse)
+
+- Amazon Redshift is a fast, fully managed data warehouse
+- Analyze data using standard SQL and existing Business Intelligence (BI) tools
+- RedShift is a SQL based data warehouse used for analytics applications
+- RedShift is a relational database that is used for Online Analytics Processing (OLAP) use cases
+- RedShift uses Amazon EC2 instances, so you must choose an instance family/type
+- RedShift always keeps three copies of your data
+- RedShift provides continuous/incremental backups
+
+![](images/redshift_1.png)
+
+![](images/redshift_2.png)
+
+![](images/redshift_3.png)
+
+RedShift Use Cases
+- Perform complex queries on massive collections of structured and semi-structured data and get fast performance
+- Frequently accessed data that needs a consistent, highly structured format
+- Use Spectrum for direct access of S3 objects in a data lake
+- Managed data warehouse solution with:
+  - Automated provisioning, configuration and patching
+  - Data durability with continuous backup to S3
+  - Scales with simple API calls
+  - Exabyte scale query capability
+
+# Amazon Elastic Map Reduce (EMR)
+
+- Managed cluster platform that simplifies running big data frameworks including Apache Hadoop and Apache Spark
+- Used for processing data for analytics and business intelligence
+- Can also be used for transforming and moving large amounts of data
+- Performs extract, transform, and load (ETL) functions
+
+![](images/emr_1.png)
+
+# Amazon DocumentDB (MongoDB)
+
+- Amazon DocumentDB provides MongoDB compatibility
+- It is a database service that is purpose-built for JSON data management at scale
+- Fully managed service
+- Storage scales automatically up to 64 TB without any impact to your application
+- Supports millions of requests per second with up to 15 low latency read replicas
+- Designed for 99.99% availability and replicates six copies of your data across three AZs
+- Can migrate from MongoDB using the AWS Database Migration Service (AWS DMS)
+
+# Amazon Keyspaces (Apache Cassandra)
+
+- A scalable, highly available, and managed Apache Cassandra–compatible database service
+- Keyspaces enables you to use the Cassandra Query Language (CQL) API code
+- Keyspaces is serverless and fully managed
+- Scales automatically in response to application traffic
+- Can serve thousands of requests per second with virtually unlimited throughput and storage
+- Consistent, single-digit-millisecond response times at any scale
+- 99.99% availability SLA within an AWS Region
+
+# Amazon Neptune
+
+- Fully managed graph database service
+- Build and run identity, knowledge, fraud graph, and other applications
+- Deploy high performance graph applications using popular open-source APIs including:
+  - Gremlin
+  - openCypher
+  - SPARQL
+- Offers greater than 99.99% availability
+- Storage is fault-tolerant and self-healing
+- DB volumes grow in increments of 10 GB up to a maximum of 64 TB
+- Create up to 15 database read replicas
+
+# Amazon Quantum Ledger Database
+
+- Amazon QLDB is a fully managed ledger database that provides a transparent, immutable, and cryptographically verifiable transaction log
+- Amazon QLDB has a built-in immutable journal that stores an accurate and sequenced entry of every data change
+- The journal is append-only, meaning that data can only be added to a journal, and it cannot be overwritten or deleted
+- Amazon QLDB uses cryptography to create a concise summary of your change history
+- Generated using a cryptographic hash function (SHA-256)
+- Serverless and offers automatic scalability
+
 # SQS
 
 ![](images/sqs_1.png)
@@ -7741,6 +7833,10 @@ state after switching
 
 ![](images/lab_002.png)
 
+## AppRunner
+
+![](images/app_runner_1.png)
+
 # EKS
 
 ![](images/eks_1.png)
@@ -7785,6 +7881,21 @@ Workload Auto Scaling:
 - In the past, the Kubernetes network load balancer was used for instance targets, but the AWS Load balancer Controller was used for IP targets
 -  With the AWS Load Balancer Controller version 2.3.0 or later, you can create NLBs using either target type
   
+## Amazon EKS Distro
+
+- Amazon EKS Distro is a distribution of Kubernetes with the same dependencies as Amazon EKS
+- Allows you to manually run Kubernetes clusters anywhere
+- EKS Distro includes binaries and containers of open-source Kubernetes, etcd, networking, and storage plugins, tested for compatibility
+- You can securely access EKS Distro releases as open source on GitHub or within AWS via Amazon S3 and Amazon ECR
+- Amazon EKS Distro alleviates the need to track updates, determine compatibility, and standardize on a common Kubernetes version across distributed teams
+- You can create Amazon EKS Distro clusters in AWS on Amazon EC2 and on your own on-premises hardware using the tooling of your choice
+
+## Amazon ECS and EKS Anywhere
+
+- Run ECS or EKS on customer-managed infrastructure, supported by AWS
+- Customers can run Amazon ECS/EKS Anywhere on their own on-premises infrastructure on bare metal servers
+- You can also deploy ECS/EKS Anywhere using VMware vSphere
+
 # Copilot 
 
 - Command line interface for launching and managing containers
@@ -8566,6 +8677,8 @@ RDS supports the following database engines:
 - Read replicas option for read heavy workloads (scales out for reads/queries only)
 - Disaster recovery with Multi AZ option
 
+![](images/rds_0001.png)
+
 ## Amazon RDS Backup and Recovery
 
 ### Automated Backups
@@ -8655,15 +8768,13 @@ recovery and continuous backup to S3
 
 **DB compatibility**. Compatible with existing MySQL and PostgreSQL open source databases 
 
+### Replicas
+
 **Aurora Replicas** In-region read scaling and failover target up to 15 (can use Auto Scaling)
 
 **MySQL Read Replicas** Cross-region cluster with read scaling and failover target up to 5 (each can have up to 15 Aurora Replicas)
 
-**Global Database** Cross-region cluster with read scaling (fast replication / low latency reads). Can remove secondary and promote
-
-**Multi-Master** Scales out writes within a region. In preview currently and will not appear on the exam
-
-**Serverless** On-demand, autoscaling configuration for Amazon Aurora does not support read replicas or public IPs (can only access through VPC or Direct Connect not VPN)
+![](images/aurora_1.png)
 
 | Feature                                         | Aurora Replica                | MySQL Replica              |
 |-------------------------------------------------|-------------------------------|-----------------------------|
@@ -8675,6 +8786,31 @@ recovery and continuous backup to S3
 | Automated failover                              | Yes                           | No                         |
 | Support for user-defined replication delay      | No                            | Yes                        |
 | Support for different data or schema vs. primary| No                            | Yes                        |
+
+### Global Database
+
+**Global Database** Cross-region cluster with read scaling (fast replication / low latency reads). Can remove secondary and promote
+
+![](images/aurora_2.png)
+
+### Multi-master
+
+**Multi-Master** Scales out writes within a region. In preview currently and will not appear on the exam
+
+![](images/aurora_3.png)
+
+### Aurora Serverless
+
+**Serverless** On-demand, autoscaling configuration for Amazon Aurora does not support read replicas or public IPs (can only access through VPC or Direct Connect not VPN)
+
+![](images/aurora_4.png)
+
+- Infrequently used applications
+- New applications
+- Variable workloads
+- Unpredictable workloads
+- Development and test databases
+- Multi-tenant applications
 
 ## Amazon RDS Security
 
@@ -8695,6 +8831,18 @@ recovery and continuous backup to S3
 - You can't restore an unencrypted backup or snapshot to an encrypted DB instance
 
 ![](images/rds_009.png)
+
+## Database proxy for Amazon RDS
+
+RDS Proxy acts as an intermediary between your application and an RDS database. RDS Proxy establishes and manages the necessary connection pools to your database so that your application creates fewer database connections.
+
+You can use RDS Proxy for any application that makes SQL calls to your database. But in the context of serverless, we focus on how this improves the Lambda experience. The proxy handles all database traffic that normally flows from your Lambda functions directly to the database.
+
+Your Lambda functions interact with RDS Proxy instead of your database instance. It handles the connection pooling necessary for scaling many simultaneous connections created by concurrent Lambda functions. This allows your Lambda applications to reuse existing connections, rather than creating new connections for every function invocation.
+
+The RDS Proxy scales automatically so that your database instance needs less memory and CPU resources for connection management. It also uses warm connection pools to increase performance. With RDS Proxy, you no longer need code that handles cleaning up idle connections and managing connection pools. Your function code is cleaner, simpler, and easier to maintain.
+
+![](images/rds_proxy_1.png)
 
 # Amazon ElastiCache
 
@@ -8838,6 +8986,8 @@ The Kinesis Client Library (KCL) helps you consume and process data from a Kines
 ## Amazon Kinesis Data Streams
 
 ![](images/kinesis_5.png)
+
+up to 1000 PUT records per seconds per shard.
 
 ## Kinesis Data Firehose
 
@@ -9021,6 +9171,18 @@ Deployment strategies:
 - `AppConfig.Linear50PercentEvery30Seconds` 50% of targets every 30 seconds
 
 AWS AppConfig will automatically encrypt data at rest using AWS owned keys and AWS Key Management Service (KMS). This layer cannot be disabled or altered by the customer. The customer can add a second layer of encryption protection that they can control and manage using customer managed keys.
+
+# AWS Config
+
+![](images/config_1.png)
+
+
+- Evaluate your AWS resource configurations for desired settings
+- Get a snapshot of the current configurations of resources that are associated with your AWS account
+- Retrieve configurations of resources that exist in your account
+- Retrieve historical configurations of one or more resources
+- Receive a notification whenever a resource is created, modified, or deleted
+- View relationships between resources
 
 # Amazon CloudWatch
 
@@ -9659,16 +9821,38 @@ The IAM role must be correct to send traces to X-Ray.
 # AWS Resource Access Manager
 
 - AWS Resource Access Manager (RAM) is a service that enables you to share AWS resources easily and securely with any AWS account or within your AWS Organization.
-- You can share:
-  - AWS Transit Gateways
-  - Subnets
-  - AWS License Manager configurations 
-  - Amazon Route 53 Resolver rules resources with RAM.
+Shares resources:
+- Across AWS accounts
+- Within AWS Organizations or OUs
+- IAM roles and IAM users
+- Resource shares are created with:
+- The AWS RAM Console
+- AWS RAM APIs
+- AWS CLI
+- AWS SDKs
+
+RAM can be used to share:
+- AWS App Mesh
+- Amazon Aurora
+- AWS Certificate Manager Private Certificate Authority
+- AWS CodeBuild
+- Amazon EC2
+- EC2 Image Builder
+- AWS Glue
+- AWS License Manager
+- AWS Network Firewall
+- AWS Outposts
+- Amazon S3 on Outposts
+- AWS Resource Groups
+- Amazon Route 53
+- AWS Systems Manager Incident Manager
+- Amazon VPC
+
 - RAM eliminates the need to create duplicate resources in multiple accounts, reducing the operational overhead of managing those resources in every single account you own.
 - You can create resources centrally in a multi-account environment, and use RAM to share those resources across accounts in three simple steps:
   1. Create a Resource Share.
-  1. Specify resources.
-  1. Specify accounts.
+  2. Specify resources.
+  3. Specify accounts.
 - RAM is available at no additional charge.
 
 
@@ -9681,4 +9865,70 @@ The IAM role must be correct to send traces to X-Ray.
 # AWS Macie
 
 Amazon Macie is a fully managed data privacy and security service that uses machine learning and pattern matching to discover and protect sensitive data in AWS, such as PII. This includes being able to scan CloudWatch logs for PII
+
+# Amazon Timestream
+
+- Time series database service for IoT and operational applications
+- Faster and cheaper than relational databases
+- Keeps recent data in memory and moves historical data to a cost optimized storage tier based upon user defined policies
+- Serverless and scales automatically
+
+# AWS Data Exchange
+
+- AWS Data Exchange is a data marketplace with over 3,000 products from 250+ providers
+- AWS Data Exchange supports Data Files, Data Tables, and Data APIs
+- Consume directly into data lakes, applications, analytics, and machine learning models
+- Automatically export new or updated data sets to Amazon S3
+- Query data tables with AWS Data Exchange for Amazon Redshift
+- Use AWS-native authentication and governance, AWS SDKs, and consistent API documentation
+
+![](images/data_exchange_1.png)
+
+# AWS Data Pipeline
+
+- AWS Data Pipeline is a managed ETL (Extract-Transform-Load) service
+- Process and move data between different AWS compute and storage services
+- Data sources can also be on-premises
+- Data can be processed and transformed
+- Results can be loaded to services such as Amazon S3, Amazon RDS, Amazon DynamoDB, and Amazon EMR
+
+![](images/data_pipeline_1.png)
+
+# AWS Lake Formation 
+
+## What is Data Lake?
+
+![](images/data_lake_1.png)
+
+## Data lake vs Data Warehouse
+
+![](images/data_lake_2.png)
+
+## Lake Formation
+
+• AWS Lake Formation enables you to set up secure data lakes in days
+• Data can be collected from databases and object storage
+• It is saved to the Amazon S3 data lake
+• You can then clean and classify data using ML algorithms
+• Security can be applied at column, row, and cell-levels
+• The data sets can then be used through services such as Amazon Redshift, Amazon Athena, Amazon EMR for Apache Spark, and Amazon QuickSight
+• Lake Formation builds on the capabilities available in AWS Glue
+
+# Amazon Managed Streaming for Apache Kafka (MSK)
+
+- Amazon MSK is used for ingesting and processing streaming data in real-time
+- Build and run Apache Kafka applications
+- It is a fully managed service
+- Provisions, configures, and maintains Apache Kafka clusters and Apache ZooKeeper nodes
+- Security levels include:
+  - VPC network isolation
+  - AWS IAM for control-plane API authorization
+  - Encryption at rest
+  - TLS encryption in-transit
+  - TLS based certificate authentication
+  - SASL/SCRAM authentication secured by AWS Secrets Manager
+
+# AWS OpsWorks
+
+![](images/opsworks_1.png)
 
