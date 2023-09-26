@@ -572,6 +572,39 @@
 - [Amazon Inspector](#amazon-inspector)
 - [AWS GuardDuty](#aws-guardduty)
 - [AWS Shield](#aws-shield)
+- [Secure Multi-Tier Architecture](#secure-multi-tier-architecture)
+- [Migration](#migration)
+  - [AWS Application Discovery Service](#aws-application-discovery-service)
+  - [AWS Database Migration Service (DMS)](#aws-database-migration-service-dms)
+    - [AWS DMS Use Cases](#aws-dms-use-cases)
+  - [AWS Application Migration Service (MGN)](#aws-application-migration-service-mgn)
+  - [AWS DataSync](#aws-datasync)
+  - [AWS Snowball Family](#aws-snowball-family)
+    - [Ways to optimize the performance of Snowball transfers:](#ways-to-optimize-the-performance-of-snowball-transfers)
+    - [AWS Snowball Use Cases](#aws-snowball-use-cases)
+  - [The 7 Rs of Migration](#the-7-rs-of-migration)
+    - [Rehost](#rehost)
+    - [Replatform](#replatform)
+    - [Refactor](#refactor)
+- [Machine Learning](#machine-learning)
+  - [AWS Rekognition](#aws-rekognition)
+  - [Amazon Transcribe](#amazon-transcribe)
+  - [Amazon Translate](#amazon-translate)
+  - [Amazon Textract](#amazon-textract)
+  - [Amazon SageMaker](#amazon-sagemaker)
+  - [Amazon Comprehend](#amazon-comprehend)
+  - [Amazon Lex](#amazon-lex)
+  - [Amazon Polly](#amazon-polly)
+  - [Amazon Forecast](#amazon-forecast)
+  - [Amazon DevOps Guru](#amazon-devops-guru)
+    - [Benefits:](#benefits)
+  - [Amazon Elastic Transcoder](#amazon-elastic-transcoder)
+- [AWS License Manager](#aws-license-manager)
+- [Costs](#costs)
+  - [AWS Compute Optimizer](#aws-compute-optimizer)
+  - [AWS Cost Explorer](#aws-cost-explorer)
+  - [AWS Cost \& Usage Report](#aws-cost--usage-report)
+  - [AWS Price List API](#aws-price-list-api)
 
 # AWS Certification
 
@@ -10094,3 +10127,267 @@ Host Assessments
   - Standard – no cost
   - Advanced - $3k USD per month and 1 year commitment
 - Integrated with Amazon CloudFront (standard included by default)
+
+# Secure Multi-Tier Architecture
+
+![](images/security_1.png)
+
+# Migration
+
+![](images/migration_1.png)
+
+## AWS Application Discovery Service
+
+Collects server hostnames, IP addresses, MAC addresses, as well as resource allocation and utilization details of key resources including CPU, network, memory, and disk
+
+![](images/migration_2.png)
+
+![](images/migration_3.png)
+
+## AWS Database Migration Service (DMS)
+
+![](images/migration_4.png)
+
+### AWS DMS Use Cases
+
+- Cloud to Cloud – EC2 to RDS, RDS to RDS, RDS to Aurora
+- On-Premises to Cloud
+- Homogeneous migrations – Oracle to Oracle, MySQL to RDS MySQL, Microsoft SQL to RDS for SQL Server
+- Heterogeneous migrations – Oracle to Aurora, Oracle to PostgreSQL, Microsoft SQL to RDS MySQL (must convert schema first with the Shema Conversion Tool (SCT))
+- Development and Test – use the cloud for dev/test workloads
+- Database consolidation – consolidate multiple source DBs to a single target DB
+- Continuous Data Replication – use for DR, dev/test, single source multi-target or multi-source single target
+
+
+## AWS Application Migration Service (MGN)
+
+- Highly automated lift-and-shift (rehost) solution for migrating applications to AWS
+- Utilizes continuous, block-level replication and enables short cutover windows measured in minutes
+- Server Migration Service (SMS) utilizes incremental, snapshot-based replication and enables cutover windows measured in hours
+- AWS recommend using AWS MGN instead of SMS
+- Integrates with the Cloud Migration Factory for orchestrating manual processes
+- Can migrate virtual and physical servers
+
+![](images/migration_5.png)
+
+![](images/migration_6.png)
+
+## AWS DataSync
+
+- Secure, online service that automates and accelerates moving data between on premises and AWS Storage services
+- DataSync can copy data between:
+  - Network File System (NFS) shares
+  - Server Message Block (SMB) shares
+  - Hadoop Distributed File Systems (HDFS)
+  - Self-managed object storage
+  - AWS Snowcone
+  - Amazon S3 buckets
+  - Amazon Elastic File System (Amazon EFS) file systems
+  - Amazon FSx (Windows, Lustre, OpenZFS, and NetApp ONTAP)
+
+![](images/migration_7.png)
+
+## AWS Snowball Family
+
+- **AWS Snowball** and **Snowmobile** are used for migrating large volumes of data to AWS
+- **Snowball Edge Compute Optimized**
+  - Provides block and object storage and optional GPU
+  - Use for data collection, machine learning and processing, and storage in environments with intermittent connectivity (edge use cases)
+- **Snowball Edge Storage Optimized**
+  - Provides block storage and Amazon S3-compatible object storage
+  - Use for local storage and large-scale data transfer
+- **Snowcone**
+  - Small device used for edge computing, storage and data transfer
+  - Can transfer data offline or online with AWS DataSync agent
+
+- Uses a secure storage device for physical transportation
+- Snowball Client is software that is installed on a local computer and is used to identify, compress, encrypt, and transfer data
+- Uses 256-bit encryption (managed with the AWS KMS) and tamper-resistant enclosures with TPM
+- Snowball (80TB) (50TB ) “petabyte scale”
+- Snowball Edge (100TB) “petabyte scale”
+- Snowmobile – “exabyte scale” with up to 100PB per Snowmobile
+
+### Ways to optimize the performance of Snowball transfers:
+
+1. Use the latest Mac or Linux Snowball client
+2. Batch small files together
+3. Perform multiple copy operations at one time
+4. Copy from multiple workstations
+5. Transfer directories, not files
+
+### AWS Snowball Use Cases
+
+- Cloud data migration – migrate data to the cloud
+- Content distribution – send data to clients or customers
+- Tactical Edge Computing – collect data and compute
+- Machine learning – run ML directly on the device
+- Manufacturing – data collection and analysis in the factory
+- Remote locations with simple data – preprocessing, tagging, compression etc.
+  
+## The 7 Rs of Migration
+
+![](images/migration_8.png)
+
+### Rehost
+
+![](images/migration_9.png)
+
+### Replatform
+
+![](images/migration_09.png)
+
+### Refactor
+
+- Refactor – Re-architect to a cloud-native serverless architecture
+- Leverage serverless services and event-driven architecture patterns
+- Migrate servers to serverless functions or containers
+- Migrate databases to managed DBs or serverless NoSQL DBs
+- Migrate file stores to object stores or elastic file systems
+- Decouple with queues, notification services, and orchestration tools
+- May involve a large amount of development and migration effort as well as expense
+
+# Machine Learning
+
+## AWS Rekognition
+
+- Add image and video analysis to your applications
+- Identify objects, people, text, scenes, and activities in images and videos
+- Processes videos stored in an Amazon S3 bucket
+- Publish completion status to Amazon SNS Topic
+
+![](images/ml_1.png)
+
+![](images/ml_2.png)
+
+## Amazon Transcribe
+
+- Add speech to text capabilities to applications
+- Recorded speech can be converted to text before it can be used in applications
+- Uses a deep learning process called automatic speech recognition (ASR) to convert speech to text quickly and accurately
+
+## Amazon Translate
+
+- Neural machine translation service that delivers fast, high-quality, and affordable language translation
+- Uses deep learning models to deliver more accurate and more natural sounding translation
+- Localize content such as websites and applications for your diverse users
+
+## Amazon Textract
+
+- Automatically extract printed text, handwriting, and data from any document
+- Features:
+  - Optical character recognition (OCR)
+  - Identifies relationships, structure, and text
+  - Uses AI to extract text and structured data
+  - Recognizes handwriting as well as printed text
+  - Can extract from documents such as PDFs, images, forms, and tables
+  - Understands context. For example know what data to extract from a receipt or invoice
+
+## Amazon SageMaker
+
+- Helps data scientists and developers to prepare, build, train, and deploy high-quality machine learning (ML) models
+- ML development activities including:
+  - Data preparation
+  - Feature engineering
+  - Statistical bias detection
+  - Auto-ML
+  - Training and tuning
+  - Hosting
+  - Monitoring
+  - Workflows
+
+## Amazon Comprehend
+
+- Natural-language processing (NLP) service
+- Uses machine learning to uncover information in unstructured data
+- Can identify critical elements in data, including references to language, people, and places, and the text files can be categorized by relevant topics
+- In real time, you can automatically and accurately detect customer sentiment in your content
+
+## Amazon Lex
+
+- Conversational AI for Chatbots
+- Build conversational interfaces into any application using voice and text
+- Build bots to increase contact center productivity, automate simple tasks, and drive operational efficiencies across the enterprise
+
+## Amazon Polly
+
+- Turns text into lifelike speech
+- Create applications that talk, and build entirely new categories of speech-enabled products
+- Text-to-Speech (TTS) service uses advanced deep learning technologies to synthesize natural sounding human speech
+
+## Amazon Forecast
+
+![](images/ml_3.png)
+
+• Time-series forecasting service
+• Uses ML and is built for business metrics analysis
+
+## Amazon DevOps Guru
+
+- Cloud operations service for improving application operational performance and availability
+- Detect behaviors that deviate from normal operating patterns
+
+### Benefits:
+- Automatically detect operational issues
+- Resolve issues with ML-powered insights
+- Elastically scale operational analytics
+- Uses ML to reduce alarm noise
+
+## Amazon Elastic Transcoder
+
+- Transcodes video files to various formats / outputs
+- AWS Elemental MediaConvert is a new service that provides more functionality and may be better for new use cases
+- Some features are only available on Elastic Transcoder such as:
+  - WebM (VP8/VP9) input and output
+  - Animated GIF output
+  - MP3, FLAC, Vorbis, and WAV audio-only output
+  - However, MediaConvert offers more options overall
+
+# AWS License Manager
+
+- Used to manage licenses from software vendors
+- For example, manage your Microsoft, Oracle, SAP and IBM licenses
+- Centralized management of software licenses for AWS and on-premises resources
+- Can track license usage including when licensed based on virtual cores (vCPUs), sockets, or number of machines
+- Distribute, activate, and track software licenses across accounts and throughout an organization
+- Enforce limits across multiple Regions
+
+# Costs
+
+## AWS Compute Optimizer
+
+- Recommends optimal AWS resources for your workloads to reduce costs and improve performance
+- Uses machine learning to analyze historical utilization metrics
+- Offers optimization guidance for:
+  - Amazon EC2 instances
+  - Amazon EBS volumes
+  - AWS Lambda functions
+  - Results can be viewed in the console or via the CLI
+
+![](images/cost_1.png)
+
+![](images/cost_2.png)
+
+## AWS Cost Explorer
+
+- The AWS Cost Explorer is a free tool that allows you to view charts of your costs
+- You can view cost data for the past 13 months and forecast how much you are likely to spend over the next three months
+- Cost Explorer can be used to discover patterns in how much you spend on AWS resources over time and to identify cost problem areas
+- Cost Explorer can help you to identify service usage statistics such as:
+- Which services you use the most
+- View metrics for which AZ has the most traffic
+- Which linked account is used the most
+
+## AWS Cost & Usage Report
+
+- Publish AWS billing reports to an Amazon S3 bucket
+- Reports break down costs by:
+- Hour, day, month, product, product resource, tags
+- Can update the report up to three times a day
+- Create, retrieve, and delete your reports using the AWS CUR API Reference
+
+## AWS Price List API
+
+- Query the prices of AWS services
+- Price List Service API (AKA the Query API) – query with JSON
+-  AWS Price List API (AKA the Bulk API) – query with HTML
+-  Alerts via Amazon SNS when prices change
