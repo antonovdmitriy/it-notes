@@ -515,6 +515,7 @@
   - [Key Management with KMS](#key-management-with-kms)
   - [Data Encryption Scenarios](#data-encryption-scenarios)
   - [Additional Exam Tips](#additional-exam-tips)
+  - [AWS CloudHSM](#aws-cloudhsm)
   - [AWS KMS API and CLI](#aws-kms-api-and-cli)
   - [Throttling and Caching](#throttling-and-caching)
 - [AWS Certificate Manager (ACM)](#aws-certificate-manager-acm)
@@ -557,6 +558,20 @@
   - [Lake Formation](#lake-formation)
 - [Amazon Managed Streaming for Apache Kafka (MSK)](#amazon-managed-streaming-for-apache-kafka-msk)
 - [AWS OpsWorks](#aws-opsworks)
+- [Recovery](#recovery)
+  - [Recovery Point Objective (RPO)](#recovery-point-objective-rpo)
+  - [Recovery Time Objective (RTO)](#recovery-time-objective-rto)
+  - [DR Strategies (Disaster recovery)](#dr-strategies-disaster-recovery)
+- [AWS Directory Service](#aws-directory-service)
+  - [Managed Microsoft AD](#managed-microsoft-ad)
+  - [AD Connector](#ad-connector)
+  - [Simple AD](#simple-ad)
+  - [SAML 2.0 Identity Federation](#saml-20-identity-federation)
+  - [Web Identity Federation](#web-identity-federation)
+  - [IAM Identity Center](#iam-identity-center)
+- [Amazon Inspector](#amazon-inspector)
+- [AWS GuardDuty](#aws-guardduty)
+- [AWS Shield](#aws-shield)
 
 # AWS Certification
 
@@ -9299,7 +9314,6 @@ Exam tip: Encryption keys are regional.
 A KMS key consists of:
 - Alias.
 - Creation date.
-- 
 - Description.
 - Key state.
 - Key material (either customer provided or AWS provided).
@@ -9451,7 +9465,22 @@ You can perform the following key management functions in AWS KMS:
 - An `InvalidKeyId` exception when using SSM Parameter Store indicates the KMS key is not enabled
 - Make sure you know the differences between AWS managed and customer managed KMS keys and automatic vs manual rotation
 
+## AWS CloudHSM
 
+- AWS CloudHSM is a cloud-based hardware security module (HSM)
+- Generate and use your own encryption keys on the AWS Cloud
+- CloudHSM runs in your Amazon VPC
+- Uses FIPS 140-2 level 3 validated HSMs
+- Managed service and automatically scales
+- Retain control of your encryption keys - you control access (and AWS has no visibility of your encryption keys)
+
+AWS CloudHSM Use Cases
+- Offload SSL/TLS processing from web servers
+- Protect private keys for an issuing certificate authority (CA)
+- Store the master key for Oracle DB Transparent Data Encryption
+- Custom key store for AWS KMS – retain control of the HSM that protects the master keys
+
+![](images/cloudhsm_1.png)
 
 ## AWS KMS API and CLI
 
@@ -9634,6 +9663,8 @@ aws secretsmanager delete-secret --secret-id dev-db-secret
 ```
 
 # Amazon Cognito
+
+![](images/cognito_4.png)
 
 ![](images/cognito_1.png)
 
@@ -9864,7 +9895,16 @@ RAM can be used to share:
 
 # AWS Macie
 
-Amazon Macie is a fully managed data privacy and security service that uses machine learning and pattern matching to discover and protect sensitive data in AWS, such as PII. This includes being able to scan CloudWatch logs for PII
+Macie is a fully managed data security and data privacy service
+- Uses machine learning and pattern matching to discover, monitor, and help you protect your sensitive data on Amazon S3
+- Macie enables security compliance and preventive security as follows:
+  - Identify a variety of data types, including PII, Protected Health Information (PHI), regulatory documents, API keys, and secret keys
+  - Identify changes to policy and access control lists
+  - Continuously monitor the security posture of Amazon S3
+  - Generate security findings that you can view using the Macie console, AWS Security Hub, or Amazon EventBridge
+  - Manage multiple AWS accounts using AWS Organizations
+
+![](images/macie_1.png)
 
 # Amazon Timestream
 
@@ -9932,3 +9972,125 @@ Amazon Macie is a fully managed data privacy and security service that uses mach
 
 ![](images/opsworks_1.png)
 
+# Recovery
+
+![](images/recovery_1.png)
+
+## Recovery Point Objective (RPO)
+
+- Measurement of the amount of data that can be acceptably lost
+- Measured in seconds, minutes, or hours
+- Example:
+  - You can acceptably lose 2 hours of data in a database (2hr RPO)
+  - This means backups must be taken every 2 hours
+- The RPO is determined by how you take a backup of data
+
+![](images/recovery_2.png)
+
+## Recovery Time Objective (RTO)
+
+- Measurement of the amount of time it takes to restore after a disaster event
+- Measured in seconds, minutes, or hours
+- Example:
+  - The IT department expect it to take 4 hours to bring applications online after a disaster
+  - This would be an RTO of 4 hours
+- The RTO is determined by how quickly you can recover
+
+![](images/recovery_3.png)
+
+## DR Strategies (Disaster recovery)
+
+![](images/recovery_4.png)
+
+[disaster-recovery-dr-architecture 1](https://aws.amazon.com/blogs/architecture/disaster-recovery-dr-architecture-on-aws-part-iii-pilot-light-and-warm-standby/)
+
+[disaster-recovery-dr-architecture 2](https://aws.amazon.com/blogs/architecture/disaster-recovery-dr-architecture-on-aws-part-i-strategies-for-recovery-in-the-cloud/)
+
+# AWS Directory Service
+
+## Managed Microsoft AD
+
+- Fully managed AWS service
+- Best choice if you have more than 5000 users and/or need a trust relationship set up
+- Can perform schema extensions
+- Can setup trust relationships to with on-premises
+- Active Directories:
+  - On-premise users and groups can access resources in either domain using SSO
+  - Requires a VPN or Direct Connect connection
+- Can be used as a standalone AD in the AWS cloud
+
+![](images/directory_1.png)
+
+## AD Connector
+
+- Redirects directory requests to your on-premise Active Directory
+- Best choice when you want to use an existing Active  Directory with AWS services
+- AD Connector comes in two sizes:
+  - Small – designed for organizations up to 500 users
+  - Large – designed for organizations up to 5000 users
+- Requires a VPN or Direct Connect connection
+- Join EC2 instances to your on-premise AD through AD Connector
+- Login to the AWS Management Console using your on-premise AD DCs for authentication
+
+![](images/directory_2.png)
+
+## Simple AD
+
+- Inexpensive Active Directory-compatible service with common directory features
+- Standalone, fully managed, directory on the AWS cloud
+- Simple AD is generally the least expensive option
+- Best choice for less than 5000 users and don’t need advanced AD features
+- Features include:
+  - Manage user accounts / groups
+  - Apply group policies
+  - Kerberos-based SSO
+  - Supports joining Linux or Windows based EC2 instances
+
+## SAML 2.0 Identity Federation
+
+![](images/directory_3.png)
+
+## Web Identity Federation
+
+![](images/directory_4.png)
+
+## IAM Identity Center
+
+![](images/directory_5.png)
+
+# Amazon Inspector
+
+- Runs assessments that check for security exposures and vulnerabilities in EC2 instances
+- Can be configured to run on a schedule
+- Agent must be installed on EC2 for host assessments
+- Network assessments do not require an agent
+
+Network Assessments
+- Assessments: Network configuration analysis to check for ports reachable from outside the VPC
+- If the Inspector Agent is installed on your EC2 instances, the assessment also finds processes reachable on port
+- Price based on the number of instance assessments
+
+Host Assessments
+- Assessments: Vulnerable software (CVE), host hardening (CIS benchmarks), and security best practices
+- Requires an agent (auto-install with SSM Run Command)
+- Price based on the number of instance assessments
+
+# AWS GuardDuty
+
+- Intelligent threat detection service
+- Detects account compromise, instance compromise, malicious reconnaissance, and bucket compromise
+- Continuous monitoring for events across:
+  - AWS CloudTrail Management Events
+  - AWS CloudTrail S3 Data Events
+  - Amazon VPC Flow Logs
+  - DNS 
+
+# AWS Shield
+
+- AWS Shield is a managed Distributed Denial of Service (DDoS) protection service
+- Safeguards web application running on AWS with always-on detection and automatic inline mitigations
+- Helps to minimize application downtime and latency
+- Two tiers –
+  - Standard – no cost
+  - Advanced - $3k USD per month and 1 year commitment
+- Integrated with Amazon CloudFront (standard included by default)
