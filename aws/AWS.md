@@ -541,7 +541,7 @@
     - [Subsegments](#subsegments)
     - [Annotations:](#annotations)
     - [Sampling](#sampling)
-    - [Metadata:](#metadata-1)
+    - [Metadata](#metadata-1)
   - [Annotations and Filtering](#annotations-and-filtering)
   - [X-Ray Daemon](#x-ray-daemon)
   - [X-Ray SDK](#x-ray-sdk)
@@ -9833,7 +9833,7 @@ An X-Ray trace is a set of data points that share the same trace ID.
 - To provide a performant and cost-effective experience, X-Ray does not collect data for every request that is sent to an application.
 - Instead, it collects data for a statistically significant number of requests.
 
-### Metadata:
+### Metadata
 
 Key / value pairs, not indexed and not used for searching.
 
