@@ -199,7 +199,7 @@
   - [VPC Peering](#vpc-peering)
   - [Bastion](#bastion)
   - [connect on-premises data center or office](#connect-on-premises-data-center-or-office)
-    - [Virtual Private Gateway](#virtual-private-gateway)
+    - [Virtual Private Gateway + customer gateway](#virtual-private-gateway--customer-gateway)
     - [AWS Direct Connect](#aws-direct-connect)
       - [AWS Direct connect + VPN](#aws-direct-connect--vpn)
       - [AWS Direct connect gateway](#aws-direct-connect-gateway)
@@ -409,6 +409,7 @@
   - [Amazon EKS Auto Scaling](#amazon-eks-auto-scaling)
   - [Amazon EKS Pod Networking](#amazon-eks-pod-networking)
   - [Amazon EKS and Elastic Load Balancing](#amazon-eks-and-elastic-load-balancing)
+  - [EKS Logs and Metrics (CloudWatch Container Insights)](#eks-logs-and-metrics-cloudwatch-container-insights)
   - [Amazon EKS Distro](#amazon-eks-distro)
   - [Amazon ECS and EKS Anywhere](#amazon-ecs-and-eks-anywhere)
 - [Copilot](#copilot)
@@ -1459,8 +1460,10 @@ sudo mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,ret
 - Works natively with S3, letting you transparently access your S3 objects as files
 - Your S3 objects are presented as files in your file system, and you can write your results back to S3
 - Provides a POSIX-compliant file system interface
+- **It is not supported to connect Fargate to FSx for Lustre**
 
 ![](images/fsx_2.png)
+
 
 ## AWS Storage Gateway
 
@@ -1549,6 +1552,8 @@ Use S3 bucket policies if:
 - You prefer to keep access control policies in the S3 environment
 
 By adding a condition to the S3 bucket policy that requires `aws:SecureTransport`, you are mandating that all interactions with the bucket must be encrypted in transit using SSL/TLS.
+
+**You cannot add a custom SSL/TLS certificate to Amazon S3.**
 
 ## Authorization process
 
@@ -2069,6 +2074,8 @@ Origins can be
 - Elastic Load Balancer,
 - Route 53 – can also be external (non-AWS).
 
+**CloudFront cannot expose static public IP addresses.**
+
 ## Amazon CloudFront Caching
 
 ![](images/cloudfront_13.png)
@@ -2230,6 +2237,15 @@ A hosted zone represents a set of records belonging to a domain
 ![](images/route53_8.png)
 
 ### Failover Routing Policy
+
+You can use Route 53 to check the health of your resources and only return healthy resources in response to DNS queries. There are three types of DNS failover configurations:
+
+1. **Active-passive**: Route 53 actively returns a primary resource. In case of failure, Route 53 returns the backup resource. Configured using a failover policy.
+
+2. **Active-active**: Route 53 actively returns more than one resource. In case of failure, Route 53 fails back to the healthy resource. Configured using any routing policy besides failover.
+
+3. **Combination**: Multiple routing policies (such as latency-based, weighted, etc.) are combined into a tree to configure more complex DNS failover.
+
 
 ![](images/route53_9.png)
 
@@ -3171,7 +3187,7 @@ connect VPC in different Regions and accounts.
 
 If we want to set up VPN between on-premises data center and AWS we can create AWS VPN. There are two principal components to VPN : **Customer gateway** which is router and configuration in the on-premices data center. And then **Virtual Private Gateway** which is component one the AWS side. 
 
-### Virtual Private Gateway
+### Virtual Private Gateway + customer gateway
 
 ![](images/vpn_2.png)
 
@@ -6792,6 +6808,7 @@ RedShift Use Cases
 - Messages can be kept in the queue from 1 minute to 14 days
 - Default retention period is 4 days
 - Amazon SQS guarantees that your messages will be processed at least once
+- Standard queues can support up to 120,000 in flight messages
 
 ## Queue types
 
@@ -6992,6 +7009,7 @@ Amazon API Gateway supports:
 - **WebSocket APIs** deployed as a stateful frontend for an AWS service (such as Lambda or DynamoDB) or for an HTTP endpoint
 - REST APIs and HTTP APIs support authorizers for AWS Lambda, IAM, and Amazon Cognito
 - WebSocket APIs support IAM authorization and Lambda authorizers
+- put to the aws services, for example to SQS
 
 ## Feautures
 
@@ -7928,7 +7946,19 @@ Workload Auto Scaling:
   - An AWS Network Load Balancer (NLB) when you create a Kubernetes service of type `LoadBalancer`
 - In the past, the Kubernetes network load balancer was used for instance targets, but the AWS Load balancer Controller was used for IP targets
 -  With the AWS Load Balancer Controller version 2.3.0 or later, you can create NLBs using either target type
-  
+
+## EKS Logs and Metrics (CloudWatch Container Insights)
+
+Use **CloudWatch Container Insights** to collect, aggregate, and summarize metrics and logs from your containerized applications and microservices. Container Insights is available for Amazon Elastic Container Service (Amazon ECS), Amazon Elastic Kubernetes Service (Amazon EKS), and Kubernetes platforms on Amazon EC2.
+
+With Container Insights for EKS you can see the top contributors by memory or CPU, or the most recently active resources. This is available when you select any of the following dashboards in the drop-down box near the top of the page:
+
+- ECS Services
+- ECS Tasks
+- EKS Namespaces
+- EKS Services
+- EKS Pods
+
 ## Amazon EKS Distro
 
 - Amazon EKS Distro is a distribution of Kubernetes with the same dependencies as Amazon EKS
@@ -8822,6 +8852,8 @@ recovery and continuous backup to S3
 
 **MySQL Read Replicas** Cross-region cluster with read scaling and failover target up to 5 (each can have up to 15 Aurora Replicas)
 
+  - large databases with MySQL Read Replica may well take more than 10 minutes to promote.
+
 ![](images/aurora_1.png)
 
 | Feature                                         | Aurora Replica                | MySQL Replica              |
@@ -8837,7 +8869,9 @@ recovery and continuous backup to S3
 
 ### Global Database
 
-**Global Database** Cross-region cluster with read scaling (fast replication / low latency reads). Can remove secondary and promote
+Amazon Aurora Global Database is designed for globally distributed applications, allowing a single Amazon Aurora database to span multiple AWS regions. It replicates your data with no impact on database performance, enables fast local reads with low latency in each region, and provides disaster recovery from region-wide outages
+
+If your primary region suffers a performance degradation or outage, you can promote one of the secondary regions to take read/write responsibilities. An Aurora cluster can recover in less than 1 minute even in the event of a complete regional outage.
 
 ![](images/aurora_2.png)
 
@@ -10184,6 +10218,8 @@ Collects server hostnames, IP addresses, MAC addresses, as well as resource allo
   - Amazon S3 buckets
   - Amazon Elastic File System (Amazon EFS) file systems
   - Amazon FSx (Windows, Lustre, OpenZFS, and NetApp ONTAP)
+
+- **DataSync syncs one way, it is not bidirectional**
 
 ![](images/migration_7.png)
 
