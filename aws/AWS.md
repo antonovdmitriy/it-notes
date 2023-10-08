@@ -9909,42 +9909,38 @@ The IAM role must be correct to send traces to X-Ray.
 # AWS Fault Injection Simulator
 
 - AWS Fault Injection Simulator is a fully managed service for running fault injection experiments on AWS.
-
 - Makes it easier to improve an application’s performance, observability, and resiliency.
-
 - Fault injection experiments are used in chaos engineering, which is the practice of stressing an application in testing or production environments by creating disruptive events.
-
 - Fault injection experiment helps teams create the real-world conditions needed to uncover the hidden bugs, monitoring blind spots, and performance bottlenecks that are difficult to find in distributed systems.
 
 # AWS Resource Access Manager
 
 - AWS Resource Access Manager (RAM) is a service that enables you to share AWS resources easily and securely with any AWS account or within your AWS Organization.
 Shares resources:
-- Across AWS accounts
-- Within AWS Organizations or OUs
-- IAM roles and IAM users
-- Resource shares are created with:
-- The AWS RAM Console
-- AWS RAM APIs
-- AWS CLI
-- AWS SDKs
-
-RAM can be used to share:
-- AWS App Mesh
-- Amazon Aurora
-- AWS Certificate Manager Private Certificate Authority
-- AWS CodeBuild
-- Amazon EC2
-- EC2 Image Builder
-- AWS Glue
-- AWS License Manager
-- AWS Network Firewall
-- AWS Outposts
-- Amazon S3 on Outposts
-- AWS Resource Groups
-- Amazon Route 53
-- AWS Systems Manager Incident Manager
-- Amazon VPC
+  - Across AWS accounts
+  - Within AWS Organizations or OUs
+  - IAM roles and IAM users
+  - Resource shares are created with:
+  - The AWS RAM Console
+  - AWS RAM APIs
+  - AWS CLI
+  - AWS SDKs
+- RAM can be used to share:
+  - AWS App Mesh
+  - Amazon Aurora
+  - AWS Certificate Manager Private Certificate Authority
+  - AWS CodeBuild
+  - Amazon EC2
+  - EC2 Image Builder
+  - AWS Glue
+  - AWS License Manager
+  - AWS Network Firewall
+  - AWS Outposts
+  - Amazon S3 on Outposts
+  - AWS Resource Groups
+  - Amazon Route 53
+  - AWS Systems Manager Incident Manager
+  - Amazon VPC
 
 - RAM eliminates the need to create duplicate resources in multiple accounts, reducing the operational overhead of managing those resources in every single account you own.
 - You can create resources centrally in a multi-account environment, and use RAM to share those resources across accounts in three simple steps:
@@ -10013,13 +10009,13 @@ Macie is a fully managed data security and data privacy service
 
 ## Lake Formation
 
-• AWS Lake Formation enables you to set up secure data lakes in days
-• Data can be collected from databases and object storage
-• It is saved to the Amazon S3 data lake
-• You can then clean and classify data using ML algorithms
-• Security can be applied at column, row, and cell-levels
-• The data sets can then be used through services such as Amazon Redshift, Amazon Athena, Amazon EMR for Apache Spark, and Amazon QuickSight
-• Lake Formation builds on the capabilities available in AWS Glue
+- AWS Lake Formation enables you to set up secure data lakes in days
+- Data can be collected from databases and object storage
+- It is saved to the Amazon S3 data lake
+- You can then clean and classify data using ML algorithms
+- Security can be applied at column, row, and cell-levels
+- The data sets can then be used through services such as Amazon Redshift, Amazon Athena, Amazon EMR for Apache Spark, and Amazon QuickSight
+- Lake Formation builds on the capabilities available in AWS Glue
 
 # Amazon Managed Streaming for Apache Kafka (MSK)
 
@@ -10235,6 +10231,7 @@ Collects server hostnames, IP addresses, MAC addresses, as well as resource allo
 - **Snowcone**
   - Small device used for edge computing, storage and data transfer
   - Can transfer data offline or online with AWS DataSync agent
+  - You would not be able to deploy a transformation service locally to the Snowcone device as it is not optimized for compute operations.
 
 - Uses a secure storage device for physical transportation
 - Snowball Client is software that is installed on a local computer and is used to identify, compress, encrypt, and transfer data
@@ -10409,15 +10406,14 @@ Collects server hostnames, IP addresses, MAC addresses, as well as resource allo
 - You can view cost data for the past 13 months and forecast how much you are likely to spend over the next three months
 - Cost Explorer can be used to discover patterns in how much you spend on AWS resources over time and to identify cost problem areas
 - Cost Explorer can help you to identify service usage statistics such as:
-- Which services you use the most
-- View metrics for which AZ has the most traffic
-- Which linked account is used the most
+  - Which services you use the most
+  - View metrics for which AZ has the most traffic
+  - Which linked account is used the most
 
 ## AWS Cost & Usage Report
 
 - Publish AWS billing reports to an Amazon S3 bucket
-- Reports break down costs by:
-- Hour, day, month, product, product resource, tags
+- Reports break down costs by: Hour, day, month, product, product resource, tags
 - Can update the report up to three times a day
 - Create, retrieve, and delete your reports using the AWS CUR API Reference
 
