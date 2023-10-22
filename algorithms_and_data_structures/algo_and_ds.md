@@ -48,6 +48,8 @@ O(n!)
 
 Binary search is an algorithm; its input is a sorted list of elements. With binary search, you guess the middle number and eliminate half the remaining numbers every time. For any list of n, binary search will take $log_2n$ n steps to run in the worst case, whereas simple search will take n steps.
 
+![](images/Binary-search-work.gif)
+
 ```java
     int binarySearch(int arr[], int x)
     {
@@ -79,6 +81,8 @@ Binary search is an algorithm; its input is a sorted list of elements. With bina
 ## Sorting
 
 ### Selection sorting
+
+![](images/Selection-Sort-Animation.gif)
 
 ```java
 public static void sortAscending(final int[] arr) {
@@ -119,8 +123,8 @@ public static void sortDescending(final int[] arr) {
 ## Recursive
 
 When you write a recursive function, you have to tell it when to stop recursing. That’s why every recursive function has two parts: 
-- **base case** - when the function calls itself
 - **recursive case** -  when the function calls itself
+- **base case** - when the function doesn’t call itself again ... so it doesn’t go into an infinite loop.
   
   so it doesn’t go into an infinite loop.
 

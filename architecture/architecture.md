@@ -121,7 +121,6 @@ There are situations in which we may choose to sacrifice reliability in order to
 
  - If the system grows in a particular way, what are our options for coping with the growth?
  - How can we add computing resources to handle the additional load?
-- 
 - When you increase a load parameter and keep the system resources (CPU, memory, network bandwidth, etc.) unchanged, how is the performance of your system affected?
 - When you increase a load parameter, how much do you need to increase the resources if you want to keep performance unchanged?
 
