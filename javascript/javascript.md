@@ -1,11 +1,29 @@
 # Table of contents
 
 - [Table of contents](#table-of-contents)
+- [Docs](#docs)
+- [Tricks](#tricks)
+  - [Console](#console)
 - [Examples](#examples)
   - [Change internal in html tag](#change-internal-in-html-tag)
   - [Change css](#change-css)
   - [Change tag attribute](#change-tag-attribute)
   - [If JS disabled](#if-js-disabled)
+
+# Docs
+
+[docs MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
+
+# Tricks
+
+## Console
+
+to print something for debug
+```js
+console.log('hello world')
+```
+
+
 
 # Examples
 

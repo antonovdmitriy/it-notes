@@ -1,3 +1,42 @@
+
+- [Binary system](#binary-system)
+- [Data size](#data-size)
+- [Algorithms](#algorithms)
+  - [Big O notation](#big-o-notation)
+  - [Memory addresses arrays and linked list](#memory-addresses-arrays-and-linked-list)
+  - [traveling salesperson problem.](#traveling-salesperson-problem)
+  - [Search](#search)
+    - [Binary search](#binary-search)
+  - [Sorting](#sorting)
+    - [Selection sorting](#selection-sorting)
+  - [Recursive](#recursive)
+- [Dynamic programming](#dynamic-programming)
+  - [Memoization](#memoization)
+    - [Fib](#fib)
+    - [Grid traveler](#grid-traveler)
+    - [canSum](#cansum)
+    - [howSum](#howsum)
+    - [bestSum](#bestsum)
+    - [canConstruct](#canconstruct)
+    - [countConstruct](#countconstruct)
+    - [allConstruct](#allconstruct)
+  - [Tabulation](#tabulation)
+
+
+# Binary system
+
+![](images/binary_to_decimal.png)
+
+# Data size
+
+![](images/data_0.png)
+
+![](images/data_1.png)
+
+![](images/data_2.png)
+
+# Algorithms
+
 - An algorithm is a set of instructions for accomplishing a task
 
 - The study of algorithms is concerned with both **correctness** (will this algorithm work for all input?) and **performance** (is this the most efficient way to solve this problem?).
@@ -135,3 +174,922 @@ def factorial(x):
   else:
     return x * factorial(x-1)
 ```
+
+# Dynamic programming
+
+![](images/dynamic_01.png)
+
+## Memoization
+
+![](images/memo_01.png)
+
+### Fib
+
+Write a function `fib(n)` that makes in a number as an argument. The function should return the n-th number of the Fibonacci sequence.
+
+The 1st and 2nd number of the sequence is 1. 
+To generate the next number of the sequence, we sum the previous two.
+
+![](images/fibo_memo_01.png)
+
+how to calculate time complexity
+
+![](images/binary_tree_time_complexity_01.png)
+
+![](images/binary_tree_space_complexity_01.png)
+
+![](images/fib_time_complexity_01.png)
+
+
+it can be possible to memorize a previous results
+
+![](images/fibo_memo_02.png)
+
+
+```java
+public class Fib {
+
+    public static long fib(long n, Map<Long, Long> memo) {
+
+        if (memo.containsKey(n)) {
+            return memo.get(n);
+        }
+
+        if (n <= 2) return 1;
+
+
+        memo.put(n, fib(n - 1, memo) + fib(n - 2, memo));
+        return memo.get(n);
+    }
+
+    public static long fib(long n) {      // TIME 0(N)
+        return fib(n, new HashMap<>());
+    }
+
+    public static long fibBrut(long n) {  // TIME 0(2^N)
+        if (n <= 2) return 1;
+        return fib(n - 1) + fib(n - 2);
+    }
+
+    public static void main(String[] args) {
+        System.out.println(fib(1));
+        System.out.println(fib(9)); // 34
+        System.out.println(fib(50)); // 12586269025
+    }
+}
+```
+
+![](images/fib_complexity_after_memo_01.png)
+
+### Grid traveler
+
+You are a traveler on a 2D grid. You begin in the top-left corner and your goal is to travel to the bottom-right corner. You may only move down or right.
+
+How many ways can you travel to the goal on a grid with dimensions m * n
+
+Write functions `gridTraveler(m, n)` that calculates this
+
+![](images/grid_traveler_01.png)
+
+![](images/grid_traveler_02.png)
+
+![](images/grid_traveler_03.png)
+
+![](images/grid_traveler_04.png)
+
+![](images/grid_traveler_05.png)
+
+![](images/grid_traveler_06.png)
+
+```java
+import java.util.HashMap;
+import java.util.Map;
+
+public class GridTraveler {
+
+    public static int gridTraveler(int m, int n, Map<String, Integer> memo) {
+        String preparedMemoKey = "%s,%s".formatted(m, n);
+        if (memo.containsKey(preparedMemoKey)) {
+            return memo.get(preparedMemoKey);
+        }
+        if (m == 0 || n == 0) {
+            return 0;
+        }
+        if (m == 1 && n == 1) {
+            return 1;
+        }
+
+        memo.put(preparedMemoKey, gridTraveler(m - 1, n, memo) + gridTraveler(m, n - 1, memo));
+        return memo.get(preparedMemoKey);
+    }
+
+    public static int gridTraveler(int m, int n) {
+
+        return gridTraveler(m, n, new HashMap<>());
+    }
+
+    public static int gridTravelerBrut(int m, int n) {
+
+        if (m == 0 || n == 0) {
+            return 0;
+        }
+        if (m == 1 && n == 1) {
+            return 1;
+        }
+        return gridTravelerBrut(m - 1, n) + gridTravelerBrut(m, n - 1);
+    }
+
+    public static void main(String[] args) {
+        System.out.println(gridTraveler(8, 0)); // 1
+        System.out.println(gridTraveler(1, 1)); // 1
+        System.out.println(gridTraveler(3, 2)); // 3
+        System.out.println(gridTraveler(30, 30)); // 51542064
+    }
+}
+
+```
+
+![](images/grid_traveler_07.png)
+
+
+![](images/grid_traveler_08.png)
+
+### canSum
+
+Write a function `canSum(targetSum, numbers)` that takes in a targetSum and array of numbers as arguments
+
+The function  should return a boolean indicating whether or not it is possible to generate the targetSum using numbers from the array
+
+You may use an element of the array as many times as needed.
+
+You may assume that all input numbers are non-negative
+
+![](images/memo_cansum_01.png)
+
+![](images/memo_cansum_02.png)
+
+![](images/memo_cansum_03.png)
+
+![](images/memo_cansum_04.png)
+
+```java
+public class CanSum {
+
+    public static boolean canSumBrut(int targetSum, int[] numbers) {
+
+        if (targetSum == 0) {
+            return true;
+        }
+        if (targetSum < 0) {
+            return false;
+        }
+
+        for (int number : numbers) {
+            if (canSumBrut(targetSum - number, numbers)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public static void main(String[] args) {
+
+        System.out.println(canSumBrut(7, new int[]{2, 3})); // true
+        System.out.println(canSumBrut(7, new int[]{5, 3, 4, 7})); // true
+        System.out.println(canSumBrut(7, new int[]{2, 4})); // false
+        System.out.println(canSumBrut(8, new int[]{2, 3, 5})); // true
+        System.out.println(canSumBrut(300, new int[]{7, 14})); // false
+
+    }
+}
+```
+
+![](images/memo_cansum_05.png)
+
+![](images/memo_cansum_06.png)
+
+```java
+public static boolean canSum(int targetSum, int[] numbers, Map<Integer, Boolean> memo) {
+
+        if (memo.containsKey(targetSum)) {
+            return memo.get(targetSum);
+        }
+
+        if (targetSum == 0) {
+            return true;
+        }
+        if (targetSum < 0) {
+            return false;
+        }
+
+        for (int number : numbers) {
+            int remainder = targetSum - number;
+            boolean result = canSum(remainder, numbers, memo);
+            memo.put(targetSum, result);
+            if (result) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+
+    public static boolean canSum(int targetSum, int[] numbers) {
+        return canSum(targetSum, numbers, new HashMap<>());
+    }
+
+    public static void main(String[] args) {
+
+        System.out.println(canSum(7, new int[]{2, 3})); // true
+        System.out.println(canSum(7, new int[]{5, 3, 4, 7})); // true
+        System.out.println(canSum(7, new int[]{2, 4})); // false
+        System.out.println(canSum(8, new int[]{2, 3, 5})); // true
+        System.out.println(canSum(300, new int[]{7, 14})); // false
+
+    }
+```
+
+![](images/memo_cansum_07.png)
+
+### howSum
+
+Write a function `howSum(targetSum, numbers)` that takes in a targetSum and an array of numbers as argument
+
+The function should return an array containing any combination of elements that add up to exactly the targetSum. If there is no combination that adds up to the targetSum, then return null
+
+If there are multiple combinations possible, you may return any single one.
+
+```java
+package dynamic.memo;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+
+public class HowSum {
+
+    public static int[] howSum(int targetSum, int[] numbers) {
+
+        if (targetSum < 0) {
+            return null;
+        }
+
+        if (targetSum == 0) {
+            return new int[]{};
+        }
+
+        for (int number : numbers) {
+            int[] sum = howSum(targetSum - number, numbers);
+            if (sum != null) {
+                return addToArray(sum, number);
+            }
+        }
+
+        return null;
+    }
+
+    private static int[] addToArray(int[] arrayToAdd, int number) {
+        int[] result = Arrays.copyOf(arrayToAdd, arrayToAdd.length + 1);
+        result[result.length - 1] = number;
+        return result;
+    }
+
+    public static void main(String[] args) {
+
+        // m = targetSum
+        // n =  numbers.lengh
+        // time: 0(n ^ m * m)
+        // space: 0(m)
+        System.out.println(Arrays.toString(howSum(7, new int[]{2, 3}))); // [3, 2, 2]
+        System.out.println(Arrays.toString(howSum(7, new int[]{5, 3, 4, 7}))); // [4, 3]
+        System.out.println(Arrays.toString(howSum(7, new int[]{2, 4}))); // null
+        System.out.println(Arrays.toString(howSum(8, new int[]{2, 3, 5}))); // [2,2,2,2]
+        System.out.println(Arrays.toString(howSum(300, new int[]{7, 14}))); // null
+
+    }
+}
+
+```
+
+after memoization
+
+```java
+    public static int[] howSum(int targetSum, int[] numbers, Map<Integer, int[]> memo) {
+
+        if (memo.containsKey(targetSum)) {
+            return memo.get(targetSum);
+        }
+
+        if (targetSum < 0) {
+            return null;
+        }
+
+        if (targetSum == 0) {
+            return new int[]{};
+        }
+
+        for (int number : numbers) {
+            int[] sum = howSum(targetSum - number, numbers, memo);
+            if (sum != null) {
+                int[] result = addToArray(sum, number);
+                memo.put(targetSum, result);
+                return result;
+            }
+        }
+
+        memo.put(targetSum, null);
+        return null;
+    }
+
+// time: 0(n * m^2)
+// time 0(m ^ 2)
+
+    public static int[] howSum(int targetSum, int[] numbers) {
+        return howSum(targetSum, numbers, new HashMap<>());
+    }
+```
+
+![](images/memo_howsum_01.png)
+
+### bestSum
+
+Write a function `bestSum(targetSum, numbers)` that takes in a targetSum and an array of numbers as argument
+
+The function should return an array containing the shortest combination of numbers that add up to exactly the targetSum. If there is no combination that adds up to the targetSum, then return null
+
+If there is a tie for the shortest combination you may return any one of the shortest
+
+If there are multiple combinations possible, you may return any single one.
+
+![](images/memo_bestSum_01.png)
+
+```java
+public static int[] bestSumBrut(int targetSum, int[] numbers) {
+
+        if (targetSum < 0) {
+            return null;
+        }
+
+        if (targetSum == 0) {
+            return new int[]{};
+        }
+
+        int[] shortestCombination = null;
+
+        for (int number : numbers) {
+            int[] sum = bestSumBrut(targetSum - number, numbers);
+            if (sum != null) {
+                int[] resultCombination = addToArray(sum, number);
+                if (shortestCombination == null || shortestCombination.length > resultCombination.length) {
+                    shortestCombination = resultCombination;
+                }
+            }
+        }
+
+        return shortestCombination;
+    }
+```
+
+after memoization
+
+```java
+package dynamic.memo;
+
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+
+public class BestSum {
+
+
+    public static int[] bestSumBrut(int targetSum, int[] numbers) {
+
+        if (targetSum < 0) {
+            return null;
+        }
+
+        if (targetSum == 0) {
+            return new int[]{};
+        }
+
+        int[] shortestCombination = null;
+
+        for (int number : numbers) {
+            int[] sum = bestSumBrut(targetSum - number, numbers);
+            if (sum != null) {
+                int[] resultCombination = addToArray(sum, number);
+                if (shortestCombination == null || shortestCombination.length > resultCombination.length) {
+                    shortestCombination = resultCombination;
+                }
+            }
+        }
+
+        return shortestCombination;
+    }
+
+
+    public static int[] bestSum(int targetSum, int[] numbers, Map<Integer, int[]> memo) {
+
+        if (memo.containsKey(targetSum)) {
+            return memo.get(targetSum);
+        }
+
+        if (targetSum < 0) {
+            return null;
+        }
+
+        if (targetSum == 0) {
+            return new int[]{};
+        }
+
+        int[] shortestCombination = null;
+
+        for (int number : numbers) {
+            int[] sum = bestSum(targetSum - number, numbers, memo);
+            if (sum != null) {
+                int[] resultCombination = addToArray(sum, number);
+                if (shortestCombination == null || shortestCombination.length > resultCombination.length) {
+                    shortestCombination = resultCombination;
+                }
+            }
+        }
+
+        memo.put(targetSum, shortestCombination);
+
+        return shortestCombination;
+    }
+
+    public static int[] bestSum(int targetSum, int[] numbers) {
+        return bestSum(targetSum, numbers, new HashMap<>());
+    }
+
+    private static int[] addToArray(int[] arrayToAdd, int number) {
+        int[] result = Arrays.copyOf(arrayToAdd, arrayToAdd.length + 1);
+        result[result.length - 1] = number;
+        return result;
+    }
+
+    public static void main(String[] args) {
+
+
+        // m = targetSum
+        // n =  numbers.lengh
+
+        // brut
+        // time: 0(n ^ m * m)
+        // space: 0(m ^ 2)
+
+        // memo
+        // time: 0(n * m^2)
+        // time 0(m ^ 2)
+        System.out.println(Arrays.toString(bestSum(7, new int[]{5, 3, 4, 7}))); // [7]
+        System.out.println(Arrays.toString(bestSum(8, new int[]{2, 3, 5}))); // [3,5]
+        System.out.println(Arrays.toString(bestSum(8, new int[]{1, 4, 5}))); // [4,4]
+        System.out.println(Arrays.toString(bestSum(100, new int[]{1, 2, 5, 25}))); // [25,25,25,25]
+
+    }
+}
+
+```
+
+![](images/memo_bestSum_02.png)
+
+### canConstruct
+
+Write a function `canConstruct(target, wordBank)` that accepts a target and an array of strings.
+
+The function should return a boolean indicating whether or not the target can be constructed by concatenating elements of the wordBank array.
+
+You may reuse elements of the wordBank as many times as you needed.
+
+![](images/memo_canconstruct_01.png)
+
+![](images/memo_canconstruct_02.png)
+
+![](images/memo_canconstruct_03.png)
+
+```java
+package dynamic.memo;
+
+public class CanConstruct {
+
+    public static boolean canConstructBrut(String target, String[] wordBank) {
+
+        if (target.isEmpty()) {
+            return true;
+        }
+
+        for (String word : wordBank) {
+            if (target.startsWith(word)) {
+                String suffix = target.substring(word.length());
+                if (canConstructBrut(suffix, wordBank)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    public static void main(String[] args) {
+
+        // m length
+        // n wordBank length
+
+        // brute
+        // time: 0( (n ^ m) * m )
+        // space: 0 (m ^ 2)
+
+        System.out.println(canConstructBrut("abcdef", new String[]{"ab", "abc", "cd", "def", "abcd"})); // true
+        System.out.println(canConstructBrut("skateboard", new String[]{"bo", "rd", "ate", "t", "ska", "sk", "boar"})); // false
+        System.out.println(canConstructBrut("enterapotentpot", new String[]{"a", "p", "ent", "enter", "ot", "o", "t"})); // true
+        System.out.println(canConstructBrut("eeeeeeeeeeeeeeeeeef", new String[]{"e", "ee", "eee", "eeee", "eeeee", "eeeeee"})); // false
+    }
+}
+```
+
+![](images/memo_canconstruct_04.png)
+
+![](images/memo_canconstruct_05.png)
+
+![](images/memo_canconstruct_06.png)
+
+```java
+package dynamic.memo;
+
+import java.util.HashMap;
+import java.util.Map;
+
+public class CanConstruct {
+
+    public static boolean canConstructBrut(String target, String[] wordBank) {
+
+        if (target.isEmpty()) {
+            return true;
+        }
+
+        for (String word : wordBank) {
+            if (target.startsWith(word)) {
+                String suffix = target.substring(word.length());
+                if (canConstructBrut(suffix, wordBank)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    public static boolean canConstruct(String target, String[] wordBank) {
+        return canConstruct(target, wordBank, new HashMap<>());
+    }
+
+
+    public static boolean canConstruct(String target, String[] wordBank, Map<String, Boolean> memo) {
+
+        if (memo.containsKey(target)) {
+            return memo.get(target);
+        }
+
+        if (target.isEmpty()) {
+            return true;
+        }
+
+        for (String word : wordBank) {
+            if (target.startsWith(word)) {
+                String suffix = target.substring(word.length());
+                if (canConstruct(suffix, wordBank, memo)) {
+                    memo.put(target, true);
+                    return true;
+                }
+            }
+        }
+
+        memo.put(target, false);
+        return false;
+    }
+
+    public static void main(String[] args) {
+
+        // m length
+        // n wordBank length
+
+        // brut
+        // time: 0( n ^ m * m)
+        // space: 0 (m ^ 2)
+        
+        // memo
+        // time: 0( n * m ^ 2)
+        // space: 0( m ^ 2)
+
+        System.out.println(canConstruct("abcdef", new String[]{"ab", "abc", "cd", "def", "abcd"})); // true
+        System.out.println(canConstruct("skateboard", new String[]{"bo", "rd", "ate", "t", "ska", "sk", "boar"})); // false
+        System.out.println(canConstruct("enterapotentpot", new String[]{"a", "p", "ent", "enter", "ot", "o", "t"})); // true
+        System.out.println(canConstruct("eeeeeeeeeeeeeeeeeeeeeeef", new String[]{"e", "ee", "eee", "eeee", "eeeee", "eeeeee"})); // false
+    }
+}
+
+```
+
+![](images/memo_canconstruct_07.png)
+
+### countConstruct
+
+Write a function `countConstruct(target, wordBank)` that accepts a target string and an array of strings.
+
+The function should return the number of ways that the target can be constructed by concatenating elements of wordBank array
+
+You may reuse elements of the wordBank as many times as you needed.
+
+![](images/memo_countconstruct_01.png)
+
+![](images/memo_countconstruct_02.png)
+
+```java
+    public static int countConstructBrut(String target, String[] wordBank) {
+
+        if (target.isEmpty()) {
+            return 1;
+        }
+
+        int result = 0;
+
+        for (String word : wordBank) {
+            if (target.startsWith(word)) {
+                String suffix = target.substring(word.length());
+                result += countConstructBrut(suffix, wordBank);
+            }
+        }
+
+        return result;
+    }
+
+
+    public static void main(String[] args) {
+
+        // m length
+        // n wordBank length
+
+        // brut
+        // time: 0( n ^ m * m)
+        // space: 0 (m ^ 2)
+
+        // memo
+        // time: 0( n * m ^ 2)
+        // space: 0( m ^ 2)
+
+        System.out.println(countConstructBrut("purple", new String[]{"purp", "p", "ur", "le", "purpl"})); // 2
+        System.out.println(countConstructBrut("abcdef", new String[]{"ab", "abc", "cd", "def", "abcd"})); // 1
+        System.out.println(countConstructBrut("skateboard", new String[]{"bo", "rd", "ate", "t", "ska", "sk", "boar"})); // 0
+        System.out.println(countConstructBrut("enterapotentpot", new String[]{"a", "p", "ent", "enter", "ot", "o", "t"})); // 4
+        System.out.println(countConstructBrut("eeeeeeeeeeeeeeeeeeeeeeef", new String[]{"e", "ee", "eee", "eeee", "eeeee", "eeeeee"})); // 0
+    }
+```
+
+after memo
+
+```java
+package dynamic.memo;
+
+import java.util.HashMap;
+import java.util.Map;
+
+public class CountConstruct {
+
+
+    public static int countConstruct(String target, String[] wordBank) {
+        return countConstruct(target, wordBank, new HashMap<>());
+    }
+
+
+    public static int countConstruct(String target, String[] wordBank, Map<String, Integer> memo) {
+
+        if (memo.containsKey(target)) {
+            return memo.get(target);
+        }
+
+        if (target.isEmpty()) {
+            return 1;
+        }
+
+        int result = 0;
+
+        for (String word : wordBank) {
+            if (target.startsWith(word)) {
+                String suffix = target.substring(word.length());
+                result += countConstruct(suffix, wordBank, memo);
+            }
+        }
+
+        memo.put(target, result);
+        return result;
+    }
+
+    public static int countConstructBrut(String target, String[] wordBank) {
+
+        if (target.isEmpty()) {
+            return 1;
+        }
+
+        int result = 0;
+
+        for (String word : wordBank) {
+            if (target.startsWith(word)) {
+                String suffix = target.substring(word.length());
+                result += countConstructBrut(suffix, wordBank);
+            }
+        }
+
+        return result;
+    }
+
+
+    public static void main(String[] args) {
+
+        // m length
+        // n wordBank length
+
+        // brut
+        // time: 0( n ^ m * m)
+        // space: 0 (m ^ 2)
+
+        // memo
+        // time: 0( n * m ^ 2)
+        // space: 0( m ^ 2)
+
+        System.out.println(countConstruct("purple", new String[]{"purp", "p", "ur", "le", "purpl"})); // 2
+        System.out.println(countConstruct("abcdef", new String[]{"ab", "abc", "cd", "def", "abcd"})); // 1
+        System.out.println(countConstruct("skateboard", new String[]{"bo", "rd", "ate", "t", "ska", "sk", "boar"})); // 0
+        System.out.println(countConstruct("enterapotentpot", new String[]{"a", "p", "ent", "enter", "ot", "o", "t"})); // 4
+        System.out.println(countConstruct("eeeeeeeeeeeeeeeeeeeeeeef", new String[]{"e", "ee", "eee", "eeee", "eeeee", "eeeeee"})); // 0
+    }
+}
+
+```
+
+![](images/memo_countconstruct_03.png)
+
+### allConstruct
+
+Write a function `allConstruct(target, wordBank)` that accepts a target and an array of strings.
+
+The function should return a 2D array containing all the ways that the target can be constructed by concatenating elements of the wordBank array. Each elements of the 2D array should represents one combination that construct the target. Each element of the 2D array should represent one combination that constructs the target. 
+
+You may reuse elements of the wordBank as many times as you needed.
+
+![](images/memo_allConstruct_01.png)
+
+![](images/memo_allConstruct_02.png)
+
+![](images/memo_allConstruct_03.png)
+
+```java
+public static List<List<String>> allConstructBrut(String target, String[] wordBank) {
+
+        if (target.isEmpty()) {
+            return List.of(List.of());
+        }
+
+        List<List<String>> result = new ArrayList<>();
+
+        for (String word : wordBank) {
+            if (target.startsWith(word)) {
+
+                String suffix = target.substring(word.length());
+                List<List<String>> suffixWays = allConstructBrut(suffix, wordBank);
+
+                List<List<String>> suffixWaysWithAddedWord = suffixWays.stream().map(ways -> {
+                    List<String> waysWithAddedWord = new ArrayList<>();
+                    waysWithAddedWord.add(word);
+                    waysWithAddedWord.addAll(ways);
+                    return waysWithAddedWord;
+                }).toList();
+
+                result.addAll(suffixWaysWithAddedWord);
+            }
+        }
+        return result;
+    }
+
+
+    public static void main(String[] args) {
+
+        System.out.println(allConstructBrut("purple", new String[]{"purp", "p", "ur", "le", "purpl"}));
+        // [
+        //  [ "purp", "le" ]
+        //  [ "p", "ur", "p", "le" ]
+        // ]
+        System.out.println(allConstructBrut("abcdef", new String[]{"ab", "abc", "cd", "def", "abcd", "ef", "c"}));
+        // [
+        //  [ "ab", "cd", "ef" ]
+        //  [ "ab", "c", "def" ]
+        //  [ "abc", "def" ]
+        //  [ "abcd", "ef" ]
+        // ]
+        System.out.println(allConstructBrut("skateboard", new String[]{"bo", "rd", "ate", "t", "ska", "sk", "boar"})); // []
+        System.out.println(allConstructBrut("eeeeeeeeeeeeeeeeeeeeeeez", new String[]{"e", "ee", "eee", "eeee", "eeeee", "eeeeee"})); // []
+    }
+```
+
+after memoization
+
+```java
+package dynamic.memo;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+public class AllConstruct {
+
+
+    public static List<List<String>> allConstruct(String target, String[] wordBank, Map<String, List<List<String>>> memo) {
+
+        if (memo.containsKey(target)) {
+            return memo.get(target);
+        }
+
+        if (target.isEmpty()) {
+            return List.of(List.of());
+        }
+
+        List<List<String>> result = new ArrayList<>();
+
+        for (String word : wordBank) {
+            if (target.startsWith(word)) {
+
+                String suffix = target.substring(word.length());
+                List<List<String>> suffixWays = allConstruct(suffix, wordBank, memo);
+
+                List<List<String>> suffixWaysWithAddedWord = suffixWays.stream().map(ways -> {
+                    List<String> waysWithAddedWord = new ArrayList<>();
+                    waysWithAddedWord.add(word);
+                    waysWithAddedWord.addAll(ways);
+                    return waysWithAddedWord;
+                }).toList();
+
+                result.addAll(suffixWaysWithAddedWord);
+            }
+        }
+        memo.put(target, result);
+        return result;
+    }
+
+    public static List<List<String>> allConstruct(String target, String[] wordBank) {
+        return allConstruct(target, wordBank, new HashMap<>());
+    }
+
+    public static List<List<String>> allConstructBrut(String target, String[] wordBank) {
+
+        if (target.isEmpty()) {
+            return List.of(List.of());
+        }
+
+        List<List<String>> result = new ArrayList<>();
+
+        for (String word : wordBank) {
+            if (target.startsWith(word)) {
+
+                String suffix = target.substring(word.length());
+                List<List<String>> suffixWays = allConstructBrut(suffix, wordBank);
+
+                List<List<String>> suffixWaysWithAddedWord = suffixWays.stream().map(ways -> {
+                    List<String> waysWithAddedWord = new ArrayList<>();
+                    waysWithAddedWord.add(word);
+                    waysWithAddedWord.addAll(ways);
+                    return waysWithAddedWord;
+                }).toList();
+
+                result.addAll(suffixWaysWithAddedWord);
+            }
+        }
+        return result;
+    }
+
+
+    public static void main(String[] args) {
+
+        System.out.println(allConstruct("purple", new String[]{"purp", "p", "ur", "le", "purpl"}));
+        // [
+        //  [ "purp", "le" ]
+        //  [ "p", "ur", "p", "le" ]
+        // ]
+        System.out.println(allConstruct("abcdef", new String[]{"ab", "abc", "cd", "def", "abcd", "ef", "c"}));
+        // [
+        //  [ "ab", "cd", "ef" ]
+        //  [ "ab", "c", "def" ]
+        //  [ "abc", "def" ]
+        //  [ "abcd", "ef" ]
+        // ]
+        System.out.println(allConstruct("skateboard", new String[]{"bo", "rd", "ate", "t", "ska", "sk", "boar"})); // []
+        System.out.println(allConstruct("eeeeeeeeeeeeeeeeeeeeeeez", new String[]{"e", "ee", "eee", "eeee", "eeeee", "eeeeee"})); // []
+    }
+}
+
+```
+
+![](images/memo_allConstruct_04.png)
+
+## Tabulation
