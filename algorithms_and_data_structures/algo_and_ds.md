@@ -21,6 +21,12 @@
     - [countConstruct](#countconstruct)
     - [allConstruct](#allconstruct)
   - [Tabulation](#tabulation)
+    - [Fib](#fib-1)
+    - [GridTraveler](#gridtraveler)
+    - [CanSum](#cansum-1)
+    - [howSum](#howsum-1)
+    - [bestSum](#bestsum-1)
+    - [canConstruct](#canconstruct-1)
 
 
 # Binary system
@@ -1093,3 +1099,304 @@ public class AllConstruct {
 ![](images/memo_allConstruct_04.png)
 
 ## Tabulation
+
+![](images/tab_recipe.png)
+
+### Fib
+
+![](images/tab_fib.gif)
+
+
+![](images/tab_fib_01.png)
+
+```java
+package dynamic.tab;
+
+public class Fib {
+
+    public static int fib(int n) {
+
+        int[] tab = new int[n + 1];
+        tab[1] = 1;
+
+        for (int i = 0; i <= n; i++) {
+            if (i + 1 < tab.length) {
+                tab[i + 1] += tab[i];
+            }
+            if (i + 2 < tab.length) {
+                tab[i + 2] += tab[i];
+            }
+        }
+
+        return tab[n];
+    }
+
+    public static void main(String[] args) {
+        
+        // TIME: 0(n)
+        // SPACE: 0(n)
+        
+        System.out.println(fib(1));
+        System.out.println(fib(9)); // 34
+        System.out.println(fib(30)); // 832040
+    }
+}
+
+```
+
+### GridTraveler
+
+You are a traveler on a 2D grid. You begin in the top-left corner and your goal is to travel to the bottom-right corner. You may only move down or right.
+
+How many ways can you travel to the goal on a grid with dimensions m * n
+
+Write functions `gridTraveler(m, n)` that calculates this
+
+![](images/tab_gridTraveler.gif)
+
+```java
+package dynamic.tab;
+
+public class GridTraveler {
+
+    public static int gridTraveler(int m, int n) {
+
+        if (m == 0 || n == 0) {
+            return 0;
+        }
+
+        int[][] tab = new int[m + 1][n + 1];
+        tab[1][1] = 1;
+
+        for (int i = 0; i <= m; i++) {
+
+            for (int j = 0; j <= n; j++) {
+
+                int currentValue = tab[i][j];
+                if (j + 1 <= n) {
+                    tab[i][j + 1] += currentValue;
+                }
+                if (i + 1 <= m) {
+                    tab[i + 1][j] += currentValue;
+                }
+            }
+        }
+
+        return tab[m][n];
+    }
+
+
+    public static void main(String[] args) {
+        System.out.println(gridTraveler(8, 0)); // 1
+        System.out.println(gridTraveler(1, 1)); // 1
+        System.out.println(gridTraveler(3, 2)); // 3
+        System.out.println(gridTraveler(30, 30)); // 51542064
+    }
+
+}
+
+```
+
+### CanSum
+
+Write a function `canSum(targetSum, numbers)` that takes in a targetSum and array of numbers as arguments
+
+The function  should return a boolean indicating whether or not it is possible to generate the targetSum using numbers from the array
+
+You may use an element of the array as many times as needed.
+
+You may assume that all input numbers are non-negative
+
+![](images/tab_canSum.gif)
+
+```java
+package dynamic.tab;
+
+public class CanSum {
+
+    public static boolean canSum(int targetSum, int[] numbers) {
+
+        boolean[] tab = new boolean[targetSum + 1];
+        tab[0] = true;
+
+        for (int i = 0; i < tab.length; i++) {
+
+            if (tab[i]) {
+                for (int number : numbers) {
+                    int positionToTrue = i + number;
+                    if (positionToTrue < tab.length) {
+                        tab[positionToTrue] = true;
+                    }
+                }
+            }
+        }
+
+
+        return tab[targetSum];
+    }
+
+    public static void main(String[] args) {
+        
+        // m = targetSum
+        // n = numbers.length
+
+        // TIME 0 (nm)
+        // SPACE 0(m)
+        
+        System.out.println(canSum(0, new int[]{2, 3})); // true
+        System.out.println(canSum(7, new int[]{5, 3, 4, 7})); // true
+        System.out.println(canSum(7, new int[]{2, 4})); // false
+        System.out.println(canSum(8, new int[]{2, 3, 5})); // true
+        System.out.println(canSum(300, new int[]{7, 14})); // false
+
+    }
+
+}
+
+```
+
+### howSum
+
+Write a function `howSum(targetSum, numbers)` that takes in a targetSum and an array of numbers as argument
+
+The function should return an array containing any combination of elements that add up to exactly the targetSum. If there is no combination that adds up to the targetSum, then return null
+
+If there are multiple combinations possible, you may return any single one.
+
+![](images/tab_howSum.gif)
+
+
+![](images/tab_howSum_01.png)
+
+```java
+package dynamic.tab;
+
+import java.util.Arrays;
+
+public class HowSum {
+
+    public static int[] howSum(int targetSum, int[] numbers) {
+
+        int[][] tab = new int[targetSum + 1][];
+        tab[0] = new int[0];
+
+        for (int i = 0; i < tab.length; i++) {
+
+            int[] currentItem = tab[i];
+            if (currentItem != null) {
+                for (int number : numbers) {
+                    int positionToAdd = i + number;
+                    if (positionToAdd < tab.length) {
+                        tab[positionToAdd] = addToArray(currentItem, number);
+                    }
+                }
+            }
+        }
+
+        return tab[targetSum];
+    }
+
+    private static int[] addToArray(int[] arrayToAdd, int number) {
+        int[] result = Arrays.copyOf(arrayToAdd, arrayToAdd.length + 1);
+        result[result.length - 1] = number;
+        return result;
+    }
+
+    public static void main(String[] args) {
+
+
+        // m = targetSum
+        // n =  numbers.length
+
+        System.out.println(Arrays.toString(howSum(7, new int[]{2, 3}))); // [3, 2, 2]
+        System.out.println(Arrays.toString(howSum(7, new int[]{5, 3, 4, 7}))); // [4, 3]
+        System.out.println(Arrays.toString(howSum(7, new int[]{2, 4}))); // null
+        System.out.println(Arrays.toString(howSum(8, new int[]{2, 3, 5}))); // [2,2,2,2]
+        System.out.println(Arrays.toString(howSum(300, new int[]{7, 14}))); // null
+
+    }
+}
+
+```
+
+### bestSum
+
+
+Write a function `bestSum(targetSum, numbers)` that takes in a targetSum and an array of numbers as argument
+
+The function should return an array containing the shortest combination of numbers that add up to exactly the targetSum. If there is no combination that adds up to the targetSum, then return null
+
+If there is a tie for the shortest combination you may return any one of the shortest
+
+If there are multiple combinations possible, you may return any single one.
+
+
+![](images/tab_bestSum.gif)
+
+![](images/tab_bestSum_01.png)
+
+```java
+package dynamic.tab;
+
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+
+public class BestSum {
+
+    public static int[] bestSum(int targetSum, int[] numbers) {
+
+        int[][] tab = new int[targetSum + 1][];
+        tab[0] = new int[0];
+
+        for (int i = 0; i < tab.length; i++) {
+            int[] currentItem = tab[i];
+            if (currentItem != null) {
+
+                for (int number : numbers) {
+                    int positionToAdd = i + number;
+                    if (positionToAdd < tab.length) {
+                        int[] candidate = addToArray(currentItem, number);
+                        int[] valueOnPosition = tab[positionToAdd];
+                        if (valueOnPosition == null || candidate.length < valueOnPosition.length) {
+                            tab[positionToAdd] = candidate;
+                        }
+                    }
+                }
+            }
+        }
+
+        return tab[targetSum];
+    }
+
+    private static int[] addToArray(int[] arrayToAdd, int number) {
+        int[] result = Arrays.copyOf(arrayToAdd, arrayToAdd.length + 1);
+        result[result.length - 1] = number;
+        return result;
+    }
+
+    public static void main(String[] args) {
+        
+        // m = targetSum
+        // n =  numbers.lengh
+
+        System.out.println(Arrays.toString(bestSum(7, new int[]{5, 3, 4, 7}))); // [7]
+        System.out.println(Arrays.toString(bestSum(8, new int[]{2, 3, 5}))); // [3,5]
+        System.out.println(Arrays.toString(bestSum(8, new int[]{1, 4, 5}))); // [4,4]
+        System.out.println(Arrays.toString(bestSum(100, new int[]{1, 2, 5, 25}))); // [25,25,25,25]
+
+    }
+}
+
+```
+
+### canConstruct
+
+
+Write a function `canConstruct(target, wordBank)` that accepts a target and an array of strings.
+
+The function should return a boolean indicating whether or not the target can be constructed by concatenating elements of the wordBank array.
+
+You may reuse elements of the wordBank as many times as you needed.
+
+
