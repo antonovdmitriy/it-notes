@@ -1,8 +1,24 @@
 
 - [Binary system](#binary-system)
 - [Data size](#data-size)
+- [Big O notation](#big-o-notation)
+  - [Constant](#constant)
+  - [Logarithmic O(log(n))](#logarithmic-ologn)
+  - [Linear O(n)](#linear-on)
+  - [Loglinear O(n \* log(n))](#loglinear-on--logn)
+  - [Polynomial O(n^c)](#polynomial-onc)
+    - [O(n^2)](#on2)
+    - [O(n^3)](#on3)
+  - [Exponential O(C ^ n)](#exponential-oc--n)
+    - [O(2^n)](#o2n)
+    - [O(3^n)](#o3n)
+  - [Factorial O(n!)](#factorial-on)
+  - [Analyzing multi-argument functions](#analyzing-multi-argument-functions)
+    - [O(n + m)](#on--m)
+    - [O(n \* m)](#on--m-1)
+    - [Max](#max)
+  - [Combinatorics and Combinations](#combinatorics-and-combinations)
 - [Algorithms](#algorithms)
-  - [Big O notation](#big-o-notation)
   - [Memory addresses arrays and linked list](#memory-addresses-arrays-and-linked-list)
   - [traveling salesperson problem.](#traveling-salesperson-problem)
   - [Search](#search)
@@ -13,10 +29,14 @@
 - [Dynamic programming](#dynamic-programming)
   - [Memoization](#memoization)
     - [Fib](#fib)
+    - [Trib](#trib)
     - [Grid traveler](#grid-traveler)
+    - [GridTraveler with walls](#gridtraveler-with-walls)
+    - [MaxTravelersWithScores](#maxtravelerswithscores)
     - [canSum](#cansum)
     - [howSum](#howsum)
     - [bestSum](#bestsum)
+    - [Coins counting change](#coins-counting-change)
     - [canConstruct](#canconstruct)
     - [countConstruct](#countconstruct)
     - [allConstruct](#allconstruct)
@@ -26,7 +46,10 @@
     - [CanSum](#cansum-1)
     - [howSum](#howsum-1)
     - [bestSum](#bestsum-1)
+    - [munSumCount](#munsumcount)
     - [canConstruct](#canconstruct-1)
+    - [countConstruct](#countconstruct-1)
+    - [allConstruct](#allconstruct-1)
 
 
 # Binary system
@@ -41,6 +64,324 @@
 
 ![](images/data_2.png)
 
+
+# Big O notation 
+
+[Good website about big O](https://www.bigocheatsheet.com/)
+
+Big O notation lets you compare the number of operations. It tells you how fast the algorithm grows. Big O establishes a worst-case run time
+
++ O(1) constant time
++ O(log n), also known as log time. Example: Binary search.
++ O(n), also known as linear time. Example: Simple search.
++ O(n * log n). Example: A fast sorting algorithm, like quicksort
++ O(n2). A slow sorting algorithm, like selection sort
++ O(n!). A really slow algorithm, like the traveling salesperson
+
+![](images/complexity_comparison_01.png)
+
+![](images/complexity_comparison_02.png)
+
+![](images/complexity_comparison_03.png)
+
+
+## Constant 
+
+the number of steps does not depend on the input size
+
+```java
+    int bar(int n) {
+        int result = 0;
+        for (int i = 0; i < 5; i++) {
+            result += n;
+        }
+        return result;
+    }
+```
+
+```java
+    int bar(int[] numbers) {
+        return numbers[0] * numbers[numbers.length - 1];
+    }
+```
+
+## Logarithmic O(log(n))
+
+- A log is the opposite of an exponent
+- An exponent is a repeated multiplication a log is a repeated division
+- if 2 ^ 5 = 32 then log2(32) = 5
+
+![](images/complexity_log_01.png)
+
+```java
+    void bar(int n) {
+
+        while(n > 1){
+            System.out.println(n);
+            n /= 2;
+        }
+        System.out.println("done");
+    }
+```
+
+```java
+    void bar(int n) {
+
+        if (n <= 1) {
+            System.out.println("finish");
+            return;
+        }
+
+        System.out.println(n);
+        bar(n / 2);
+    }
+```
+
+## Linear O(n)
+
+```java
+    void bar(int[] numbers) {
+        for (int i = 0; i < numbers.length; i++) {
+            System.out.println(numbers[i]);
+        }
+    }
+```
+
+```java
+    void bar(int n) {
+
+        if (n == 0) {
+            System.out.println("finish");
+            return;
+        }
+
+        System.out.println(n);
+        bar(n - 1);
+    }
+```
+
+## Loglinear O(n * log(n))
+
+- Has linear behavior nested in log steps
+- bigger than O(n) but less than O(n^2)
+
+![](images/complexity_loglinear_01.png)
+
+```java
+    void bar(String str) {
+        System.out.println(str);
+        if (str.length() <= 1) {
+            return;
+        }
+        int middleIndex = (int) Math.floor(str.length() / 2);
+        bar(str.substring(0, middleIndex));
+    }
+```
+
+```java
+    void bar(String[] array) {
+
+        StringBuilder str = new StringBuilder();
+        for(int i = 0; i< array.length; i++){
+            str.append(array[i]);
+        }
+
+        System.out.println(str);
+        System.out.println("------");
+
+        if (array.length <= 1) {
+            return;
+        }
+
+        int middleIndex = (int) Math.floor(array.length / 2);
+        String[] left = Arrays.copyOfRange(array, 0, middleIndex);
+        String[] right = Arrays.copyOfRange(array, middleIndex, array.length - 1);
+        bar(left);
+        bar(right);
+    }
+```
+
+## Polynomial O(n^c)
+
+- n is the size of the input
+- c is some constant
+- includes O(n^2) quadratic, O(n^3) cubic etc.
+
+![](images/complexity_polynomial_01.png)
+
+### O(n^2)
+```java
+    void bar(String[] array) {
+
+        for(int i = 0; i< array.length; i++){
+            for(int j = 0; j<array.length; j++) {
+                System.out.println(array[i] + "/" + array[j]);;
+            }
+        }
+    }
+```
+
+```java
+    void bar(String s) {
+
+        if (s.length() == 0) {
+            return;
+        }
+
+        char firstChar = s.charAt(0);
+        String rest = s.substring(1);
+        bar(rest);
+    }
+```
+
+### O(n^3)
+```java
+    void bar(int n) {
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                for (int k = 0; k < n; k++)
+                    System.out.println(i + "/" + j + "/" + k);
+            }
+        }
+    }
+```
+
+## Exponential O(C ^ n)
+
+
+- n is the size of the input
+- c is some constant
+- includes O(2^n), O(3^n), etc.
+
+![](images/complexity_exp_01.png)
+
+### O(2^n)
+
+```java
+    void bar(int n) {
+
+        if (n == 1) {
+            return;
+        }
+
+        bar(n - 1);
+        bar(n - 1);
+    }
+```
+
+### O(3^n)
+
+```java
+    void bar(int n) {
+
+        if (n == 1) {
+            return;
+        }
+
+        bar(n - 1);
+        bar(n - 1);
+        bar(n - 1);
+    }
+```
+
+## Factorial O(n!)
+
+n! = (n)(n-1)(n-2)(n-3)...(2)(1)
+
+4! = 4 * 3 * 2 * 1 = 24
+
+```java
+    void bar(int n) {
+
+        if (n == 1) {
+            return;
+        }
+
+        for (int i = 0; i < n; i++) {
+            bar(n - 1);
+        }
+    }
+```
+
+## Analyzing multi-argument functions
+
+### O(n + m)
+
+```java
+
+    void bar(int n, int m) {
+        
+        for (int i = 0; i < n; i++) {
+            System.out.println("hi");
+        }
+        
+        for (int i = 0; i < m; i++) {
+            System.out.println("bye");
+        }
+    }
+```
+
+### O(n * m)
+
+```java
+
+    void bar(String[] array1, String[] array2) {
+
+        for (int i = 0; i < array1.length; i++) {
+            for (int j = 0; j < array2.length; j++) {
+                System.out.println(array1[i] + "/" + array2[j]);
+                ;
+            }
+        }
+    }
+```
+
+### Max
+
+```java
+
+    void bar(String s1, String s2) {
+        if (s1.length() > s2.length()) {
+
+            for (int i = 0; i < s1.length(); i++) {
+                System.out.println(s1.charAt(i));
+            }
+
+        } else {
+            for (int j = 0; j < s2.length(); j++) {
+                System.out.println(s2.charAt(j));
+            }
+        }
+    }
+```
+
+O(max(m, n)) where m, n are the string length
+
+or
+
+O(n) where n is the length of the longer string
+
+## Combinatorics and Combinations
+
+Combination - a collection of things where the order does not matter
+
+```
+combinations of [a, b, c]
+
+1. []
+2. [a]
+3. [b]
+4. [c]
+5. [a,b]
+6. [b,c]
+7. [a,c]
+8. [a,b,c]
+```
+
+Given a set of n things there are 2^n possible combinations
+
+
+
 # Algorithms
 
 - An algorithm is a set of instructions for accomplishing a task
@@ -48,16 +389,6 @@
 - The study of algorithms is concerned with both **correctness** (will this algorithm work for all input?) and **performance** (is this the most efficient way to solve this problem?).
 
 Generally you want to choose the most efficient algorithm—whether you’re trying to optimize for time or space.
-
-
-## Big O notation 
-Big O notation lets you compare the number of operations. It tells you how fast the algorithm grows. Big O establishes a worst-case run time
-
-+ O(log n), also known as log time. Example: Binary search.
-+ O(n), also known as linear time. Example: Simple search.
-+ O(n * log n). Example: A fast sorting algorithm, like quicksort
-+ O(n2). Example: A slow sorting algorithm, like selection sort
-+ O(n!). Example: A really slow algorithm, like the traveling salesperson
 
 ## Memory addresses arrays and linked list
 
@@ -247,6 +578,61 @@ public class Fib {
 
 ![](images/fib_complexity_after_memo_01.png)
 
+
+### Trib
+
+![](images/memo_trib_01.png)
+
+```java
+package dynamic.memo;
+
+import java.util.HashMap;
+import java.util.Map;
+
+public class Trib {
+
+    public static long fib(long n, Map<Long, Long> memo) {
+
+        if (n == 0 || n == 1) {
+            return 0;
+        }
+        if (n == 2) {
+            return 1;
+        }
+
+        if (memo.containsKey(n)) {
+            return memo.get(n);
+        }
+
+        memo.put(n, fib(n - 1, memo) + fib(n - 2, memo) + fib(n - 3));
+        return memo.get(n);
+    }
+
+    public static long fib(long n) {
+        return fib(n, new HashMap<>());
+    }
+
+    public static long fibBrut(long n) {
+
+        if (n == 0 || n == 1) {
+            return 0;
+        }
+        if (n == 2) {
+            return 1;
+        }
+
+        if (n <= 2) return 1;
+        return fib(n - 1) + fib(n - 2) + fib(n - 3);
+    }
+
+    public static void main(String[] args) {
+        System.out.println(fib(1));
+        System.out.println(fib(8)); // 24
+        System.out.println(fib(30)); // 15902591
+    }
+}
+```
+
 ### Grid traveler
 
 You are a traveler on a 2D grid. You begin in the top-left corner and your goal is to travel to the bottom-right corner. You may only move down or right.
@@ -319,6 +705,149 @@ public class GridTraveler {
 
 
 ![](images/grid_traveler_08.png)
+
+### GridTraveler with walls
+
+```java
+package dynamic.memo;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+public class GridTravelerWithWalls {
+
+    public static int countToRightBottomCorner(int startRow, int startColumn, List<List<String>> grid, Map<String, Integer> memo) {
+        String preparedMemoKey = "%s,%s".formatted(startRow, startColumn);
+
+        if (memo.containsKey(preparedMemoKey)) {
+            return memo.get(preparedMemoKey);
+        }
+
+
+        if (startRow == grid.size() || startColumn == grid.get(0).size()) {
+            return 0;
+        }
+
+        boolean isItWall = grid.get(startRow).get(startColumn).equals("X");
+        if (isItWall) {
+            return 0;
+        }
+
+        if (startRow == grid.size() - 1 && startColumn == grid.get(0).size() - 1) {
+            return 1;
+        }
+
+        int result = countToRightBottomCorner(startRow + 1, startColumn, grid, memo) + countToRightBottomCorner(startRow, startColumn + 1, grid, memo);
+        memo.put(preparedMemoKey, result);
+        return result;
+    }
+
+    public static int countToRightBottomCorner(int startRow, int startColumn, List<List<String>> grid) {
+
+        return countToRightBottomCorner(startRow, startColumn, grid, new HashMap<>());
+    }
+
+    public static int countToRightBottomCornerBrut(int startRow, int startColumn, List<List<String>> grid) {
+
+        if (startRow == grid.size() || startColumn == grid.get(0).size()) {
+            return 0;
+        }
+
+        boolean isItWall = grid.get(startRow).get(startColumn).equals("X");
+        if (isItWall) {
+            return 0;
+        }
+
+        if (startRow == grid.size() - 1 && startColumn == grid.get(0).size() - 1) {
+            return 1;
+        }
+
+
+        return countToRightBottomCornerBrut(startRow + 1, startColumn, grid) + countToRightBottomCornerBrut(startRow, startColumn + 1, grid);
+    }
+
+    public static void main(String[] args) {
+
+        List<List<String>> grid = new ArrayList<>();
+        grid.add(List.of("", "", "X"));
+        grid.add(List.of("", "", ""));
+        grid.add(List.of("", "", ""));
+
+        System.out.println(countToRightBottomCorner(0, 0, grid)); // 5
+    }
+}
+
+```
+
+### MaxTravelersWithScores
+
+![](images/memo_gridtraveler_with_scores_01.png)
+
+```java
+package dynamic.memo;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+
+public class GridTravelerWithScores {
+
+    public static double findMaxScoresPathBrut(int r, int c, List<List<Integer>> grid) {
+
+        if (r == grid.size() || c == grid.get(0).size()) {
+            return Double.NEGATIVE_INFINITY;
+        }
+
+        if (r == grid.size() - 1 && c == grid.get(0).size() - 1) {
+            return grid.get(r).get(c);
+        }
+
+        return grid.get(r).get(c) + Math.max(findMaxScoresPathBrut(r + 1, c, grid), findMaxScoresPathBrut(r, c + 1, grid));
+    }
+
+    public static double findMaxScoresPath(int r, int c, List<List<Integer>> grid, Map<List<Integer>, Double> memo) {
+
+        if (r == grid.size() || c == grid.get(0).size()) {
+            return Double.NEGATIVE_INFINITY;
+        }
+
+        if (r == grid.size() - 1 && c == grid.get(0).size() - 1) {
+            return grid.get(r).get(c);
+        }
+
+        List<Integer> pos = List.of(r, c);
+
+        if (memo.containsKey(pos)) {
+            return memo.get(pos);
+        }
+
+        double result = grid.get(r).get(c) + Math.max(findMaxScoresPath(r + 1, c, grid, memo), findMaxScoresPath(r, c + 1, grid, memo));
+        memo.put(pos, result);
+
+        return result;
+    }
+
+
+    public static double findMaxScoresPath(int r, int c, List<List<Integer>> grid) {
+        return findMaxScoresPath(r, c, grid, new HashMap<>());
+    }
+
+    public static void main(String[] args) {
+        List<List<Integer>> grid = List.of(
+                List.of(1, 2, 1),
+                List.of(1, 2, 1),
+                List.of(1, 2, 1));
+
+        System.out.println(findMaxScoresPath(0, 0, grid));
+
+    }
+
+}
+
+```
 
 ### canSum
 
@@ -660,6 +1189,91 @@ public class BestSum {
 ```
 
 ![](images/memo_bestSum_02.png)
+
+### Coins counting change
+
+![](images/memo_coins.gif)
+
+```java
+package dynamic.memo;
+
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+public class CountOfUniqueCombinationCoins {
+
+    public static int countingChangeBrut(int targetSum, int[] coins) {
+        return countingChangeBrut(targetSum, 0, coins);
+    }
+
+    public static int countingChangeBrut(int targetSum, int coinIndex, int[] coins) {
+
+        if (targetSum == 0) {
+            return 1;
+        }
+
+        if (coinIndex >= coins.length) {
+            return 0;
+        }
+
+        int value = coins[coinIndex];
+
+        int totalWays = 0;
+        for (int qty = 0; qty * value <= targetSum; qty++) {
+            int subSum = targetSum - (qty * value);
+            totalWays += countingChangeBrut(subSum, coinIndex + 1, coins);
+        }
+        return totalWays;
+    }
+
+
+    public static int countingChange(int targetSum, int[] coins) {
+        return countingChange(targetSum, 0, coins, new HashMap<>());
+    }
+
+    public static int countingChange(int targetSum, int coinIndex, int[] coins, Map<List<Integer>, Integer> memo) {
+
+        if (targetSum == 0) {
+            return 1;
+        }
+
+        if (coinIndex >= coins.length) {
+            return 0;
+        }
+
+        List<Integer> key = List.of(targetSum, coinIndex);
+        if (memo.containsKey(key)) {
+            return memo.get(key);
+        }
+
+        int value = coins[coinIndex];
+
+        int totalWays = 0;
+        for (int qty = 0; qty * value <= targetSum; qty++) {
+            int subSum = targetSum - (qty * value);
+            totalWays += countingChange(subSum, coinIndex + 1, coins, memo);
+        }
+
+        memo.put(key, totalWays);
+
+        return totalWays;
+    }
+
+    public static void main(String[] args) {
+
+        System.out.println(countingChangeBrut(4, new int[]{1, 2, 3})); // 4
+        System.out.println(countingChangeBrut(8, new int[]{1, 2, 3})); // 10
+        System.out.println(countingChangeBrut(24, new int[]{5, 7, 3})); // 5
+        System.out.println(countingChangeBrut(13, new int[]{2, 6, 12, 10})); // 0
+        System.out.println(countingChangeBrut(512, new int[]{1, 5, 10, 25})); // 20119
+        System.out.println(countingChangeBrut(1000, new int[]{1, 5, 10, 25})); // 142511
+        System.out.println(countingChangeBrut(240, new int[]{1, 2, 3, 4, 5, 6, 7, 8, 9})); // 1525987916
+    }
+}
+
+```
 
 ### canConstruct
 
@@ -1144,6 +1758,7 @@ public class Fib {
 
 ```
 
+
 ### GridTraveler
 
 You are a traveler on a 2D grid. You begin in the top-left corner and your goal is to travel to the bottom-right corner. You may only move down or right.
@@ -1390,6 +2005,92 @@ public class BestSum {
 
 ```
 
+### munSumCount
+
+```java
+package dynamic.memo;
+
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+
+public class MinSumCount {
+
+    public static int minSumCountBrut(int targetSum, int[] numbers) {
+
+        if (targetSum < 0) {
+            return -1;
+        }
+
+        if (targetSum == 0) {
+            return 0;
+        }
+
+        int shortestCombination = -1;
+
+        for (int number : numbers) {
+            int sum = minSumCountBrut(targetSum - number, numbers);
+            if (sum != -1) {
+                sum++;
+                if (shortestCombination == -1 || shortestCombination > sum) {
+                    shortestCombination = sum;
+                }
+            }
+        }
+
+        return shortestCombination;
+    }
+
+
+    public static int minSumCount(int targetSum, int[] numbers, Map<Integer, Integer> memo) {
+
+        if (targetSum < 0) {
+            return -1;
+        }
+
+        if (targetSum == 0) {
+            return 0;
+        }
+
+
+        if (memo.containsKey(targetSum)) {
+            return memo.get(targetSum);
+        }
+
+        int shortestCombination = -1;
+
+        for (int number : numbers) {
+            int sum = minSumCount(targetSum - number, numbers, memo);
+            if (sum != -1) {
+                sum++;
+                if (shortestCombination == -1 || shortestCombination > sum) {
+                    shortestCombination = sum;
+                }
+            }
+        }
+
+        memo.put(targetSum, shortestCombination);
+
+        return shortestCombination;
+    }
+
+    public static int minSumCount(int targetSum, int[] numbers) {
+        return minSumCount(targetSum, numbers, new HashMap<>());
+    }
+
+    public static void main(String[] args) {
+
+        System.out.println(minSumCount(7, new int[]{7})); // 1
+        System.out.println(minSumCount(7, new int[]{5, 3, 4, 7})); // 1
+        System.out.println(minSumCount(8, new int[]{2, 3, 5})); // 2
+        System.out.println(minSumCount(8, new int[]{1, 4, 5})); // 2
+        System.out.println(minSumCount(100, new int[]{1, 2, 5, 25})); // 4
+
+    }
+}
+
+```
+
 ### canConstruct
 
 
@@ -1446,3 +2147,149 @@ public class CanConstruct {
 
 ```
 
+### countConstruct
+
+
+Write a function `countConstruct(target, wordBank)` that accepts a target string and an array of strings.
+
+The function should return the number of ways that the target can be constructed by concatenating elements of wordBank array
+
+You may reuse elements of the wordBank as many times as you needed.
+
+![](images/tab_countConstruct.gif)
+
+![](images/tab_countConstruct_01.png)
+
+```java
+package dynamic.tab;
+
+import java.util.HashMap;
+import java.util.Map;
+
+public class CountConstruct {
+
+
+    public static int countConstruct(String target, String[] wordBank) {
+
+        int[] tab = new int[target.length() + 1];
+        tab[0] = 1;
+
+        for (int i = 0; i < tab.length; i++) {
+
+            int currentValue = tab[i];
+            if (currentValue != 0) {
+                for (String word : wordBank) {
+                    if (i + word.length() < tab.length) {
+                        String currentSuffix = target.substring(i, i + word.length());
+                        if (currentSuffix.equals(word)) {
+                            tab[i + word.length()] += currentValue;
+                        }
+                    }
+                }
+            }
+        }
+        return tab[target.length()];
+    }
+
+
+    public static void main(String[] args) {
+
+        // m length
+        // n wordBank length
+
+        // memo
+        // time: 0( n * m ^ 2)
+        // space: 0( m ^ 2)
+
+
+        System.out.println(countConstruct("purple", new String[]{"purple"})); // 1
+        System.out.println(countConstruct("purple", new String[]{"purp", "p", "ur", "le", "purpl"})); // 2
+        System.out.println(countConstruct("abcdef", new String[]{"ab", "abc", "cd", "def", "abcd"})); // 1
+        System.out.println(countConstruct("skateboard", new String[]{"bo", "rd", "ate", "t", "ska", "sk", "boar"})); // 0
+        System.out.println(countConstruct("enterapotentpot", new String[]{"a", "p", "ent", "enter", "ot", "o", "t"})); // 4
+        System.out.println(countConstruct("eeeeeeeeeeeeeeeeeeeeeeef", new String[]{"e", "ee", "eee", "eeee", "eeeee", "eeeeee"})); // 0
+    }
+}
+```
+
+### allConstruct
+
+
+Write a function `allConstruct(target, wordBank)` that accepts a target and an array of strings.
+
+The function should return a 2D array containing all the ways that the target can be constructed by concatenating elements of the wordBank array. Each elements of the 2D array should represents one combination that construct the target. Each element of the 2D array should represent one combination that constructs the target. 
+
+You may reuse elements of the wordBank as many times as you needed.
+
+![](images/memo_allConstruct_02.png)
+
+![](images/tab_allConstruct.gif)
+
+![](images/tab_allConstruct_01.png)
+
+```java
+package dynamic.tab;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+public class AllConstruct {
+
+
+    public static List<List<String>> allConstruct(String target, String[] wordBank) {
+
+        List<List<String>>[] tab = new List[target.length() + 1];
+        Arrays.fill(tab, List.of());
+        tab[0] = List.of(List.of());
+
+        for (int i = 0; i < tab.length; i++) {
+            List<List<String>> currentValue = tab[i];
+
+            if (!currentValue.isEmpty()) {
+
+                for (String word : wordBank) {
+
+                    if (i + word.length() < tab.length) {
+
+                        String suffix = target.substring(i, i + word.length());
+                        if (suffix.equals(word)) {
+
+                            List<List<String>> newValueAtPosition = new ArrayList<>();
+                            newValueAtPosition.addAll(tab[i + word.length()]);
+                            newValueAtPosition.addAll(currentValue.stream().map(o -> {
+                                List<String> resultWithCurrentWord = new ArrayList<>(o);
+                                resultWithCurrentWord.add(word);
+                                return resultWithCurrentWord;
+                            }).toList());
+
+                            tab[i + word.length()] = newValueAtPosition;
+                        }
+                    }
+                }
+            }
+        }
+        return tab[target.length()];
+    }
+
+
+    public static void main(String[] args) {
+
+        System.out.println(allConstruct("purple", new String[]{"purp", "p", "ur", "le", "purpl"}));
+        // [
+        //  [ "purp", "le" ]
+        //  [ "p", "ur", "p", "le" ]
+        // ]
+        System.out.println(allConstruct("abcdef", new String[]{"ab", "abc", "cd", "def", "abcd", "ef", "c"}));
+        // [
+        //  [ "ab", "cd", "ef" ]
+        //  [ "ab", "c", "def" ]
+        //  [ "abc", "def" ]
+        //  [ "abcd", "ef" ]
+        // ]
+        System.out.println(allConstruct("skateboard", new String[]{"bo", "rd", "ate", "t", "ska", "sk", "boar"})); // []
+        System.out.println(allConstruct("eeeeeeeeeeeeeeeeeeeeeeez", new String[]{"e", "ee", "eee", "eeee", "eeeee", "eeeeee"})); // []
+    }
+}
+
+```
