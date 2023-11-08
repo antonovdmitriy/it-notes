@@ -17,7 +17,8 @@
     - [O(n + m)](#on--m)
     - [O(n \* m)](#on--m-1)
     - [Max](#max)
-  - [Combinatorics and Combinations](#combinatorics-and-combinations)
+- [Combinatorics](#combinatorics)
+  - [Combinations](#combinations)
 - [Algorithms](#algorithms)
   - [Memory addresses arrays and linked list](#memory-addresses-arrays-and-linked-list)
   - [traveling salesperson problem.](#traveling-salesperson-problem)
@@ -361,7 +362,9 @@ or
 
 O(n) where n is the length of the longer string
 
-## Combinatorics and Combinations
+# Combinatorics
+
+## Combinations
 
 Combination - a collection of things where the order does not matter
 
@@ -378,8 +381,7 @@ combinations of [a, b, c]
 8. [a,b,c]
 ```
 
-Given a set of n things there are 2^n possible combinations
-
+Given a set of n things there are `2^n` possible combinations
 
 
 # Algorithms

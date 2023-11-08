@@ -2,6 +2,7 @@
 
 Just notes, compilation from different courrses and own thoughts. 
 
+- [Algorithms and data structures](algorithms_and_data_structures/algo_and_ds.md)
 - [Aws](/aws/AWS.md)
 - [Java](/java/Java%20tricks.md)
 - [Linux](/linux/linux.md)
@@ -22,5 +23,4 @@ Just notes, compilation from different courrses and own thoughts.
 - [Html](html/html.md)
 - [Css](css/css.md)
 - [Javascript](javascript/javascript.md)
-- [Algorithms and data structures](algorithms_and_data_structures/algo_and_ds.md)
 - [System design and architecture](architecture/architecture.md)
