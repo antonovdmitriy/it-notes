@@ -20,6 +20,9 @@
 - [Combinatorics](#combinatorics)
   - [Combinations](#combinations)
   - [Permutations](#permutations)
+- [Data structures](#data-structures)
+  - [Linked list](#linked-list)
+    - [Variants](#variants)
 - [Algorithms](#algorithms)
   - [Memory addresses arrays and linked list](#memory-addresses-arrays-and-linked-list)
   - [traveling salesperson problem.](#traveling-salesperson-problem)
@@ -529,6 +532,408 @@ public class AllPermutations {
 
 // TIME : O(n!)
 // SPACE: O(n^2)
+
+```
+
+# Data structures
+
+## Linked list
+
+- data structure where values are chained sequentially
+- more efficient for insertion/deletion than arrays
+- does not require contiguous memory addressing
+
+![](images/linked_list_01.png)
+
+Composed of nodes that contain a stored value and a reference to the next node
+
+### Variants
+
+![](images/linked_list_02.png)
+
+![](images/linked_list_03.png)
+
+![](images/linked_list_04.png)
+
+
+singly linked list
+
+```java
+package datastruct;
+
+public class LinkedListIterative<T> {
+
+    public static final String TO_STRING_PATTERN = "[%s]";
+    private Node head;
+
+    public void add(T value) {
+        if (head == null) {
+            head = new Node(value);
+            return;
+        }
+
+        Node lastNode = getTail(head);
+        lastNode.setNext(new Node(value));
+    }
+
+    public T get(int index) {
+        if (head == null) {
+            throw new IllegalArgumentException("list bound violation ");
+        }
+
+        if (index == 0) {
+            return head.getValue();
+        }
+
+        return getNodeByIndex(index).getValue();
+    }
+
+    public boolean remove(T value) {
+
+        if (head.getValue().equals(value)) {
+            head = head.getNext();
+            return true;
+        }
+
+        Node previous = head;
+        Node current = head.getNext();
+        while (current != null) {
+            if (current.getValue().equals(value)) {
+                previous.setNext(current.getNext());
+                return true;
+            }
+
+            previous = current;
+            current = current.getNext();
+        }
+
+        return false;
+    }
+
+    public Node remove(T value, Node head) {
+
+        if (head.getValue().equals(value)) {
+            return head.getNext();
+        }
+
+        Node previous = head;
+        Node current = head.getNext();
+        while (current != null) {
+            if (current.getValue().equals(value)) {
+                previous.setNext(current.getNext());
+                break;
+            }
+
+            previous = current;
+            current = current.getNext();
+        }
+
+        return head;
+    }
+
+    public boolean contains(T value) {
+        if (head == null) {
+            return false;
+        }
+
+        Node current = head;
+        boolean result = false;
+        while (current != null) {
+            if (current.getValue().equals(value)) {
+                result = true;
+                break;
+            }
+            current = current.getNext();
+        }
+
+        return result;
+    }
+
+    public void print() {
+        StringBuilder result = new StringBuilder();
+        Node current = head;
+        while (current != null) {
+            result.append(current.getValue());
+            result.append("->");
+            current = current.getNext();
+        }
+        System.out.println(result);
+    }
+
+    public void print(Node head) {
+        StringBuilder result = new StringBuilder();
+        Node current = head;
+        while (current != null) {
+            result.append(current.getValue());
+            result.append("->");
+            current = current.getNext();
+        }
+        System.out.println(result);
+    }
+
+    @Override
+    public String toString() {
+
+        if (head == null) {
+            return "";
+        }
+
+        return TO_STRING_PATTERN.formatted(head);
+    }
+
+    private Node getNodeByIndex(int index) {
+        Node currentNode = head;
+        for (int i = 0; i < index; i++) {
+            if (currentNode.getNext() == null) {
+                throw new IllegalArgumentException("list bound violation ");
+            }
+            currentNode = currentNode.getNext();
+        }
+        return currentNode;
+    }
+
+    private Node getTail(Node firstNode) {
+
+        while (firstNode.getNext() != null) {
+            firstNode = firstNode.getNext();
+        }
+
+        return firstNode;
+    }
+
+    private class Node {
+        private final T value;
+        private Node next;
+
+        public Node(T value) {
+            this.value = value;
+        }
+
+        public T getValue() {
+            return value;
+        }
+
+        public Node getNext() {
+            return next;
+        }
+
+        public void setNext(Node next) {
+            this.next = next;
+        }
+
+        @Override
+        public String toString() {
+            return "Node{" +
+                    "value=" + value +
+                    ", next=" + next +
+                    '}';
+        }
+    }
+
+    public static void main(String[] args) {
+        LinkedListIterative<Integer> things = new LinkedListIterative<>();
+        things.add(4);
+        things.add(5);
+        things.print();
+        System.out.println(things.get(1));
+        System.out.println(things.contains(10));
+        System.out.println(things.contains(4));
+        things.add(7);
+        things.add(8);
+        things.print();
+        things.remove(8);
+        things.print();
+        things.remove(4);
+        things.print();
+
+    }
+}
+
+```
+
+```java
+package datastruct;
+
+import java.util.Objects;
+
+public class LinkedListRecursive<T> {
+
+    public static final String TO_STRING_PATTERN = "[%s]";
+    private Node head;
+
+    public void add(T value) {
+        if (head == null) {
+            head = new Node(value);
+            return;
+        }
+
+        Node lastNode = getTail(head);
+        lastNode.setNext(new Node(value));
+    }
+
+    private boolean nodeContains(T value, Node node) {
+
+        if (node == null) {
+            return false;
+        }
+
+        if (Objects.equals(value, node.getValue())) {
+            return true;
+        }
+
+        return nodeContains(value, node.getNext());
+    }
+
+    public boolean contains(T value) {
+        if (head == null) {
+            return false;
+        }
+
+        return nodeContains(value, head);
+    }
+
+
+    public T get(int index) {
+        if (head == null) {
+            throw new IllegalArgumentException("list bound violation ");
+        }
+
+        Node foundNode = getNodeByIndex(index, 0, head);
+        if (foundNode == null) {
+            return null;
+        }
+
+        return foundNode.getValue();
+    }
+
+    private String printNode(Node node) {
+
+        if (node == null) {
+            return "";
+        }
+
+        return node.getValue() + "->" + printNode(node.getNext());
+    }
+
+    public void print() {
+        System.out.println(printNode(head));
+    }
+
+    public boolean remove(T value) {
+
+        if (head.getValue().equals(value)) {
+            head = head.getNext();
+            return true;
+        }
+
+        return removeHelper(value, head.getNext(), head);
+    }
+
+    public Node remove(T value, Node head) {
+
+        if (head.getValue().equals(value)) {
+            return head.getNext();
+        }
+
+        removeHelper(value, head.getNext(), head);
+
+        return head;
+    }
+
+    private boolean removeHelper(T value, Node current, Node previous) {
+
+        if (current == null) {
+            return false;
+        }
+
+        if (current.getValue().equals(value)) {
+            previous.setNext(current.getNext());
+            return true;
+        }
+
+        return removeHelper(value, current.getNext(), current);
+    }
+
+    @Override
+    public String toString() {
+
+        if (head == null) {
+            return "";
+        }
+
+        return TO_STRING_PATTERN.formatted(head);
+    }
+
+
+    private Node getNodeByIndex(int targetPosition, int currentIndex, Node currentNode) {
+
+        if (currentNode == null) {
+            return null;
+        }
+
+        if (currentIndex == targetPosition) {
+            return currentNode;
+        }
+
+        return getNodeByIndex(targetPosition, currentIndex + 1, currentNode.getNext());
+    }
+
+    private Node getTail(Node firstNode) {
+
+        if (firstNode.getNext() == null) {
+            return firstNode;
+        }
+
+        return getTail(firstNode.getNext());
+    }
+
+    private class Node {
+        private final T value;
+        private Node next;
+
+        public Node(T value) {
+            this.value = value;
+        }
+
+        public T getValue() {
+            return value;
+        }
+
+        public Node getNext() {
+            return next;
+        }
+
+        public void setNext(Node next) {
+            this.next = next;
+        }
+
+        @Override
+        public String toString() {
+            return "Node{" +
+                    "value=" + value +
+                    ", next=" + next +
+                    '}';
+        }
+    }
+
+    public static void main(String[] args) {
+        LinkedListRecursive<Integer> things = new LinkedListRecursive<>();
+        things.add(4);
+        things.add(5);
+        things.print();
+        System.out.println(things.get(1));
+        System.out.println(things.contains(10));
+        System.out.println(things.contains(4));
+        things.add(7);
+        things.add(8);
+        things.print();
+        things.remove(8);
+        things.print();
+        things.remove(4);
+        things.print();
+
+    }
+}
 
 ```
 
