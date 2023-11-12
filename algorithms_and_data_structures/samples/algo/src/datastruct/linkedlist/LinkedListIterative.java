@@ -1,4 +1,4 @@
-package datastruct;
+package datastruct.linkedlist;
 
 public class LinkedListIterative<T> {
 

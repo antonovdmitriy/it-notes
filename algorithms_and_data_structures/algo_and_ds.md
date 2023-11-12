@@ -25,6 +25,9 @@
     - [Variants](#variants)
     - [How to reverse Linked List?](#how-to-reverse-linked-list)
     - [Zipper](#zipper)
+  - [Stack](#stack)
+    - [Bracket mather](#bracket-mather)
+  - [Queue](#queue)
 - [Algorithms](#algorithms)
   - [Memory addresses arrays and linked list](#memory-addresses-arrays-and-linked-list)
   - [traveling salesperson problem.](#traveling-salesperson-problem)
@@ -1195,6 +1198,251 @@ public class Zipper {
         Node<String> second = new Node<>("B", new Node<>("D", null));
         print(zipperRecursivelly(first, second));
     }
+}
+
+```
+
+## Stack
+
+- collection of items
+- add to top of stack (push)
+- remove top of stack (pop)
+- last-in-first-out (LIFO)
+  
+  Useful for:
+  - tracking a history of steps
+  - browser history
+  - backtracking algorithms
+
+```java
+package datastruct.stack;
+
+public class LinkedListStack<T> {
+
+    private Node top = null;
+
+    // O(1)
+    private void push(T value) {
+        top = new Node(value, top);
+    }
+
+    // O(1)
+    private T pop() {
+
+        if (top == null) {
+            return null;
+        }
+
+        T resut = top.getValue();
+        top = top.getNext();
+        return resut;
+    }
+
+
+    private String printNode(Node node) {
+
+        if (node == null) {
+            return "";
+        }
+
+        return node.getValue() + "->" + printNode(node.getNext());
+    }
+
+    public void print() {
+        System.out.println(printNode(top));
+    }
+
+
+    public class Node {
+        private final T value;
+        private Node next;
+
+        public Node(T value, Node next) {
+            this.value = value;
+            this.next = next;
+        }
+
+        public T getValue() {
+            return value;
+        }
+
+        public Node getNext() {
+            return next;
+        }
+
+        public void setNext(Node next) {
+            this.next = next;
+        }
+    }
+
+    public static void main(String[] args) {
+        LinkedListStack<String> stack = new LinkedListStack<>();
+        stack.push("a");
+        stack.push("b");
+        stack.push("c");
+        stack.print();
+
+        stack.pop();
+        stack.print();
+        stack.pop();
+        stack.print();
+    }
+}
+
+```
+
+### Bracket mather
+
+```java
+package datastruct.stack;
+
+import java.util.LinkedList;
+
+public class BracketMatcher {
+
+    private static LinkedList<Integer> memo = new LinkedList<>();
+
+
+    private static int match(String input) {
+
+        for (char c : input.toCharArray()) {
+
+            if (c == ')') {
+                if (memo.isEmpty()) {
+                    return 0;
+                } else {
+                    memo.pop();
+                }
+            }
+
+            if (c == '(') {
+                memo.push(1);
+            }
+        }
+
+        return memo.isEmpty() ? 1 : 0;
+    }
+
+    public static void main(String[] args) {
+        System.out.println(match("(hello)"));
+        System.out.println(match("(()hello)"));
+        System.out.println(match("()hello)"));
+
+    }
+
+}
+
+```
+
+## Queue
+
+- collection of items
+- add to back of queue (enqueue)
+- remove front of queue (dequeue)
+- First-in-first-out (FIFO)
+
+Useful for:
+- FIFO order
+- tracking requests for a limited resource
+- graph algorithms
+
+```java
+package datastruct.queue;
+
+import datastruct.stack.LinkedListStack;
+
+public class Queue<T> {
+
+    private Node head = null;
+    private Node tail = null;
+
+    private void enqueue(T value) {
+        Node nodeToAdd = new Node(value, null);
+        if (head == null) {
+            head = nodeToAdd;
+            tail = nodeToAdd;
+        } else {
+            tail.setNext(nodeToAdd);
+            tail = nodeToAdd;
+        }
+    }
+
+    private T dequeue() {
+
+        if (head == null) {
+            return null;
+        }
+
+        T result = head.getValue();
+
+        head = head.getNext();
+
+        if (head == null) {
+            tail = null;
+        }
+
+        return result;
+
+    }
+
+
+    private String printNode(Node node) {
+
+        if (node == null) {
+            return "";
+        }
+
+        return node.getValue() + "->" + printNode(node.getNext());
+    }
+
+    public void print() {
+        System.out.println(printNode(head));
+    }
+
+
+    public class Node {
+        private final T value;
+        private Node next;
+
+        public Node(T value, Node next) {
+            this.value = value;
+            this.next = next;
+        }
+
+        public T getValue() {
+            return value;
+        }
+
+        public Node getNext() {
+            return next;
+        }
+
+        public void setNext(Node next) {
+            this.next = next;
+        }
+    }
+
+    public static void main(String[] args) {
+        Queue<String> stack = new Queue<>();
+        stack.enqueue("a");
+        stack.enqueue("b");
+        stack.enqueue("c");
+        stack.print();
+
+        stack.dequeue();
+        stack.print();
+        stack.dequeue();
+        stack.print();
+        stack.dequeue();
+        stack.print();
+
+        stack.enqueue("a");
+        stack.enqueue("b");
+        stack.enqueue("c");
+        stack.print();
+
+    }
+
 }
 
 ```
