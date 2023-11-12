@@ -29,6 +29,10 @@ public class LinkedListIterative<T> {
 
     public boolean remove(T value) {
 
+        if(head == null){
+            return false;
+        }
+
         if (head.getValue().equals(value)) {
             head = head.getNext();
             return true;

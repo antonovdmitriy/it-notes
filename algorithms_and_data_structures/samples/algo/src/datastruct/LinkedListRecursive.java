@@ -44,7 +44,7 @@ public class LinkedListRecursive<T> {
             throw new IllegalArgumentException("list bound violation ");
         }
 
-        Node foundNode = getNodeByIndex(index, 0, head);
+        Node foundNode = getNodeByIndex(index, head);
         if (foundNode == null) {
             return null;
         }
@@ -66,6 +66,10 @@ public class LinkedListRecursive<T> {
     }
 
     public boolean remove(T value) {
+
+        if (head == null) {
+            return false;
+        }
 
         if (head.getValue().equals(value)) {
             head = head.getNext();
@@ -111,17 +115,17 @@ public class LinkedListRecursive<T> {
     }
 
 
-    private Node getNodeByIndex(int targetPosition, int currentIndex, Node currentNode) {
+    private Node getNodeByIndex(int index, Node currentNode) {
 
         if (currentNode == null) {
             return null;
         }
 
-        if (currentIndex == targetPosition) {
+        if (index == 0) {
             return currentNode;
         }
 
-        return getNodeByIndex(targetPosition, currentIndex + 1, currentNode.getNext());
+        return getNodeByIndex(index - 1, currentNode.getNext());
     }
 
     private Node getTail(Node firstNode) {
