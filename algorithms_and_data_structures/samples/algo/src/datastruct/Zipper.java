@@ -32,18 +32,34 @@ public class Zipper {
         }
     }
 
-    public static Node zipper(Node first, Node second) {
+    public static Node zipper(Node head1, Node head2) {
 
+        Node tail = head1;
+        Node current1 = head1.getNext();
+        Node current2 = head2;
+        int count = 0;
 
-        Node head = first;
-
-
-
-        while (first != null && second != null) {
-
+        while (current1 != null && current2 != null) {
+            if (count % 2 == 0) {
+                tail.setNext(current2);
+                current2 = current2.getNext();
+            } else {
+                tail.setNext(current1);
+                current1 = current1.getNext();
+            }
+            tail = tail.getNext();
+            count++;
         }
 
-        return head;
+        if (current1 != null) {
+            tail.setNext(current1);
+        }
+
+        if (current2 != null) {
+            tail.setNext(current2);
+        }
+
+        return head1;
     }
 
     public static void print(Node<?> node) {
@@ -63,8 +79,5 @@ public class Zipper {
         Node<String> first = new Node<>("A", new Node<>("C", new Node<>("E", new Node<>("F", null))));
         Node<String> second = new Node<>("B", new Node<>("D", null));
         print(zipper(first, second));
-
     }
-
-
 }
