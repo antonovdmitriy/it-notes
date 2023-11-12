@@ -62,6 +62,29 @@ public class Zipper {
         return head1;
     }
 
+    public static Node zipperRecursivelly(Node head1, Node head2) {
+
+        if (head1 == null && head2 == null) {
+            return null;
+        }
+
+        if (head1 == null) {
+            return head2;
+        }
+
+        if (head2 == null) {
+            return head1;
+        }
+
+        Node next1 = head1.getNext();
+        Node next2 = head2.getNext();
+
+        head1.setNext(head2);
+        head2.setNext(zipperRecursivelly(next1, next2));
+
+        return head1;
+    }
+
     public static void print(Node<?> node) {
 
         StringBuilder sb = new StringBuilder();
@@ -78,6 +101,6 @@ public class Zipper {
 
         Node<String> first = new Node<>("A", new Node<>("C", new Node<>("E", new Node<>("F", null))));
         Node<String> second = new Node<>("B", new Node<>("D", null));
-        print(zipper(first, second));
+        print(zipperRecursivelly(first, second));
     }
 }
