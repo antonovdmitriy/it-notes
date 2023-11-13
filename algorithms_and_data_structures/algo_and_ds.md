@@ -1843,11 +1843,279 @@ Binary Tree is:
 - Tree where each node has at most two children
 - Tree whith 0 childer or 1 children is ok binary tree
 
+```java
+package datastruct.tree.binary;
+
+public class BinaryTree<T> {
+
+    private Node<T> root;
+
+    public Node<T> getRoot() {
+        return root;
+    }
+
+    public void setRoot(Node<T> root) {
+        this.root = root;
+    }
+
+    private static class Node<T> {
+
+        private final T value;
+        private Node<T> left;
+        private Node<T> right;
+
+        public Node(T value, Node<T> left, Node<T> right) {
+            this.value = value;
+            this.left = left;
+            this.right = right;
+        }
+
+        public Node(T value) {
+            this.value = value;
+        }
+
+        public T getValue() {
+            return value;
+        }
+
+        public Node<T> getLeft() {
+            return left;
+        }
+
+        public void setLeft(Node<T> left) {
+            this.left = left;
+        }
+
+        public Node<T> getRight() {
+            return right;
+        }
+
+        public void setRight(Node<T> right) {
+            this.right = right;
+        }
+    }
+
+    public static void main(String[] args) {
+
+        Node a = new Node("a");
+        Node b = new Node("b");
+        Node c = new Node("d");
+        Node d = new Node("d");
+        Node e = new Node("e");
+        Node f = new Node("f");
+
+        a.setLeft(b);
+        a.setRight(c);
+        b.setLeft(d);
+        b.setRight(e);
+        c.setRight(f);
+    }
+}
+
+```
+
 ### Breadth-first traversal
 
 Iterate over node on one level of the tree.
 
+![](images/tree_breadth_first_01.gif)
 
+```java
+package datastruct.tree.binary;
+
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
+
+public class BreadthFirst {
+
+    private static class Node<T> {
+
+        private final T value;
+        private Node<T> left;
+        private Node<T> right;
+
+        public Node(T value, Node<T> left, Node<T> right) {
+            this.value = value;
+            this.left = left;
+            this.right = right;
+        }
+
+        public Node(T value) {
+            this.value = value;
+        }
+
+        public T getValue() {
+            return value;
+        }
+
+        public Node<T> getLeft() {
+            return left;
+        }
+
+        public void setLeft(Node<T> left) {
+            this.left = left;
+        }
+
+        public Node<T> getRight() {
+            return right;
+        }
+
+        public void setRight(Node<T> right) {
+            this.right = right;
+        }
+    }
+
+    public static void breadthFirstPrint(Node root) {
+
+        Queue<Node> memo = new LinkedList<>();
+
+        memo.offer(root);
+
+        while (!memo.isEmpty()) {
+            Node current = memo.poll();
+            System.out.println(current.getValue());
+            if (current.getLeft() != null) {
+                memo.offer(current.getLeft());
+            }
+            if (current.getRight() != null) {
+                memo.offer(current.getRight());
+            }
+        }
+    }
+
+    public static boolean containsBreadthFirst(Node root, Object value) {
+
+        Queue<Node> memo = new LinkedList<>();
+
+        memo.offer(root);
+
+        while (!memo.isEmpty()) {
+            Node current = memo.poll();
+            Object currentValue = current.getValue();
+            if (currentValue.equals(value)) {
+                return true;
+            }
+            if (current.getLeft() != null) {
+                memo.offer(current.getLeft());
+            }
+            if (current.getRight() != null) {
+                memo.offer(current.getRight());
+            }
+        }
+        return false;
+    }
+
+
+    public static void main(String[] args) {
+
+        Node a = new Node("a");
+        Node b = new Node("b");
+        Node c = new Node("c");
+        Node d = new Node("d");
+        Node e = new Node("e");
+        Node f = new Node("f");
+
+        a.setLeft(b);
+        a.setRight(c);
+        b.setLeft(d);
+        b.setRight(e);
+        c.setRight(f);
+
+        breadthFirstPrint(a);
+        System.out.println(containsBreadthFirst(a, "d"));
+        System.out.println(containsBreadthFirst(a, "t"));
+    }
+
+}
+
+```
+
+```java
+package datastruct.tree.binary;
+
+import java.util.LinkedList;
+import java.util.Queue;
+
+public class BreadthFirstSum {
+
+    private static class Node<T> {
+
+        private final T value;
+        private Node<T> left;
+        private Node<T> right;
+
+        public Node(T value, Node<T> left, Node<T> right) {
+            this.value = value;
+            this.left = left;
+            this.right = right;
+        }
+
+        public Node(T value) {
+            this.value = value;
+        }
+
+        public T getValue() {
+            return value;
+        }
+
+        public Node<T> getLeft() {
+            return left;
+        }
+
+        public void setLeft(Node<T> left) {
+            this.left = left;
+        }
+
+        public Node<T> getRight() {
+            return right;
+        }
+
+        public void setRight(Node<T> right) {
+            this.right = right;
+        }
+    }
+
+    public static int sumBreadthFirst(Node<Integer> root) {
+
+        Queue<Node<Integer>> memo = new LinkedList<>();
+
+        memo.offer(root);
+
+        int result = 0;
+        while (!memo.isEmpty()) {
+            Node<Integer> current = memo.poll();
+            result += current.getValue();
+            if (current.getLeft() != null) {
+                memo.offer(current.getLeft());
+            }
+            if (current.getRight() != null) {
+                memo.offer(current.getRight());
+            }
+        }
+        return result;
+    }
+
+
+    public static void main(String[] args) {
+
+        Node<Integer> a = new Node<>(3);
+        Node<Integer> b = new Node<>(2);
+        Node<Integer> c = new Node<>(7);
+        Node<Integer> d = new Node<>(4);
+        Node<Integer> e = new Node<>(-2);
+        Node<Integer> f = new Node<>(5);
+
+        a.setLeft(b);
+        a.setRight(c);
+        b.setLeft(d);
+        b.setRight(e);
+        c.setRight(f);
+
+        System.out.println(sumBreadthFirst(a)); // 19
+    }
+}
+```
 
 # Algorithms
 
