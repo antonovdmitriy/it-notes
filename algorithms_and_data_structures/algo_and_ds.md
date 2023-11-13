@@ -32,6 +32,8 @@
   - [Queue](#queue)
     - [Snake](#snake)
   - [Snake with motion](#snake-with-motion)
+  - [Binary Tree](#binary-tree)
+    - [Breadth-first traversal](#breadth-first-traversal)
 - [Algorithms](#algorithms)
   - [Memory addresses arrays and linked list](#memory-addresses-arrays-and-linked-list)
   - [traveling salesperson problem.](#traveling-salesperson-problem)
@@ -1830,6 +1832,21 @@ public class SnakeGame {
 </project>
 
 ```
+
+## Binary Tree
+
+Tree is a collection of elements where:
+- there is one root
+- there is only one unique path between any two nodes
+
+Binary Tree is:
+- Tree where each node has at most two children
+- Tree whith 0 childer or 1 children is ok binary tree
+
+### Breadth-first traversal
+
+Iterate over node on one level of the tree.
+
 
 
 # Algorithms
