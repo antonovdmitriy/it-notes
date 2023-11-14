@@ -36,7 +36,7 @@
     - [Breadth-first traversal](#breadth-first-traversal)
     - [Depth first traversal](#depth-first-traversal)
       - [Using Stack](#using-stack)
-    - [Recursive](#recursive)
+      - [Recursive](#recursive)
 - [Algorithms](#algorithms)
   - [Memory addresses arrays and linked list](#memory-addresses-arrays-and-linked-list)
   - [traveling salesperson problem.](#traveling-salesperson-problem)
@@ -2122,6 +2122,8 @@ public class BreadthFirstSum {
 
 ### Depth first traversal
 
+![](images/tree_depth_first_01.gif)
+
 #### Using Stack
 
 ```java
@@ -2328,7 +2330,7 @@ public class DepthFirstSum {
 }
 ```
 
-### Recursive
+#### Recursive
 
 3 ways:
 - pre-order: sel, left, right

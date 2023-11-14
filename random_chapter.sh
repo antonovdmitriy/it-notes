@@ -15,7 +15,10 @@ select_random_leaf() {
     local next_indent=0
 
     # Read file into an array
-    mapfile -t lines < "$md_file"
+    # mapfile -t lines < "$md_file"
+
+    # Read file into an array, converting CRLF to LF if needed
+    mapfile -t lines < <(tr -d '\r' < "$md_file")
 
     # Loop through lines to find the table of contents and leaf nodes
     for (( i=0; i<${#lines[@]}; i++ )); do
@@ -23,15 +26,21 @@ select_random_leaf() {
         local next_line="${lines[$i+1]}"
 
         # Check if line is a table of contents item
-        if [[ "$line" =~ ^\ +[-\*] ]]; then
+        if [[ "$line" =~ ^[[:blank:]]*[-\*] ]]; then
             # Determine indentation level by counting leading spaces
-            current_indent=$(echo "$line" | grep -o '^\ *' | wc -c)
-            next_indent=$(echo "$next_line" | grep -o '^\ *' | wc -c)
+            current_indent=$(echo "$line" | grep -o '^[[:blank:]]*' | wc -c)
+            next_indent=$(echo "$next_line" | grep -o '^[[:blank:]]*' | wc -c)
 
             # Check if it is a leaf node
             if [[ $current_indent -ge $next_indent ]]; then
                 leaves+=("$line")
             fi
+
+            # Break the loop if the next line is empty, assuming the end of the table of contents
+            if [[ -z "$next_line" ]]; then
+                break
+            fi
+
         fi
     done
 
