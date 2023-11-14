@@ -9,11 +9,8 @@ fi
 # Function to select a random leaf from the table of contents
 select_random_leaf() {
     local md_file=$1
-    local in_toc=false
+    local lines=()
     local leaves=()
-    local prev_line=""
-    local line=""
-    local next_line=""
     local current_indent=0
     local next_indent=0
 
@@ -22,31 +19,18 @@ select_random_leaf() {
 
     # Loop through lines to find the table of contents and leaf nodes
     for (( i=0; i<${#lines[@]}; i++ )); do
-        line=${lines[$i]}
-        next_line=${lines[$i + 1]}
+        local line="${lines[$i]}"
+        local next_line="${lines[$i+1]}"
 
-        # Check for start of the table of contents
-        if [[ "$line" =~ ^[-\*]\ \[.*\]\(#.*\) ]]; then
-            in_toc=true
-        fi
-
-        # If in table of contents
-        if [ "$in_toc" = true ]; then
+        # Check if line is a table of contents item
+        if [[ "$line" =~ ^\ +[-\*] ]]; then
             # Determine indentation level by counting leading spaces
-            current_indent=$(echo "$line" | sed -e 's/[^ -].*//g' | wc -c)
-            next_indent=$(echo "$next_line" | sed -e 's/[^ -].*//g' | wc -c)
+            current_indent=$(echo "$line" | grep -o '^\ *' | wc -c)
+            next_indent=$(echo "$next_line" | grep -o '^\ *' | wc -c)
 
             # Check if it is a leaf node
-            if [ "$current_indent" -ge "$next_indent" ]; then
+            if [[ $current_indent -ge $next_indent ]]; then
                 leaves+=("$line")
-            fi
-
-            # Update previous line
-            prev_line=$line
-
-            # Check for the end of the table of contents
-            if [[ ! "$next_line" =~ ^[-\*]\ \[.*\]\(#.*\) ]]; then
-                break
             fi
         fi
     done
@@ -66,6 +50,8 @@ select_random_leaf() {
         echo "No leaf chapters found in the table of contents of $md_file."
     fi
 }
+
+# Rest of the script for handling files and directories...
 
 
 # Check if a path (file or directory) is provided
