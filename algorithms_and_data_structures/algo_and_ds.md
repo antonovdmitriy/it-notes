@@ -38,6 +38,9 @@
       - [Using Stack](#using-stack)
       - [Recursive](#recursive)
     - [max root to leaf path sum](#max-root-to-leaf-path-sum)
+  - [Graph](#graph)
+    - [Depth first traversal](#depth-first-traversal-1)
+    - [Breadh first traversal](#breadh-first-traversal)
 - [Algorithms](#algorithms)
   - [Memory addresses arrays and linked list](#memory-addresses-arrays-and-linked-list)
   - [traveling salesperson problem.](#traveling-salesperson-problem)
@@ -2641,6 +2644,138 @@ public class MaxPathRootToLeafSum {
 
 ```
 
+## Graph
+
+- Collection of nodes and edges
+
+![](images/graph_01.png)
+
+![](images/graph_02.png)
+
+![](images/graph_03.png)
+
+![](images/graph_04.png)
+
+![](images/graph_depth_breadth_01.png)
+
+### Depth first traversal
+
+![](images/graph_depth_01.gif)
+
+![](images/graph_depth_02.gif)
+
+```java
+package datastruct.graph;
+
+import java.util.*;
+
+public class DepthFirstIterative {
+
+    public static void depthFirstPrint(Map<Character, List<Character>> graph, Character source) {
+
+        Deque<Character> stack = new LinkedList<>();
+        stack.push(source);
+
+        while (!stack.isEmpty()) {
+            Character current = stack.pop();
+
+            System.out.println(current);
+            List<Character> neighbours = graph.get(current);
+            if (neighbours != null && !neighbours.isEmpty()) {
+                neighbours.forEach(stack::push);
+            }
+        }
+
+    }
+
+    public static void main(String[] args) {
+        Map<Character, List<Character>> graph = new HashMap<>();
+        graph.put('a', List.of( 'c', 'b'));
+        graph.put('b', List.of('d'));
+        graph.put('c', List.of('e'));
+        graph.put('d', List.of('f'));
+        graph.put('e', List.of());
+        graph.put('f', List.of());
+
+        depthFirstPrint(graph, 'a');
+    }
+}
+
+```
+
+```java
+package datastruct.graph;
+
+import java.util.*;
+
+public class DepthFirstRecursive {
+
+    public static void depthFirstPrint(Map<Character, List<Character>> graph, Character source) {
+
+        System.out.println(source);
+
+        graph.get(source).forEach(e -> depthFirstPrint(graph, e));
+    }
+
+    public static void main(String[] args) {
+        Map<Character, List<Character>> graph = new HashMap<>();
+        graph.put('a', List.of('b', 'c'));
+        graph.put('b', List.of('d'));
+        graph.put('c', List.of('e'));
+        graph.put('d', List.of('f'));
+        graph.put('e', List.of());
+        graph.put('f', List.of());
+
+        depthFirstPrint(graph, 'a');
+    }
+}
+
+```
+
+### Breadh first traversal
+
+![](images/graph_breadth_01.gif)
+
+![](images/graph_breadth_02.gif)
+
+```java
+package datastruct.graph;
+
+import java.util.*;
+
+public class BreadthFirstIterative {
+
+    public static void breadthFirstPrint(Map<Character, List<Character>> graph, Character source) {
+
+        Queue<Character> queue = new LinkedList<>();
+        queue.offer(source);
+
+        while (!queue.isEmpty()) {
+            Character current = queue.poll();
+
+            System.out.println(current);
+            List<Character> neighbours = graph.get(current);
+            if (neighbours != null && !neighbours.isEmpty()) {
+                neighbours.forEach(queue::offer);
+            }
+        }
+
+    }
+
+    public static void main(String[] args) {
+        Map<Character, List<Character>> graph = new HashMap<>();
+        graph.put('a', List.of( 'b', 'c'));
+        graph.put('b', List.of('d'));
+        graph.put('c', List.of('e'));
+        graph.put('d', List.of('f'));
+        graph.put('e', List.of());
+        graph.put('f', List.of());
+
+        breadthFirstPrint(graph, 'a');
+    }
+}
+
+```
 
 # Algorithms
 
