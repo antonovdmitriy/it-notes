@@ -34,6 +34,9 @@
   - [Snake with motion](#snake-with-motion)
   - [Binary Tree](#binary-tree)
     - [Breadth-first traversal](#breadth-first-traversal)
+    - [Depth first traversal](#depth-first-traversal)
+      - [Using Stack](#using-stack)
+    - [Recursive](#recursive)
 - [Algorithms](#algorithms)
   - [Memory addresses arrays and linked list](#memory-addresses-arrays-and-linked-list)
   - [traveling salesperson problem.](#traveling-salesperson-problem)
@@ -41,7 +44,7 @@
     - [Binary search](#binary-search)
   - [Sorting](#sorting)
     - [Selection sorting](#selection-sorting)
-  - [Recursive](#recursive)
+  - [Recursive](#recursive-1)
 - [Dynamic programming](#dynamic-programming)
   - [Memoization](#memoization)
     - [Fib](#fib)
@@ -2114,6 +2117,441 @@ public class BreadthFirstSum {
 
         System.out.println(sumBreadthFirst(a)); // 19
     }
+}
+```
+
+### Depth first traversal
+
+#### Using Stack
+
+```java
+package datastruct.tree.binary;
+
+import java.util.Deque;
+import java.util.LinkedList;
+import java.util.Queue;
+
+public class DepthFirst {
+
+    private static class Node<T> {
+
+        private final T value;
+        private Node<T> left;
+        private Node<T> right;
+
+        public Node(T value, Node<T> left, Node<T> right) {
+            this.value = value;
+            this.left = left;
+            this.right = right;
+        }
+
+        public Node(T value) {
+            this.value = value;
+        }
+
+        public T getValue() {
+            return value;
+        }
+
+        public Node<T> getLeft() {
+            return left;
+        }
+
+        public void setLeft(Node<T> left) {
+            this.left = left;
+        }
+
+        public Node<T> getRight() {
+            return right;
+        }
+
+        public void setRight(Node<T> right) {
+            this.right = right;
+        }
+    }
+
+    public static void depthFirstPrint(Node root) {
+
+        // TIME O(n)
+        // SPACE O(n)
+
+        Deque<Node> memo = new LinkedList<>();
+
+        memo.push(root);
+
+        while (!memo.isEmpty()) {
+            Node current = memo.pop();
+            System.out.println(current.getValue());
+            if (current.getRight() != null) {
+                memo.push(current.getRight());
+            }
+            if (current.getLeft() != null) {
+                memo.push(current.getLeft());
+            }
+        }
+    }
+
+    public static boolean containsDepthFirst(Node root, Object value) {
+
+
+        Deque<Node> memo = new LinkedList<>();
+
+        memo.push(root);
+
+        while (!memo.isEmpty()) {
+            Node current = memo.pop();
+            if (current.getValue().equals(value)) {
+                return true;
+            }
+            if (current.getRight() != null) {
+                memo.push(current.getRight());
+            }
+            if (current.getLeft() != null) {
+                memo.push(current.getLeft());
+            }
+        }
+
+        return false;
+    }
+
+
+    public static void main(String[] args) {
+
+        Node a = new Node("a");
+        Node b = new Node("b");
+        Node c = new Node("c");
+        Node d = new Node("d");
+        Node e = new Node("e");
+        Node f = new Node("f");
+
+        a.setLeft(b);
+        a.setRight(c);
+        b.setLeft(d);
+        b.setRight(e);
+        c.setRight(f);
+
+        depthFirstPrint(a);
+        System.out.println(containsDepthFirst(a, "d"));
+        System.out.println(containsDepthFirst(a, "t"));
+    }
+
+}
+```
+
+```java
+package datastruct.tree.binary;
+
+import java.util.Deque;
+import java.util.LinkedList;
+
+public class DepthFirstSum {
+
+    private static class Node<T> {
+
+        private final T value;
+        private Node<T> left;
+        private Node<T> right;
+
+        public Node(T value, Node<T> left, Node<T> right) {
+            this.value = value;
+            this.left = left;
+            this.right = right;
+        }
+
+        public Node(T value) {
+            this.value = value;
+        }
+
+        public T getValue() {
+            return value;
+        }
+
+        public Node<T> getLeft() {
+            return left;
+        }
+
+        public void setLeft(Node<T> left) {
+            this.left = left;
+        }
+
+        public Node<T> getRight() {
+            return right;
+        }
+
+        public void setRight(Node<T> right) {
+            this.right = right;
+        }
+    }
+
+    public static int sumDepthFirst(Node<Integer> root) {
+        // TIME O(n)
+        // SPACE O(n)
+
+        Deque<Node<Integer>> memo = new LinkedList<>();
+
+        memo.push(root);
+
+        int sum = 0;
+        while (!memo.isEmpty()) {
+            Node<Integer> current = memo.pop();
+
+            sum += current.getValue();
+            if (current.getRight() != null) {
+                memo.push(current.getRight());
+            }
+            if (current.getLeft() != null) {
+                memo.push(current.getLeft());
+            }
+        }
+        return sum;
+    }
+
+
+    public static void main(String[] args) {
+
+        Node<Integer> a = new Node<>(3);
+        Node<Integer> b = new Node<>(2);
+        Node<Integer> c = new Node<>(7);
+        Node<Integer> d = new Node<>(4);
+        Node<Integer> e = new Node<>(-2);
+        Node<Integer> f = new Node<>(5);
+
+        a.setLeft(b);
+        a.setRight(c);
+        b.setLeft(d);
+        b.setRight(e);
+        c.setRight(f);
+
+        System.out.println(sumDepthFirst(a)); // 19
+    }
+
+}
+```
+
+### Recursive
+
+3 ways:
+- pre-order: sel, left, right
+- post-order: left, right, self
+- in-order: left, self, right
+
+```java
+package datastruct.tree.binary;
+
+import java.util.Deque;
+import java.util.LinkedList;
+
+public class DepthFirstRecursive {
+
+    private static class Node<T> {
+
+        private final T value;
+        private Node<T> left;
+        private Node<T> right;
+
+        public Node(T value, Node<T> left, Node<T> right) {
+            this.value = value;
+            this.left = left;
+            this.right = right;
+        }
+
+        public Node(T value) {
+            this.value = value;
+        }
+
+        public T getValue() {
+            return value;
+        }
+
+        public Node<T> getLeft() {
+            return left;
+        }
+
+        public void setLeft(Node<T> left) {
+            this.left = left;
+        }
+
+        public Node<T> getRight() {
+            return right;
+        }
+
+        public void setRight(Node<T> right) {
+            this.right = right;
+        }
+    }
+
+    public static void depthFirstPrint(Node root) {
+
+        // TIME O(n)
+        // SPACE O(n)
+
+        if (root == null) {
+            return;
+        }
+
+        System.out.println(root.getValue());
+        depthFirstPrint(root.getLeft());
+        depthFirstPrint(root.getRight());
+    }
+
+    public static boolean containsDepthFirst(Node root, Object value) {
+        if (root == null) {
+            return false;
+        }
+
+        if(root.getValue().equals(value)){
+            return true;
+        }
+
+        return containsDepthFirst(root.getLeft(), value) || containsDepthFirst(root.getRight(), value);
+    }
+
+    public static void preOrder(Node root) {
+        // self left right
+        // TIME O(n)
+        // SPACE O(n)
+
+        if (root == null) {
+            return;
+        }
+
+        System.out.println(root.getValue());
+        preOrder(root.getLeft());
+        preOrder(root.getRight());
+    }
+
+
+    public static void postOrder(Node root) {
+        // left right self
+        // TIME O(n)
+        // SPACE O(n)
+
+        if (root == null) {
+            return;
+        }
+
+        postOrder(root.getLeft());
+        postOrder(root.getRight());
+        System.out.println(root.getValue()); // print before
+    }
+
+
+    public static void inOrder(Node root) {
+        // left self right
+        // TIME O(n)
+        // SPACE O(n)
+
+        if (root == null) {
+            return;
+        }
+
+        inOrder(root.getLeft());
+        System.out.println(root.getValue()); // print before
+        inOrder(root.getRight());
+    }
+
+    public static void main(String[] args) {
+
+        Node a = new Node("a");
+        Node b = new Node("b");
+        Node c = new Node("c");
+        Node d = new Node("d");
+        Node e = new Node("e");
+        Node f = new Node("f");
+
+        a.setLeft(b);
+        a.setRight(c);
+        b.setLeft(d);
+        b.setRight(e);
+        c.setRight(f);
+
+        depthFirstPrint(a);
+        System.out.println(containsDepthFirst(a, "d"));
+        System.out.println(containsDepthFirst(a, "t"));
+        preOrder(a);
+        System.out.println("--");
+        postOrder(a);
+        System.out.println("--");
+        inOrder(a);
+    }
+
+}
+
+```
+
+```java
+package datastruct.tree.binary;
+
+public class DepthFirstSumRecursive {
+
+    private static class Node<T> {
+
+        private final T value;
+        private Node<T> left;
+        private Node<T> right;
+
+        public Node(T value, Node<T> left, Node<T> right) {
+            this.value = value;
+            this.left = left;
+            this.right = right;
+        }
+
+        public Node(T value) {
+            this.value = value;
+        }
+
+        public T getValue() {
+            return value;
+        }
+
+        public Node<T> getLeft() {
+            return left;
+        }
+
+        public void setLeft(Node<T> left) {
+            this.left = left;
+        }
+
+        public Node<T> getRight() {
+            return right;
+        }
+
+        public void setRight(Node<T> right) {
+            this.right = right;
+        }
+    }
+
+    public static int sumDepthFirst(Node<Integer> root) {
+
+        // TIME O(n)
+        // SPACE O(n)
+
+        if (root == null) {
+            return 0;
+        }
+
+        return root.getValue() + sumDepthFirst(root.getLeft()) + sumDepthFirst(root.getRight());
+    }
+
+
+    public static void main(String[] args) {
+
+        Node<Integer> a = new Node<>(3);
+        Node<Integer> b = new Node<>(2);
+        Node<Integer> c = new Node<>(7);
+        Node<Integer> d = new Node<>(4);
+        Node<Integer> e = new Node<>(-2);
+        Node<Integer> f = new Node<>(5);
+
+        a.setLeft(b);
+        a.setRight(c);
+        b.setLeft(d);
+        b.setRight(e);
+        c.setRight(f);
+
+        System.out.println(sumDepthFirst(a)); // 19
+    }
+
 }
 ```
 

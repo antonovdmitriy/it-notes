@@ -1,6 +1,3 @@
-# Table of contents
-
-- [Table of contents](#table-of-contents)
 - [Multiple cursors](#multiple-cursors)
 - [Move/copy rows](#movecopy-rows)
 - [Preview](#preview)

@@ -1,6 +1,3 @@
-## Table of contents
-
-- [Table of contents](#table-of-contents)
 - [Data intensive applications](#data-intensive-applications)
   - [Reliability](#reliability)
   - [Scalabllity](#scalabllity)
