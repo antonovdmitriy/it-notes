@@ -1,16 +1,9 @@
 package datastruct.tree.binary;
 
-public class BinaryTree<T> {
+import java.util.Deque;
+import java.util.LinkedList;
 
-    private Node<T> root;
-
-    public Node<T> getRoot() {
-        return root;
-    }
-
-    public void setRoot(Node<T> root) {
-        this.root = root;
-    }
+public class DepthFirstSum {
 
     private static class Node<T> {
 
@@ -49,19 +42,46 @@ public class BinaryTree<T> {
         }
     }
 
+    public static int sumDepthFirst(Node<Integer> root) {
+        // TIME O(n)
+        // SPACE O(n)
+
+        Deque<Node<Integer>> memo = new LinkedList<>();
+
+        memo.push(root);
+
+        int sum = 0;
+        while (!memo.isEmpty()) {
+            Node<Integer> current = memo.pop();
+
+            sum += current.getValue();
+            if (current.getRight() != null) {
+                memo.push(current.getRight());
+            }
+            if (current.getLeft() != null) {
+                memo.push(current.getLeft());
+            }
+        }
+        return sum;
+    }
+
+
     public static void main(String[] args) {
 
-        Node a = new Node("a");
-        Node b = new Node("b");
-        Node c = new Node("d");
-        Node d = new Node("d");
-        Node e = new Node("e");
-        Node f = new Node("f");
+        Node<Integer> a = new Node<>(3);
+        Node<Integer> b = new Node<>(2);
+        Node<Integer> c = new Node<>(7);
+        Node<Integer> d = new Node<>(4);
+        Node<Integer> e = new Node<>(-2);
+        Node<Integer> f = new Node<>(5);
 
         a.setLeft(b);
         a.setRight(c);
         b.setLeft(d);
         b.setRight(e);
         c.setRight(f);
+
+        System.out.println(sumDepthFirst(a)); // 19
     }
+
 }

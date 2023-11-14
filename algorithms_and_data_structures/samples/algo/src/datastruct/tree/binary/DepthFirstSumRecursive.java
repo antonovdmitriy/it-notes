@@ -1,16 +1,6 @@
 package datastruct.tree.binary;
 
-public class BinaryTree<T> {
-
-    private Node<T> root;
-
-    public Node<T> getRoot() {
-        return root;
-    }
-
-    public void setRoot(Node<T> root) {
-        this.root = root;
-    }
+public class DepthFirstSumRecursive {
 
     private static class Node<T> {
 
@@ -49,19 +39,35 @@ public class BinaryTree<T> {
         }
     }
 
+    public static int sumDepthFirst(Node<Integer> root) {
+
+        // TIME O(n)
+        // SPACE O(n)
+
+        if (root == null) {
+            return 0;
+        }
+
+        return root.getValue() + sumDepthFirst(root.getLeft()) + sumDepthFirst(root.getRight());
+    }
+
+
     public static void main(String[] args) {
 
-        Node a = new Node("a");
-        Node b = new Node("b");
-        Node c = new Node("d");
-        Node d = new Node("d");
-        Node e = new Node("e");
-        Node f = new Node("f");
+        Node<Integer> a = new Node<>(3);
+        Node<Integer> b = new Node<>(2);
+        Node<Integer> c = new Node<>(7);
+        Node<Integer> d = new Node<>(4);
+        Node<Integer> e = new Node<>(-2);
+        Node<Integer> f = new Node<>(5);
 
         a.setLeft(b);
         a.setRight(c);
         b.setLeft(d);
         b.setRight(e);
         c.setRight(f);
+
+        System.out.println(sumDepthFirst(a)); // 19
     }
+
 }

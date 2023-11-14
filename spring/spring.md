@@ -1,6 +1,8 @@
-# Table of contents
 
-## Simple app
+- [Simple app](#simple-app)
+- [Testing](#testing)
+
+# Simple app
 
 ```gradle
 plugins {

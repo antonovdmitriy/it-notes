@@ -1,6 +1,3 @@
-# Table of contents
-
-- [Table of contents](#table-of-contents)
 - [Basics](#basics)
   - [Installation](#installation)
     - [Check go installation](#check-go-installation)

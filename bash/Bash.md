@@ -1,6 +1,4 @@
 
-# Table of contents
-- [Table of contents](#table-of-contents)
 - [History](#history)
 - [Recommended sources to help](#recommended-sources-to-help)
 - [Variables](#variables)
@@ -62,7 +60,6 @@
 	- [trivial restart if service down](#trivial-restart-if-service-down)
 	- [check users are created](#check-users-are-created)
 	- [install kube cluster](#install-kube-cluster)
-
 
 # History
 
