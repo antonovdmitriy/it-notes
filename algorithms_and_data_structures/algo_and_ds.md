@@ -45,6 +45,8 @@
     - [Undirected path Has path](#undirected-path-has-path)
     - [Connected components count](#connected-components-count)
     - [Largest component](#largest-component)
+    - [Shortest path](#shortest-path)
+    - [Island count](#island-count)
 - [Algorithms](#algorithms)
   - [Memory addresses arrays and linked list](#memory-addresses-arrays-and-linked-list)
   - [traveling salesperson problem.](#traveling-salesperson-problem)
@@ -3056,6 +3058,193 @@ public class LargestComponent {
 
         System.out.println(largestComponentSize(graph)); // 4
     }
+}
+```
+
+### Shortest path
+
+![](images/graph_shortest_path.gif)
+
+```java
+package datastruct.graph;
+
+import java.util.*;
+
+public class ShortestPath {
+
+    public record Entry(Character value, Integer count) {
+    }
+
+    public static int shortestPath(List<List<Character>> edges, Character source, Character target) {
+
+        Map<Character, List<Character>> graph = buildGraph(edges);
+
+        Set<Character> visited = new HashSet<>();
+        Queue<Entry> queue = new LinkedList<>();
+        Entry entry = new Entry(source, 0);
+
+        queue.offer(entry);
+        visited.add(source);
+
+        while (!queue.isEmpty()) {
+
+            Entry current = queue.poll();
+            if (current.value().equals(target)) {
+                return current.count();
+            }
+
+            for (Character neighbour : graph.get(current.value)) {
+                if (!visited.contains(neighbour)) {
+                    visited.add(neighbour);
+                    queue.offer(new Entry(neighbour, current.count + 1));
+                }
+            }
+        }
+
+        return -1;
+    }
+
+    private static boolean shortestPath(Map<Character,
+            List<Character>> graph,
+                                        Character source,
+                                        Character target,
+                                        Set<Character> visited) {
+
+        if (source.equals(target)) {
+            return true;
+        }
+
+        if (visited.contains(source)) {
+            return false;
+        }
+
+        visited.add(source);
+
+        List<Character> neighbours = graph.get(source);
+        for (char neighbour : neighbours) {
+            if (shortestPath(graph, neighbour, target, visited)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static Map<Character, List<Character>> buildGraph(List<List<Character>> edges) {
+
+        Map<Character, List<Character>> result = new HashMap<>();
+
+        for (List<Character> edge : edges) {
+
+            Character source = edge.get(0);
+            Character target = edge.get(1);
+
+            if (!result.containsKey(source)) {
+                result.put(source, new ArrayList<>());
+            }
+
+            if (!result.containsKey(target)) {
+                result.put(target, new ArrayList<>());
+            }
+
+            result.get(source).add(target);
+            result.get(target).add(source);
+        }
+
+        return result;
+    }
+
+    public static void main(String[] args) {
+
+        List<List<Character>> graph = List.of(
+                List.of('w', 'x'),
+                List.of('x', 'y'),
+                List.of('z', 'y'),
+                List.of('z', 'v'),
+                List.of('w', 'v'));
+        System.out.println(shortestPath(graph, 'w', 'z'));
+    }
+
+}
+
+```
+
+### Island count
+
+![](images/graph_island_count.gif)
+
+```java
+package datastruct.graph;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+public class IslandCount {
+
+    private record Position(int r, int c) {
+    }
+
+    public static int countIsland(List<List<Character>> graph) {
+
+        Set<Position> visited = new HashSet<>();
+
+        int count = 0;
+
+        for (int r = 0; r < graph.size(); r++) {
+
+            for (int c = 0; c < graph.get(0).size(); c++) {
+
+                if (explore(graph, r, c, visited)) {
+                    count++;
+                }
+
+            }
+        }
+
+        return count;
+    }
+
+    private static boolean explore(List<List<Character>> graph, int r, int c, Set<Position> visited) {
+
+        if (r < 0 || r >= graph.size() || c < 0 || c >= graph.get(0).size()) {
+            return false;
+        }
+
+        if (graph.get(r).get(c).equals('W')) {
+            return false;
+        }
+
+        Position currentPosition = new Position(r, c);
+        if (visited.contains(currentPosition)) {
+            return false;
+        }
+
+        visited.add(currentPosition);
+
+        explore(graph, r - 1, c, visited);
+        explore(graph, r + 1, c, visited);
+        explore(graph, r, c - 1, visited);
+        explore(graph, r, c + 1, visited);
+
+        return true;
+    }
+
+    public static void main(String[] args) {
+
+        List<List<Character>> graph = List.of(
+                List.of('W', 'L', 'W', 'W', 'W'),
+                List.of('W', 'L', 'W', 'W', 'W'),
+                List.of('W', 'W', 'W', 'L', 'W'),
+                List.of('W', 'W', 'L', 'L', 'W'),
+                List.of('L', 'W', 'W', 'L', 'L'),
+                List.of('L', 'L', 'W', 'W', 'W')
+        );
+
+        System.out.println(countIsland(graph)); // 3
+    }
+
 }
 ```
 
