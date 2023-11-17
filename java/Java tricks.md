@@ -11901,7 +11901,7 @@ This new version checks for files only within 5 steps of the starting node. A de
 
 #### Avoiding Circular Paths
 
- `walk()` method is different in that it does not follow symbolic links by default and requires the `FOLLOW_LINKS` option to be enabled. We can alter our getPathSize() method to enable following symbolic links by adding the `FileVisitOption`
+ `walk()` method is different in that it does not follow symbolic links by default and requires the `FOLLOW_LINKS` option to be enabled. We can alter our `getPathSize()` method to enable following symbolic links by adding the `FileVisitOption`
 
 ```java
   try (var s = Files.walk(source,
