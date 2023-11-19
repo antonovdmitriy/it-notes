@@ -61,13 +61,15 @@ public class Palidrome {
 
     public static void main(String[] args) {
 
+        System.out.println(isPalidndrome("abbaa"));
+
 //
-        System.out.println(longestPalindrome("abba"));
-        System.out.println(longestPalindrome("bab"));
-        System.out.println(longestPalindrome("abcdb"));
-
-        System.out.println(longestPalindrome("babad")); // "bab"
-
-        System.out.println(longestPalindrome("cbbd")); // "bab"
+//        System.out.println(longestPalindrome("abba"));
+//        System.out.println(longestPalindrome("bab"));
+//        System.out.println(longestPalindrome("abcdb"));
+//
+//        System.out.println(longestPalindrome("babad")); // "bab"
+//
+//        System.out.println(longestPalindrome("cbbd")); // "bab"
     }
 }

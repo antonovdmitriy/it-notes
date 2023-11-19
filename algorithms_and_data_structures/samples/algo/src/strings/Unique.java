@@ -1,22 +1,33 @@
 package strings;
 
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 public class Unique {
 
-    // O(n)
-    public boolean isUnique(String s) {
-        if (s.length() > 256) return false;
+    // Implement and algorithm to determine if a string has all unique characters.
+    // What if you cannot use additional data structures?
 
-        boolean chars[] = new boolean[256];
-        Arrays.fill(chars, false);
-
-        for (int i = 0; i < s.length(); i++) {
-            if (chars[s.charAt(i)]) return false;
-            chars[s.charAt(i)] = true;
+    // O(nlogn)
+    public boolean isUniqueSorting(String s) {
+        char arr[] = s.toCharArray();
+        Arrays.sort(arr);
+        for(int i=1; i<s.length(); i++) {
+            if(arr[i-1] == arr[i]) return false;
         }
 
         return true;
+    }
+
+    // O(n)
+    public boolean isUnique(String s) {
+        Set<Character> set = new HashSet<>();
+        for(char c: s.toCharArray()){
+            set.add(c);
+        }
+
+        return (s.length() == set.size());
     }
 
 

@@ -1029,7 +1029,7 @@ System.out.println(12 / 3); // 4
 System.out.println(12 % 3); // 0
 ```
 
-> For a given divisor y, the modulus operation results in a value between `0` and `(y - 1)` for positive dividends, or 0, 1, 2 in this example.
+> For a given divisor `y`, the modulus operation results in a value between `0` and `(y - 1)` for positive dividends
 
 > The modulus operation is not limited to positive integer values in Java; it may also be applied to negative integers and floating-point numbers. For example, if the divisor is 5, then the modulus value of a negative number is between -4 and 0. 
 
@@ -1037,10 +1037,10 @@ System.out.println(12 % 3); // 0
 
 1. If two values have different data types, Java will automatically promote one of the values to the larger of the two data types.
 2. If one of the values is integral and the other is floating-point, Java will automatically promote the integral value to the floating-point value's data type.
-3. Smaller data types, namely, byte, short, and char, are first promoted to int any time they're used with a Java binary arithmetic operator with a variable (as opposed to a value), even if neither of the operands is int.
+3. Smaller data types, namely, `byte`, `short`, and `char`, are first promoted to `int` any time they're used with a Java binary arithmetic operator with a variable (as opposed to a value), even if neither of the operands is `int`.
 4. After all promotion has occurred and the operands have the same data type, the resulting value will have the same data type as its promoted operands.
 
-> For the third rule, note that unary operators are excluded from this rule. For example, applying ++ to a short value results in a short value.
+> For the third rule, note that unary operators are excluded from this rule. For example, applying ++ to a `short` value results in a short value.
 
 ```java
 int x = 1;
@@ -2812,7 +2812,7 @@ public class Trip {
 ## Access modifiers
 
 - **private** The private modifier means the method can be called only from within the same class.
-- **Package Access** With package access, the method can be called only from a class in the same package. This one is tricky because there is no keyword. You simply omit the access modifier. Package access is sometimes referred to as package-private or default access (even within this book!).
+- **Package Access** With package access, the method can be called only from a class in the same package. This one is tricky because there is no keyword. You simply omit the access modifier. Package access is sometimes referred to as package-private or default access.
 - **protected** The protected modifier means the method can be called **only from a class in the same package or a subclass**.
 - **public** The public modifier means the method can be called from anywhere.
 
@@ -6157,7 +6157,7 @@ public class Crate<T> {
 }
 ```
 
-The generic type T is available anywhere within the class. When you instantiate the class, you tell the compiler what T should be for that particular instance.
+The generic type `T` is available anywhere within the class. When you instantiate the class, you tell the compiler what `T` should be for that particular instance.
 
 ```java
 Elephant elephant = new Elephant();
@@ -6388,7 +6388,7 @@ You can use generic wildcards in three ways
 
 ### Unbounded Wildcards
 
-An unbounded wildcard represents any data type. You use ? when you want to specify that any type is okay with you.
+An unbounded wildcard represents any data type. You use `?` when you want to specify that any type is okay with you.
 
 ```java
 public static void printList(List<Object> list) {
@@ -6536,7 +6536,7 @@ tricky
 
 ```java
 List<? super IOException> exceptions = new ArrayList<Exception>();
-exceptions.add(new Exception()); 
+exceptions.add(new Exception()); // DOES NOT COMPILE 
 ```
 
 Line 3 references a `List` that could be `List<IOException>` or `List<Exception>` or `List<Object>`. Line 4 does not compile because we could have a `List<IOException>`, and an Exception object wouldn't fit in there.
@@ -11676,7 +11676,7 @@ public long skip(long n) throws IOException
 ```
 
 - `mark()` and `reset()` methods return an I/O stream to an earlier position. Before calling either of these methods, you should call the` markSupported()` method, which returns true only if `mark()` is supported. 
-- The skip() method is pretty simple; it basically reads data from the I/O stream and discards the contents.
+- The `skip()` method is pretty simple; it basically reads data from the I/O stream and discards the contents.
 - actuality `mark()` and `reset()` are not putting the data back into the I/O stream but are storing the data in a temporary buffer in memory to be read again. Therefore, you should not call the `mark()` operation with too large a value, as this could take up a lot of memory.
 
 #### Marking Data
