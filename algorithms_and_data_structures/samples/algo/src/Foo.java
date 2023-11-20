@@ -1,17 +1,25 @@
-import java.io.IOException;
-import java.util.*;
-import java.util.stream.Stream;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 public class Foo {
 
-    private static int doWork(int input) {
-        try {
-            Thread.sleep(5000);
-        } catch (InterruptedException e) {}
-        return input;
-    }
-
     public static void main(String[] args) {
 
+        List<String> list = new ArrayList<>();
+        list.add("a");
+        list.add("b");
+
+//        for (int i = 0; i < list.size(); i++) {
+//            list.add(list.get(i) + "tadam");
+//        }
+
+        for(String s : list){
+            list.add( "tadam");
+        }
+
+        System.out.println(list);
     }
+
+
 }

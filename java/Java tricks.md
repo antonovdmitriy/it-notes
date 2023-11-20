@@ -269,7 +269,7 @@
     - [Creating a Resource Bundle](#creating-a-resource-bundle)
     - [Picking a Resource Bundle](#picking-a-resource-bundle)
     - [Selecting Resource Bundle Values](#selecting-resource-bundle-values)
-  - [Formatting Messages](#formatting-messages)
+    - [Formatting Messages](#formatting-messages)
   - [Properties Class](#properties-class)
 - [Concurrency](#concurrency)
   - [Introducing Threads](#introducing-threads)
@@ -9082,7 +9082,7 @@ The default locale is en_US, and the requested locale is en_CA. First, Java goes
 
 if a property is not found in any resource bundle? `MissingResourceException` at runtime.
 
-## Formatting Messages
+### Formatting Messages
 
 ```
 helloByName=Hello, {0} and {1}
@@ -9964,9 +9964,9 @@ var foodData = new ConcurrentHashMap<String, Integer>();
 
 ### Working with Concurrent Classes
 
-- When you see a class with Skip in the name, just think “sorted concurrent” collections
-- The CopyOnWrite classes create a copy of the collection any time a reference is added, removed, or changed in the collection and then update the original collection reference to point to the copy. These classes are commonly used to ensure an iterator doesn't see modifications to the collection.
-- The CopyOnWrite classes can use a lot of memory, since a new collection structure is created any time the collection is modified. Therefore, they are commonly used in multithreaded environment situations where reads are far more common than writes.
+- When you see a class with `Skip` in the name, just think “sorted concurrent” collections
+- The `CopyOnWrite` classes create a copy of the collection any time a reference is added, removed, or changed in the collection and then update the original collection reference to point to the copy. These classes are commonly used to ensure an iterator doesn't see modifications to the collection.
+- The `CopyOnWrite` classes can use a lot of memory, since a new collection structure is created any time the collection is modified. Therefore, they are commonly used in multithreaded environment situations where reads are far more common than writes.
 
 <table>
 <thead>
