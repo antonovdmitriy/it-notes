@@ -36,32 +36,6 @@ public class ShortestPath {
         return -1;
     }
 
-    private static boolean shortestPath(Map<Character,
-            List<Character>> graph,
-                                        Character source,
-                                        Character target,
-                                        Set<Character> visited) {
-
-        if (source.equals(target)) {
-            return true;
-        }
-
-        if (visited.contains(source)) {
-            return false;
-        }
-
-        visited.add(source);
-
-        List<Character> neighbours = graph.get(source);
-        for (char neighbour : neighbours) {
-            if (shortestPath(graph, neighbour, target, visited)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     private static Map<Character, List<Character>> buildGraph(List<List<Character>> edges) {
 
         Map<Character, List<Character>> result = new HashMap<>();
