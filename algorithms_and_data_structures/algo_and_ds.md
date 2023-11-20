@@ -1532,6 +1532,7 @@ public class Queue<T> {
 
 ![](images/snake_01.png)
 
+```java
 package datastruct.queue;
 
 import java.util.ArrayList;
@@ -1630,6 +1631,7 @@ public class SnakeGame {
     }
 
 }
+```
 
 ## Snake with motion
 

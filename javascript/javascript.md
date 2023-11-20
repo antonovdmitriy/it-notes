@@ -2,11 +2,15 @@
 
 - [Table of contents](#table-of-contents)
 - [Docs](#docs)
-- [Console](#console)
-- [const let var](#const-let-var)
-  - [Const](#const)
-  - [let](#let)
-  - [var](#var)
+- [Basic syntax](#basic-syntax)
+  - [Code Conventions](#code-conventions)
+  - [Console](#console)
+  - [const let var](#const-let-var)
+    - [Const](#const)
+    - [let](#let)
+    - [var](#var)
+  - [Comparison operators](#comparison-operators)
+  - [if-else](#if-else)
 - [Arrays](#arrays)
   - [Array as a Stack](#array-as-a-stack)
   - [Concat arrays](#concat-arrays)
@@ -28,16 +32,45 @@
 
 [docs MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
 
-# Console
+# Basic syntax
+
+## Code Conventions
+
+```js
+
+// variable names
+var yearMonthDay = moment().format("YYYY/MM/DD");
+
+// constants
+const FIRST_US_PRESIDENT = "George Washington"
+
+// not a magic constant literals
+const MINUTES_IN_A_YEAR = 52600;
+for(let i = 0; i < MINUTES_IN_A_YEAR; i++){
+    runJob();
+}
+
+// not use unneeded context
+var Car = {
+    carMake: "Honda",
+    carModel: "Accord",
+    carColor: "Blue"
+} // car is redundunt in this case
+
+
+
+```
+
+##  Console
 
 to print something for debug
 ```js
 console.log('hello world')
 ```
 
-# const let var
+## const let var
 
-## Const
+### Const
 
 For constants. Final variable
 
@@ -47,7 +80,7 @@ const Pi = 3.14
 Pi = 4  // ERROR
 ```
 
-## let
+### let
 
 for block level variables
 
@@ -63,7 +96,7 @@ console.log(i)     // ERROR
 
 ```
 
-## var 
+### var 
 
 For global variables
 
@@ -78,6 +111,48 @@ for(var i = 0; i< 3, i++){
 console.log(i)     // 3 
 
 ```
+
+## Comparison operators
+
+as usual 
+
+`>` `<` `<=` `>=` `!=` `==`
+
+
+## if-else
+
+```js
+var hello = true;
+
+if(hello){
+    console.log("Hello World");
+} else{
+    console.log("Bye");
+}
+```
+
+```js
+var age = 18;
+
+if(age >= 18){
+    console.log("You are an adult");
+} else if (age < 2) {
+    console.log("You are a baby");
+} else if (age < 18) {
+    console.log("You are a child");
+}
+
+if(age == 18){
+    console.log("You are eighteen");
+}
+
+
+if(age != 18){
+    console.log("You are NOT eighteen");
+}
+
+```
+
 
 
 
