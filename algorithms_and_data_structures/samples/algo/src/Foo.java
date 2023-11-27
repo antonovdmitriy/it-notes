@@ -1,78 +1,69 @@
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Foo {
 
 
     public static void main(String[] args) {
 
-        List<List<Character>> graph = List.of(
-                List.of('w', 'x'),
-                List.of('x', 'y'),
-                List.of('z', 'y'),
-                List.of('z', 'v'),
-                List.of('w', 'v'));
-        System.out.println(shortestPath(graph, 'w', 'z'));
+        // m = targetSum
+        // n =  numbers.lengh
+
+        // brut
+        // time: 0(n ^ m * m)
+        // space: 0(m ^ 2)
+
+        // memo
+        // time: 0(n * m^2)
+        // time 0(m ^ 2)
+        System.out.println(Arrays.toString(bestSum(7, new int[]{5, 3, 4, 7}))); // [7]
+        System.out.println(Arrays.toString(bestSum(8, new int[]{2, 3, 5}))); // [3,5]
+        System.out.println(Arrays.toString(bestSum(8, new int[]{1, 4, 5}))); // [4,4]
+        System.out.println(Arrays.toString(bestSum(100, new int[]{1, 2, 5, 25}))); // [25,25,25,25]
     }
 
-    public record Entry(Character value, int count) {
+
+    private static int[] bestSum(int targetSum, int[] numbers) {
+        return bestSum(targetSum, numbers, new HashMap<>());
     }
 
+    private static int[] bestSum(int targetSum, int[] numbers, Map<Integer, int[]> memo) {
 
-    private static int shortestPath(List<List<Character>> edges, char start, char finish) {
+        if(memo.containsKey(targetSum)){
+            return memo.get(targetSum);
+        }
 
-        // breadh first
-        // resolved cycles. -> revisitedSet Entry( Character, int) -> record
-        // O(m * n) time
-        // optimizing variables
+        if (targetSum < 0) {
+            return null;
+        }
 
-        Map<Character, List<Character>> graph = buildGraph(edges);
+        if (targetSum == 0) {
+            return new int[]{};
+        }
 
-        Queue<Entry> queue = new LinkedList<>();
-        Set<Character> visited = new HashSet<>();
-        queue.offer(new Entry(start, 0));
-        visited.add(start);
+        int[] bestSum = null;
 
-        while (!queue.isEmpty()) {
+        for (int number : numbers) {
 
-            Entry current = queue.poll();
-
-            if (current.value().equals(finish)) {
-                return current.count();
-            }
-
-            for (Character neighbour : graph.get(current.value())) {
-                if (!visited.contains(neighbour)) {
-                    visited.add(neighbour);
-                    queue.offer(new Entry(neighbour, current.count + 1));
+            int[] sumForNumber = bestSum(targetSum - number, numbers, memo);
+            if (sumForNumber != null) {
+                int[] possibleBestSum = extendArray(number, sumForNumber);
+                if (bestSum == null || bestSum.length > possibleBestSum.length) {
+                    bestSum = possibleBestSum;
                 }
             }
         }
 
-        return -1;
+        memo.put(targetSum, bestSum);
+
+        return bestSum;
     }
 
-    private static Map<Character, List<Character>> buildGraph(List<List<Character>> edges) {
-
-        Map<Character, List<Character>> result = new HashMap<>();
-
-        for (List<Character> edge : edges) {
-
-            Character left = edge.get(0);
-            Character right = edge.get(1);
-
-            if (!result.containsKey(left)) {
-                result.put(left, new ArrayList<>());
-            }
-
-            if (!result.containsKey(right)) {
-                result.put(right, new ArrayList<>());
-            }
-
-            result.get(left).add(right);
-            result.get(right).add(left);
-        }
-
+    private static int[] extendArray(int number, int[] sumForNumber) {
+        int[] result = new int[sumForNumber.length + 1];
+        result[0] = number;
+        System.arraycopy(sumForNumber, 0, result, 1, sumForNumber.length);
         return result;
     }
-
 }

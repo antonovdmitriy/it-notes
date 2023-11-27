@@ -3237,7 +3237,7 @@ public class Elephant extends Mammal {
 - If there is a superclass Y of X, then initialize the instance of Y first.
 - Process all instance variable declarations in the order in which they appear in the class.
 - Process all instance initializers in the order in which they appear in the class.
-- Initialize the constructor, including any overloaded constructors referenced with this().
+- Initialize the constructor, including any overloaded constructors referenced with `this()`.
 
 ```java
 public class Animal {
@@ -10086,7 +10086,7 @@ public record Fox(String name) {
          service.submit(() -> tails.drinkAndEat(food,water));
       } finally {
          service.shutdown();
-      } 
+      }
    }
 }
 ```      
@@ -11211,7 +11211,7 @@ void copyStream(InputStream in, OutputStream out) throws IOException {
 
 `flush()` method to reduce the amount of data lost if the application terminates unexpectedly. When data is written to an output stream, the underlying operating system does not guarantee that the data will make it to the file system immediately. The `flush()` method requests that all accumulated data be written immediately to disk. It is not without cost, though. Each time it is used, it may cause a noticeable delay in the application, especially for large files. Unless the data that you are writing is extremely critical, the `flush()` method should be used only intermittently.
 
-Equivalent methods exist on `Reader` and `Writer`, but they use char rather than `byte`, making the equivalent copyStream() method very similar.
+Equivalent methods exist on `Reader` and `Writer`, but they use `char` rather than `byte`, making the equivalent copyStream() method very similar.
 
 ## Reading and Writing Files
 

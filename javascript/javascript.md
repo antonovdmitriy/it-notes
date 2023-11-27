@@ -9,8 +9,13 @@
     - [Const](#const)
     - [let](#let)
     - [var](#var)
+  - [null vs undefined](#null-vs-undefined)
   - [Comparison operators](#comparison-operators)
   - [if-else](#if-else)
+- [Strings](#strings)
+  - [Basic string methods](#basic-string-methods)
+  - [regex with string](#regex-with-string)
+  - [repeat](#repeat)
 - [Arrays](#arrays)
   - [Array as a Stack](#array-as-a-stack)
   - [Concat arrays](#concat-arrays)
@@ -112,6 +117,34 @@ console.log(i)     // 3
 
 ```
 
+## null vs undefined
+
+```js
+
+var test
+console.log(test) // undefined
+
+test = null
+console.log(test) // null
+
+console.log(typeof null) // Object
+console.log(typeof undefined) // undefined
+
+
+console.log(null === undefined) // false
+console.log(null == undefined) // true
+console.log(null === null) // true
+console.log(null == null) // true
+
+
+console.log(!null) // true
+console.log(!!null) // false
+
+console.log(1 + null) // 1
+console.log(1 + undefined) // NaN
+```
+
+
 ## Comparison operators
 
 as usual 
@@ -153,7 +186,118 @@ if(age != 18){
 
 ```
 
+# Strings
 
+## Basic string methods
+
+```js
+var first = "hello"
+first.charAt(1) // e
+```
+
+```js
+var second = "world"
+// return Unicode code
+second.charCodeAt(2) // 114
+```
+
+
+```js
+String.fromCharCode(114) // r
+```
+
+```js
+var first = "hello"
+var second = "world"
+first.concat(second) // helloworld
+```
+
+```js
+var first = "hello"
+first.endWith("lo") // true
+```
+
+```js
+var first = "hello"
+first.startWith("he") // true
+```
+
+```js
+var first = "hello"
+first.includes("ell") // true
+```
+
+
+```js
+var first = "hello"
+first.indexOf("l") // 2
+```
+
+```js
+var first = "hello end world end"
+first.lastIndexOf("end") // 16
+```
+
+```js
+var first = "hello"
+first.slice(2, 4) // ll
+```
+
+```js
+var first = "hello"
+first.substr(3, 2) // lo 
+```
+
+```js
+var first = "hello"
+first.subsstring(2, 4) // ll
+```
+
+
+```js
+var first = "hello world"
+first.split(" ") // ["hello", "world"]
+```
+
+```js
+var first = "HEllo"
+first.toLowerCase(first) // hello
+```
+
+```js
+var first = "hello"
+first.toUpperCase(first) // HELLO
+```
+
+```js
+var first = "   hello  "
+first.trim(first) // "hello"
+```
+
+## regex with string
+
+```js
+var first = "hello end world end"
+first.match("/end/g") // ["end", "end"]
+```
+
+```js
+var first = "hello end world end"
+first.replace("/end/g", "END") // "hello END world END"
+```
+
+```js
+var first = "hello end world end"
+first.search("end") // 6 
+```
+
+
+## repeat
+
+```js
+var first = "k"
+first.repeat(3) // kkk
+```
 
 
 # Arrays
