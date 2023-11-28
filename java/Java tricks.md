@@ -431,6 +431,9 @@
     - [a Top-Down Migration Strategy](#a-top-down-migration-strategy)
     - [Splitting a Big Project into Modules](#splitting-a-big-project-into-modules)
     - [Failing to Compile with a Cyclic Dependency](#failing-to-compile-with-a-cyclic-dependency)
+- [Effective Java](#effective-java)
+  - [Consider static factory methods instead of constructors](#consider-static-factory-methods-instead-of-constructors)
+    - [advantages static methods](#advantages-static-methods)
 
 
 # OCP preparation
@@ -4749,14 +4752,14 @@ a -> a.canHop()
 ```
 
 - A single parameter specified with the name a
-- The arrow operator (->) to separate the parameter and body
+- The arrow operator `->` to separate the parameter and body
 - A body that calls a single method and returns the result of that method
 
 ```java
 (Animal a) -> { return a.canHop(); }
 ```
-- A single parameter specified with the name a and stating that the type is Animal
-- The arrow operator (->) to separate the parameter and body
+- A single parameter specified with the name `a` and stating that the type is `Animal`
+- The arrow operator `->` to separate the parameter and body
 - A body that has one or more lines of code, including a semicolon and a return statement
 
 valid
@@ -10260,7 +10263,7 @@ System.out.println(List.of("w","o","l","f")
 
 As part of the parallel process, the identity is applied to multiple elements in the stream, resulting in very unexpected data.
 
-Although the one- and two-argument versions of reduce() support parallel processing, it is recommended that you use the three-argument version of reduce() when working with parallel streams. Providing an explicit combiner method allows the JVM to partition the operations in the stream more efficiently.
+Although the one- and two-argument versions of `reduce()` support parallel processing, it is recommended that you use the three-argument version of reduce() when working with parallel streams. Providing an explicit combiner method allows the JVM to partition the operations in the stream more efficiently.
 
 #### Combining Results with collect()
 
@@ -10278,7 +10281,7 @@ SortedSet<String> set = stream.collect(ConcurrentSkipListSet::new,
 System.out.println(set);  // [f, l, o, w]
 ```
 
-Recall that elements in a `ConcurrentSkipListSet` are sorted according to their natural ordering. You should use a concurrent collection to combine the results, ensuring that the results of concurrent threads do not cause a ConcurrentModificationException.
+Recall that elements in a `ConcurrentSkipListSet` are sorted according to their natural ordering. You should use a concurrent collection to combine the results, ensuring that the results of concurrent threads do not cause a `ConcurrentModificationException`.
 
 #### Requirements for Parallel Reduction with collect()
 
@@ -13929,3 +13932,51 @@ module zoo.caterpillar {
 We can't compile this yet as we need to build zoo.butterfly first.  This is our circular dependency problem at work.
 
 Java will still allow you to have a cyclic dependency between packages within a module. It enforces that you do not have a cyclic dependency between modules.
+
+# Effective Java
+
+##  Consider static factory methods instead of constructors
+
+### advantages static methods
+
+1. unlike constructors, they have names.
+
+```java
+new BigInteger(int, int, Random)
+
+public static BigInteger probablePrime(int bitLength, Random rnd) {...}
+```
+
+A class can have only a single constructor with a given signature. Programmers have been known to get around this restriction by providing two constructors whose parameter lists differ only in the order of their parameter types
+
+In cases where a class seems to require multiple constructors with the same signature, replace the constructors with static factory methods and carefully chosen names to highlight their differences.
+
+2. unlike constructors, they are not required to create a new object each time they’re invoked
+
+```java
+
+
+public static Boolean valueOf(boolean b) {
+   return (b ? TRUE : FALSE);
+}
+
+```
+
+3. they can return an object of any subtype of their return type.
+
+4. class of the returned object can vary from call to call as a function of the input parameters
+   
+in `EnumSet`
+```java
+
+public static <E extends Enum<E>> EnumSet<E> noneOf(Class<E> elementType) {
+        Enum<?>[] universe = getUniverse(elementType);
+        if (universe == null)
+            throw new ClassCastException(elementType + " not an enum");
+
+        if (universe.length <= 64)
+            return new RegularEnumSet<>(elementType, universe);
+        else
+            return new JumboEnumSet<>(elementType, universe);
+    }
+```
