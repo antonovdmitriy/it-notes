@@ -434,6 +434,9 @@
 - [Effective Java](#effective-java)
   - [Consider static factory methods instead of constructors](#consider-static-factory-methods-instead-of-constructors)
     - [advantages static methods](#advantages-static-methods)
+    - [disadvantages static methods](#disadvantages-static-methods)
+    - [Common names for static factory methods](#common-names-for-static-factory-methods)
+  - [Consider a builder when faced with many constructor parameters](#consider-a-builder-when-faced-with-many-constructor-parameters)
 
 
 # OCP preparation
@@ -13980,3 +13983,47 @@ public static <E extends Enum<E>> EnumSet<E> noneOf(Class<E> elementType) {
             return new JumboEnumSet<>(elementType, universe);
     }
 ```
+
+### disadvantages static methods
+
+1. classes without public or protected constructors cannot be subclassed
+2. static factory methods are hard for programmers to find. 
+
+### Common names for static factory methods
+
+`from` A type-conversion method that takes a single parameter and returns a corresponding instance of this type
+
+```java
+Date d = Date.from(instant);
+```
+
+ `of` An aggregation method that takes multiple parameters and returns an instance of this type that incorporates them
+
+ ```java
+ Set<Rank> faceCards = EnumSet.of(JACK, QUEEN, KING);
+ ```
+
+`valueOf` A more verbose alternative to `from` and `of`
+
+```java
+BigInteger prime = BigInteger.valueOf(Integer.MAX_VALUE);
+```
+
+`instance` or `getInstance` Returns an instance that is described by its parameters (if any) but cannot be said to have the same value
+
+```java
+StackWalker luke = StackWalker.getInstance(options);
+```
+
+`create` or `newInstance` Like `instance` or `getInstance`, except that the method guarantees that each call returns a new instance
+
+```java
+Object newArray = Array.newInstance(classObject, arrayLen);
+```
+
+## Consider a builder when faced with many constructor parameters
+
+Static factories and constructors share a limitation: they do not scale well to large numbers of optional parameters.
+
+We can try to use telescoping constructors (but it is hard to write client code when there are many parameters) or Java Beans approach (goodbye consistent state and immutability) 
+

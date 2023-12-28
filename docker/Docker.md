@@ -30,6 +30,8 @@
 - [Networking](#networking)
 - [Storage](#storage)
 - [Безопасность](#безопасность)
+- [Полезности](#полезности)
+  - [настроить докер на доступ по порту](#настроить-докер-на-доступ-по-порту)
 - [Docker compose](#docker-compose)
   - [Основные команды:](#основные-команды)
 
@@ -352,6 +354,25 @@ sudo ps -fax
 - увидим информацию про все запущенные контейнеры и их рабочие директории
 ![](images/image32.png)
 - Рекомендуется использовать SELinux
+
+# Полезности
+
+## настроить докер на доступ по порту
+
+```sh
+sudo systemctl stop docker
+sudo systemctl edit docker
+```
+
+откроется vim вставить строчки поменять на свои HOST PORT
+```
+[Service]
+ExecStart=/usr/bin/dockerd -H unix:// -H tcp://HOST:PORT --containerd=/run/containerd/containerd.sock
+```
+
+```sh
+sudo systemctl start docker
+```
 
 # Docker compose
 
