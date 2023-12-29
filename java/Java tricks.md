@@ -7841,7 +7841,7 @@ void fall(String input) {
 ## Error and Throwable
 
 - Error means something went so horribly wrong that your program should not attempt to recover from it
-- you can handle Throwable and Error exceptions, it is not recommended you do so in your application code.
+- you can handle `Throwable` and `Error` exceptions, it is not recommended you do so in your application code.
   
 ## Examples
 
