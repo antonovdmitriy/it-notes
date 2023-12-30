@@ -437,6 +437,8 @@
     - [disadvantages static methods](#disadvantages-static-methods)
     - [Common names for static factory methods](#common-names-for-static-factory-methods)
   - [Consider a builder when faced with many constructor parameters](#consider-a-builder-when-faced-with-many-constructor-parameters)
+    - [The Builder pattern has disadvantages](#the-builder-pattern-has-disadvantages)
+  - [Enforce the singleton property with a private constructor or an enum type](#enforce-the-singleton-property-with-a-private-constructor-or-an-enum-type)
 
 
 # OCP preparation
@@ -14027,3 +14029,195 @@ Static factories and constructors share a limitation: they do not scale well to 
 
 We can try to use telescoping constructors (but it is hard to write client code when there are many parameters) or Java Beans approach (goodbye consistent state and immutability) 
 
+```java
+// Builder Pattern
+
+public class NutritionFacts {
+
+    private final int servingSize;
+    private final int servings;
+    private final int calories;
+    private final int fat;
+    private final int sodium;
+    private final int carbohydrate;
+
+    public static class Builder {
+
+        // Required parameters
+
+        private final int servingSize;
+        private final int servings;
+
+        // Optional parameters - initialized to default values
+
+        private int calories      = 0;
+        private int fat           = 0;
+        private int sodium        = 0;
+        private int carbohydrate  = 0;
+
+        public Builder(int servingSize, int servings) {
+            this.servingSize = servingSize;
+            this.servings    = servings;
+        }
+
+        public Builder calories(int val)
+            { calories = val;      return this; }
+
+        public Builder fat(int val)
+            { fat = val;           return this; }
+
+        public Builder sodium(int val)
+            { sodium = val;        return this; }
+
+        public Builder carbohydrate(int val)
+            { carbohydrate = val;  return this; }
+
+
+        public NutritionFacts build() {
+            return new NutritionFacts(this);
+        }
+
+    }
+
+    private NutritionFacts(Builder builder) {
+
+        servingSize  = builder.servingSize;
+        servings     = builder.servings;
+        calories     = builder.calories;
+        fat          = builder.fat;
+        sodium       = builder.sodium;
+        carbohydrate = builder.carbohydrate;
+    }
+
+}
+```
+
+```java
+NutritionFacts cocaCola = new NutritionFacts.Builder(240, 8)
+        .calories(100).sodium(35).carbohydrate(27).build();
+```
+
+- To detect invalid parameters as soon as possible, check parameter validity in the builder’s constructor and methods. 
+- Check invariants involving multiple parameters in the constructor invoked by the build method. 
+- To ensure these invariants against attack, do the checks on object fields after copying parameters from the builder 
+- If a check fails, throw an `IllegalArgumentException` whose detail message indicates which parameters are invalid
+
+The Builder pattern is well suited to class hierarchies. Use a parallel hierarchy of builders, each nested in the corresponding class. Abstract classes have abstract builders; concrete classes have concrete builders. 
+
+```java
+// Builder pattern for class hierarchies
+
+public abstract class Pizza {
+
+   public enum Topping { HAM, MUSHROOM, ONION, PEPPER, SAUSAGE }
+   final Set<Topping> toppings;
+
+   abstract static class Builder<T extends Builder<T>> {
+
+      EnumSet<Topping> toppings = EnumSet.noneOf(Topping.class);
+
+      public T addTopping(Topping topping) {
+         toppings.add(Objects.requireNonNull(topping));
+         return self();
+      }
+
+      abstract Pizza build();
+
+      // Subclasses must override this method to return "this"
+      protected abstract T self();
+   }
+
+   Pizza(Builder<?> builder) {
+      toppings = builder.toppings.clone(); // See Item  50
+   }
+
+}
+
+public class NyPizza extends Pizza {
+
+    public enum Size { SMALL, MEDIUM, LARGE }
+    private final Size size;
+
+    public static class Builder extends Pizza.Builder<Builder> {
+
+        private final Size size;
+
+        public Builder(Size size) {
+            this.size = Objects.requireNonNull(size);
+        }
+
+        @Override 
+        public NyPizza build() {
+            return new NyPizza(this);
+        }
+
+        @Override 
+        protected Builder self() { return this; }
+    }
+
+
+    private NyPizza(Builder builder) {
+        super(builder);
+        size = builder.size;
+    }
+
+}
+
+
+public class Calzone extends Pizza {
+
+    private final boolean sauceInside;
+
+    public static class Builder extends Pizza.Builder<Builder> {
+
+        private boolean sauceInside = false; // Default
+
+        public Builder sauceInside() {
+            sauceInside = true;
+            return this;
+        }
+
+        @Override 
+        public Calzone build() {
+            return new Calzone(this);
+        }
+
+        @Override 
+        protected Builder self() { return this; }
+    }
+
+    private Calzone(Builder builder) {
+        super(builder);
+        sauceInside = builder.sauceInside;
+    }
+
+}
+```
+
+```java
+NyPizza pizza = new NyPizza.Builder(SMALL)
+        .addTopping(SAUSAGE).addTopping(ONION).build();
+
+Calzone calzone = new Calzone.Builder()
+        .addTopping(HAM).sauceInside().build();
+```
+
+### The Builder pattern has disadvantages 
+
+-  In order to create an object, you must first create its builder. While the cost of creating this builder is unlikely to be noticeable in practice, it could be a problem in performance-critical situations. 
+-  Builder pattern is more verbose than the telescoping constructor pattern, so it should be used only if there are enough parameters to make it worthwhile, say four or more
+
+## Enforce the singleton property with a private constructor or an enum type
+
+```java
+// Singleton with public final field
+
+public class Elvis {
+
+    public static final Elvis INSTANCE = new Elvis();
+
+    private Elvis() { ... }
+
+    public void leaveTheBuilding() { ... }
+}
+```
