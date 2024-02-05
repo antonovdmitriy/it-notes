@@ -439,6 +439,14 @@
   - [Consider a builder when faced with many constructor parameters](#consider-a-builder-when-faced-with-many-constructor-parameters)
     - [The Builder pattern has disadvantages](#the-builder-pattern-has-disadvantages)
   - [Enforce the singleton property with a private constructor or an enum type](#enforce-the-singleton-property-with-a-private-constructor-or-an-enum-type)
+    - [public static filed](#public-static-filed)
+    - [Factory method](#factory-method)
+    - [Enum](#enum-1)
+    - [Serializable singleton](#serializable-singleton)
+  - [Enforce noninstantiability with a private constructor](#enforce-noninstantiability-with-a-private-constructor)
+  - [Dependency injection](#dependency-injection)
+  - [Avoid creating unnecessary objects](#avoid-creating-unnecessary-objects)
+  - [Eliminate obsolete object references](#eliminate-obsolete-object-references)
 
 
 # OCP preparation
@@ -14209,6 +14217,8 @@ Calzone calzone = new Calzone.Builder()
 
 ## Enforce the singleton property with a private constructor or an enum type
 
+### public static filed
+
 ```java
 // Singleton with public final field
 
@@ -14221,3 +14231,266 @@ public class Elvis {
     public void leaveTheBuilding() { ... }
 }
 ```
+
+- API makes it clear that the class is a singleton
+-  it’s simpler.
+
+Nothing that a client does can change this, with one caveat: a privileged client can invoke the private constructor reflectively with the aid of the `AccessibleObject.setAccessible` method. If you need to defend against this attack, modify the constructor to make it throw an exception if it’s asked to create a second instance.
+
+### Factory method
+
+```java
+// Singleton with static factory
+
+public class Elvis {
+
+    private static final Elvis INSTANCE = new Elvis();
+
+    private Elvis() { ... }
+
+    public static Elvis getInstance() { return INSTANCE; }
+
+
+
+    public void leaveTheBuilding() { ... }
+
+}
+```
+
+with the same caveat mentioned earlier
+
+- it gives you the flexibility to change your mind about whether the class is a singleton without changing its API. The factory method returns the sole instance, but it could be modified to return, say, a separate instance for each thread that invokes it.
+- you can write a generic singleton factory if your application requires it  -  a method reference can be used as a supplier, for example `Elvis::getInstance` is a `Supplier<Elvis>`. 
+- 
+Unless one of these advantages is relevant, the public field approach is preferable.
+
+### Enum
+
+```java
+// Enum singleton - the preferred approach
+
+public enum Elvis {
+
+    INSTANCE;
+
+    public void leaveTheBuilding() { ... }
+
+}
+```
+
+This approach is similar to the public field approach, but it is more concise, provides the serialization machinery for free, and provides an ironclad guarantee against multiple instantiation, even in the face of sophisticated serialization or reflection attacks. This approach may feel a bit unnatural, but a single-element enum type is often the best way to implement a singleton. Note that you can’t use this approach if your singleton must extend a superclass other than Enum (though you can declare an enum to implement interfaces).
+
+### Serializable singleton
+
+To make a singleton class that uses either of these approaches serializable it is not sufficient merely to add implements `Serializable` to its declaration. To maintain the singleton guarantee, declare all instance fields `transient` and provide a `readResolve` method. Otherwise, each time a serialized instance is deserialized, a new instance will be created
+
+[more info](https://www.baeldung.com/java-serialization-readobject-vs-readresolve)
+
+```java
+// readResolve method to preserve singleton property
+
+private Object readResolve() {
+
+     // Return the one true Elvis and let the garbage collector
+
+     // take care of the Elvis impersonator.
+
+    return INSTANCE;
+
+}
+```
+
+##  Enforce noninstantiability with a private constructor
+
+```java
+// Noninstantiable utility class
+
+public class UtilityClass {
+
+    // Suppress default constructor for noninstantiability
+
+    private UtilityClass() {
+
+        throw new AssertionError();
+
+    }
+
+    ... // Remainder omitted
+
+}
+```
+
+As a side effect, this idiom also prevents the class from being subclassed. All constructors must invoke a superclass constructor, explicitly or implicitly, and a subclass would have no accessible superclass constructor to invoke.
+
+## Dependency injection
+
+Do not use a singleton or static utility class to implement a class that depends on one or more underlying resources whose behavior affects that of the class, and do not have the class create these resources directly. Instead, pass the resources, or factories to create them, into the constructor (or static factory or builder). This practice, known as dependency injection, will greatly enhance the flexibility, reusability, and testability of a class.
+
+```java
+// Inappropriate use of static utility - inflexible & untestable!
+
+public class SpellChecker {
+
+    private static final Lexicon dictionary = ...;
+
+    private SpellChecker() {} // Noninstantiable
+
+    public static boolean isValid(String word) { ... }
+
+    public static List<String> suggestions(String typo) { ... }
+
+}
+```
+
+```java
+// Inappropriate use of singleton - inflexible & untestable!
+
+public class SpellChecker {
+
+    private final Lexicon dictionary = ...;
+
+    private SpellChecker(...) {}
+
+    public static SpellChecker INSTANCE = new SpellChecker(...);
+
+    public boolean isValid(String word) { ... }
+
+    public List<String> suggestions(String typo) { ... }
+
+}
+```
+
+```java
+// Dependency injection provides flexibility and testability
+
+public class SpellChecker {
+
+    private final Lexicon dictionary;
+
+    public SpellChecker(Lexicon dictionary) {
+
+        this.dictionary = Objects.requireNonNull(dictionary);
+
+    }
+
+    public boolean isValid(String word) { ... }
+
+    public List<String> suggestions(String typo) { ... }
+
+}
+```
+
+```java
+Mosaic create(Supplier<? extends Tile> tileFactory) { ... }
+```
+
+## Avoid creating unnecessary objects
+
+```java
+String s = new String("bikini");  // DON'T DO THIS!
+```
+
+```java
+String s = "bikini"
+```
+
+```java
+// Performance can be greatly improved!
+
+static boolean isRomanNumeral(String s) {
+
+    return s.matches("^(?=.)M*(C[MD]|D?C{0,3})"
+            + "(X[CL]|L?X{0,3})(I[XV]|V?I{0,3})$");
+}
+```
+```java
+// Reusing expensive object for improved performance
+
+public class RomanNumerals {
+
+    private static final Pattern ROMAN = Pattern.compile(
+            "^(?=.)M*(C[MD]|D?C{0,3})"
+            + "(X[CL]|L?X{0,3})(I[XV]|V?I{0,3})$");
+
+    static boolean isRomanNumeral(String s) {
+        return ROMAN.matcher(s).matches();
+    }
+}
+```
+
+On my machine, the original version takes 1.1 µs on an 8-character input string, while the improved version takes 0.17 µs, which is 6.5 times faster.
+
+```java
+// Hideously slow! Can you spot the object creation?
+
+private static long sum() {
+
+    Long sum = 0L;
+
+    for (long i = 0; i <= Integer.MAX_VALUE; i++)
+        sum += i;
+    return sum;
+}
+```
+
+ Changing the declaration of sum from Long to long reduces the runtime from 6.3 seconds to 0.59 seconds on my machine. The lesson is clear: prefer primitives to boxed primitives, and watch out for unintentional autoboxing.
+
+the creation and reclamation of small objects whose constructors do little explicit work is cheap, especially on modern JVM implementations. Creating additional objects to enhance the clarity, simplicity, or power of a program is generally a good thing.
+
+Conversely, avoiding object creation by maintaining your own object pool is a bad idea unless the objects in the pool are extremely heavyweight. The classic example of an object that does justify an object pool is a database connection. The cost of establishing the connection is sufficiently high that it makes sense to reuse these objects. Generally speaking, however, maintaining your own object pools clutters your code, increases memory footprint, and harms performance. Modern JVM implementations have highly optimized garbage collectors that easily outperform such object pools on lightweight objects.
+
+## Eliminate obsolete object references
+
+```java
+// Can you spot the "memory leak"?
+
+public class Stack {
+
+    private Object[] elements;
+    private int size = 0;
+    private static final int DEFAULT_INITIAL_CAPACITY = 16;
+
+    public Stack() {
+        elements = new Object[DEFAULT_INITIAL_CAPACITY];
+    }
+
+    public void push(Object e) {
+        ensureCapacity();
+        elements[size++] = e;
+    }
+
+    public Object pop() {
+
+        if (size == 0)
+            throw new EmptyStackException();
+        return elements[--size];
+    }
+
+    /**
+     * Ensure space for at least one more element, roughly
+     * doubling the capacity each time the array needs to grow.
+     */
+
+    private void ensureCapacity() {
+
+        if (elements.length == size)
+            elements = Arrays.copyOf(elements, 2 * size + 1);
+    }
+
+}
+```
+
+```java
+public Object pop() {
+
+    if (size == 0)
+        throw new EmptyStackException();
+
+    Object result = elements[--size];
+    elements[size] = null; // Eliminate obsolete reference
+    return result;
+}
+```
+- whenever a class manages its own memory, the programmer should be alert for memory leaks. Whenever an element is freed, any object references contained in the element should be nulled out.
+- Another common source of memory leaks is caches
+- A third common source of memory leaks is listeners and other callbacks
