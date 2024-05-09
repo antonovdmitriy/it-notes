@@ -9,7 +9,17 @@
   - [Example with linter usage](#example-with-linter-usage)
   - [Troubleshooting](#troubleshooting)
     - [Tabs and spaces](#tabs-and-spaces)
-- [Literals](#literals)
+  - [Variables](#variables)
+- [Data types](#data-types)
+  - [Literals](#literals)
+  - [Conditional](#conditional)
+  - [Cycles](#cycles)
+    - [For](#for)
+    - [Range](#range)
+  - [Slices](#slices)
+  - [Funсtions](#funсtions)
+  - [Structures](#structures)
+  - [Method with structure](#method-with-structure)
 
 # Basics
 
@@ -40,11 +50,11 @@ setx path "%path%;%GOPATH%\bin"
 ## First program
 
 ```go
-packagemain
+package main
 
 import"fmt"
 
-funcmain(){
+func main(){
 
  fmt.Println("Hello, world!")
 
@@ -149,7 +159,214 @@ Before it was like this
 
 ![](images/image5.png)
 
+## Variables
 
-# Literals
+keyword var then name of variable then type of variable
+
+```go
+var age int
+```
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+
+	var name string = "John"
+	fmt.Println(name)
+}
+```
+
+# Data types
+
+`int`, `int8`, `int16`, `int32`, `int64`
+
+`float32`, `float64` - floating-point 
+
+`bool` - boolean data type
+
+
+## Literals
 
 In integral literal you can write underscores `_`
+
+## Conditional 
+
+```go
+if condition {
+} else {
+}
+```
+
+comparison operators: ==, !=, <, >, <=, >=.
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+
+	const age = 20
+
+	if age >= 18 {
+		fmt.Println("Этот человек совершеннолетний")
+	} else {
+		fmt.Println("Этот человек несовершеннолетний")
+	}
+
+}
+```
+
+## Cycles
+
+### For
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+    for i := 0; i < 5; i++ {
+        fmt.Println(i)
+    }
+}
+```
+
+### Range
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+    names := []string{"Ivan", "Petr", "Johan"}
+    
+    for index, name := range names {
+        fmt.Println(index, name)
+    }
+}
+```
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+
+	numbers := []int{0, 2, 3, 4}
+	for index, value := range numbers {
+		fmt.Println(index, value)
+	}
+}
+```
+
+## Slices
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+ 
+    numbers := []int{1, 2, 3, 4, 5}   
+    numbers = append(numbers, 6)
+    subset := numbers[2:4]
+    fmt.Println("numbers:", numbers)
+    fmt.Println("subset:", subset)
+}
+```
+
+## Funсtions
+
+```go
+func add(x int, y int) int {
+    return x + y
+}
+```
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+
+	fmt.Println(isEven(0))
+	fmt.Println(isEven(2))
+	fmt.Println(isEven(145))
+	fmt.Println(isEven(3))
+	fmt.Println(isEven(10))
+}
+
+func isEven(number int) bool {
+	return number%2 == 0
+}
+```
+
+## Structures
+
+```go
+type Person struct {
+    name string
+    age  int
+}
+```
+
+```go
+var p Person
+p.name = "John"
+p.age = 30
+```
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+
+	var field Rectangle
+	field.height = 10
+	field.width = 20
+	fmt.Println(field.height, field.width)
+}
+
+type Rectangle struct {
+	width  int
+	height int
+}
+```
+
+## Method with structure
+
+method is outside of structure. The first part after func is reciever. So called that connected to structure. 
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+
+	var field Rectangle
+	field.height = 10
+	field.width = 20
+	fmt.Println(field.perimeter())
+}
+
+type Rectangle struct {
+	width  int
+	height int
+}
+
+func (rectangle Rectangle) perimeter() int {
+	return rectangle.height + rectangle.width
+}
+```
