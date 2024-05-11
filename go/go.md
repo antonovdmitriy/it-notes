@@ -20,6 +20,7 @@
   - [Funсtions](#funсtions)
   - [Structures](#structures)
   - [Method with structure](#method-with-structure)
+  - [Pointers](#pointers)
 
 # Basics
 
@@ -370,3 +371,66 @@ func (rectangle Rectangle) perimeter() int {
 	return rectangle.height + rectangle.width
 }
 ```
+
+## Pointers
+
+```go
+var ptr *int
+```
+
+```go
+var x int = 10
+ptr := &x
+fmt.Println(*ptr) 
+```
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+
+	var variable int = 10
+	ptr := &variable
+
+	*ptr = 20
+
+	fmt.Println(variable)
+
+}
+```
+
+```go
+package main
+
+import "fmt"
+
+func increment(x *int) {
+    *x += 1
+}
+
+func main() {
+    var a int = 5
+    increment(&a)
+    fmt.Println(a) // Выведет 6
+}
+```
+
+```go
+package main
+
+import "fmt"
+
+func newInt() *int {
+    var dummy int = 10
+    return &dummy
+}
+
+func main() {
+    numPtr := newInt()
+    fmt.Println(*numPtr) // Выведет 10
+}
+```
+
+if we will change to `fmt.Println(numPtr)` then we just print an address to memory as hex digit. `0xc000014088`
