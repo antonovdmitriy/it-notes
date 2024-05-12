@@ -21,6 +21,9 @@
   - [Structures](#structures)
   - [Method with structure](#method-with-structure)
   - [Pointers](#pointers)
+  - [go routines](#go-routines)
+  - [channels](#channels)
+    - [buffer channel](#buffer-channel)
 
 # Basics
 
@@ -267,6 +270,22 @@ func main() {
 }
 ```
 
+ignoring index
+```go
+for _, value := range slice {
+    fmt.Println(value) 
+}
+```
+
+ignoring value
+
+```go
+for index, _ := range slice {
+    fmt.Println(index)
+}
+
+```
+
 ## Slices
 
 ```go
@@ -327,6 +346,10 @@ p.age = 30
 ```
 
 ```go
+person := Person{name: "Alice", age: 30}
+```
+
+```go
 package main
 
 import "fmt"
@@ -344,6 +367,7 @@ type Rectangle struct {
 	height int
 }
 ```
+
 
 ## Method with structure
 
@@ -434,3 +458,103 @@ func main() {
 ```
 
 if we will change to `fmt.Println(numPtr)` then we just print an address to memory as hex digit. `0xc000014088`
+
+## go routines
+
+it is lightweight threads. 
+
+```go
+package main
+
+import (
+    "fmt"
+    "time"
+)
+
+func say(s string) {
+    for i := 0; i < 5; i++ {
+        time.Sleep(100 * time.Millisecond)
+        fmt.Println(s)
+    }
+}
+
+func main() {
+    go say("world")
+    say("hello")
+}
+```
+
+## channels
+
+a way to exchange data between go routines without races. It can be described as a stream of data. 
+
+```go
+package main
+
+import "fmt"
+
+func sum(s []int, c chan int) {
+    sum := 0
+    for _, v := range s {
+        sum += v
+    }
+    c <- sum // put int to the channel
+}
+
+func main() {
+    s := []int{7, 2, 8, -9, 4, 0}
+
+    c := make(chan int)
+    go sum(s[:len(s)/2], c)
+    go sum(s[len(s)/2:], c)
+    x, y := <-c, <-c // blocking operation before results are ready
+
+    fmt.Println(x, y, x+y)
+}
+```
+
+### buffer channel
+
+```go
+resultChan := make(chan int, 2)
+```
+
+A buffered pipe has an internal buffer that allows it to store a certain number of elements without having to read them immediately. When you create a channel using `make(chan Type, size)`, you specify the maximum number of elements that can be stored in the channel buffe
+
+Sending to a buffered channel:
+- If a buffered channel has free buffer space, sending to the channel occurs without blocking—the sender does not wait for the receiver to start reading.
+- If the channel's buffer is full, the sender blocks and waits until the buffer becomes free (when another goroutine reads from the channel).
+
+Receiving from a buffered channel:
+- If there is data in the channel, the reception occurs without blocking  the recipient immediately receives the data.
+- If the channel is empty, the receiver blocks and waits until data is sent to the channel.
+
+
+```go
+package main
+
+import (
+    "fmt"
+)
+
+func calculateSum(values []int, resultChan chan int) {
+    sum := 0
+    for _, value := range values {
+        sum += value
+    }
+    resultChan <- sum
+}
+
+func main() {
+    numbers := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+    resultChan := make(chan int, 2)
+
+    mid := len(numbers) / 2
+    go calculateSum(numbers[:mid], resultChan)
+    go calculateSum(numbers[mid:], resultChan)
+
+    sum1, sum2 := <-resultChan, <-resultChan
+
+    fmt.Println("Total Sum:", sum1 + sum2)
+}
+```
