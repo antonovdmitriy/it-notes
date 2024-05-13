@@ -20,10 +20,12 @@
   - [Funсtions](#funсtions)
   - [Structures](#structures)
   - [Method with structure](#method-with-structure)
+  - [Visibility](#visibility)
   - [Pointers](#pointers)
   - [go routines](#go-routines)
   - [channels](#channels)
     - [buffer channel](#buffer-channel)
+  - [Interfaces](#interfaces)
 
 # Basics
 
@@ -396,6 +398,30 @@ func (rectangle Rectangle) perimeter() int {
 }
 ```
 
+## Visibility
+
+Visibility rules:
+
+- Capitalization: If the name of a method, function, variable, or structure begins with a capital letter, then the identifier is exportable, meaning it can be accessed from other packages. This is similar to public in other programming languages.
+- Lowercase Letter: If the name begins with a lowercase letter, then this identifier is non-exportable and can only be accessed within its package. This is similar to private in other programming languages.
+
+```go
+package mypackage
+
+type Car struct { // Exportable structure
+    Make  string // private field
+    model string // public field
+}
+
+func (c Car) Describe() string { // public method
+    return fmt.Sprintf("%s %s", c.Make, c.model)
+}
+
+func secretFunction() { // private method
+    fmt.Println("This is a secret")
+}
+```
+
 ## Pointers
 
 ```go
@@ -556,5 +582,31 @@ func main() {
     sum1, sum2 := <-resultChan, <-resultChan
 
     fmt.Println("Total Sum:", sum1 + sum2)
+}
+```
+
+## Interfaces
+
+```go
+type Describer interface {
+    Describe() string
+}
+```
+
+both of the next structures implemented interface 
+
+```go
+func (p Person) Describe() string {
+    return fmt.Sprintf("%s is %d years old", p.Name, p.Age)
+}
+
+func (c Car) Describe() string {
+    return fmt.Sprintf("%s %s, made in %d", c.Make, c.Model, c.Year)
+}
+```
+
+```go
+func printDescription(d Describer) {
+    fmt.Println(d.Describe())
 }
 ```
