@@ -26,6 +26,8 @@
   - [channels](#channels)
     - [buffer channel](#buffer-channel)
   - [Interfaces](#interfaces)
+  - [Error handling](#error-handling)
+  - [defer](#defer)
 
 # Basics
 
@@ -409,8 +411,8 @@ Visibility rules:
 package mypackage
 
 type Car struct { // Exportable structure
-    Make  string // private field
-    model string // public field
+    Make  string // public field
+    model string // private field
 }
 
 func (c Car) Describe() string { // public method
@@ -609,4 +611,115 @@ func (c Car) Describe() string {
 func printDescription(d Describer) {
     fmt.Println(d.Describe())
 }
+```
+
+## Error handling
+
+```go
+func doSomething() (result int, err error) {
+    if somethingWentWrong {
+        return 0, fmt.Errorf("an error occurred")
+    }
+    return 42, nil
+}
+```
+
+```go
+package main
+
+import (
+	"fmt"
+	"errors"
+)
+
+func divide(a, b float64) (float64, error) {
+	if b == 0 {
+		return 0, errors.New("division by zero")
+	}
+	return a / b, nil
+}
+
+func main() {
+	result, err := divide(10.0, 0)
+	if err != nil {
+		fmt.Println("Error:", err)
+	} else {
+		fmt.Println("Result:", result)
+	}
+}
+```
+
+```go
+package main
+
+import (
+	"fmt"
+	"io"
+	"os"
+)
+
+func main() {
+
+	result, err := readFile("/home/dmitrii/.bashrc")
+	if err != nil {
+		fmt.Println(err.Error())
+	} else {
+		fmt.Println(result)
+	}
+}
+
+func readFile(path string) (string, error) {
+
+	file, error := os.Open(path)
+
+	if error != nil {
+		return "", error
+	}
+	defer file.Close()
+
+	result, error := io.ReadAll(file)
+	if error != nil {
+		return "", error
+	}
+
+	return string(result), nil
+}
+
+```
+
+## defer 
+
+for closing resources. 
+
+```go
+func example() {
+    fmt.Println("Начало функции")
+    defer fmt.Println("Это выполнится в конце")
+    fmt.Println("Это выполнится до defer")
+}
+```
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+    fmt.Println("Начало функции")
+
+    defer fmt.Println("Первый defer")
+    defer fmt.Println("Второй defer")
+    defer fmt.Println("Третий defer")
+
+    fmt.Println("Конец функции")
+}
+
+```
+
+```
+Начало функции
+Конец функции
+Третий defer
+Второй defer
+Первый defer
 ```
