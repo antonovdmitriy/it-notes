@@ -28,6 +28,11 @@
   - [Interfaces](#interfaces)
   - [Error handling](#error-handling)
   - [defer](#defer)
+  - [Modules](#modules)
+  - [Testing](#testing)
+    - [Naming](#naming)
+    - [Example](#example)
+    - [How to run](#how-to-run)
 
 # Basics
 
@@ -615,14 +620,6 @@ func printDescription(d Describer) {
 
 ## Error handling
 
-```go
-func doSomething() (result int, err error) {
-    if somethingWentWrong {
-        return 0, fmt.Errorf("an error occurred")
-    }
-    return 42, nil
-}
-```
 
 ```go
 package main
@@ -722,4 +719,118 @@ func main() {
 Третий defer
 Второй defer
 Первый defer
+```
+
+## Modules
+
+to create a module
+
+```sh
+go mod init <module-name>
+```
+
+an example file `go.mod`
+
+```go
+module test
+
+go 1.16
+```
+
+
+## Testing
+
+### Naming
+
+if file `math.go` then test should be in `math_test.go`
+
+### Example
+
+```go
+// math.go
+package main
+
+func Add(a, b int) int {
+    return a + b
+}
+```
+```go
+// math_test.go
+package main
+
+import "testing"
+
+func TestAdd(t *testing.T) {
+    result := Add(2, 3)
+    expected := 5
+    if result != expected {
+        t.Errorf("Add(2, 3) = %d; want %d", result, expected)
+    }
+}
+
+```
+
+```go
+package main
+
+import "errors"
+
+func Divide(a, b float64) (float64, error) {
+	if b == 0 {
+		return 0, errors.New("division by zero")
+	}
+	return a / b, nil
+}
+```
+
+
+```go
+package main
+
+import "testing"
+
+func TestDivideByPositiveNumber(t *testing.T) {
+	var expected float64 = 3
+
+	result, error := Divide(6, 2)
+
+	if result != expected {
+		t.Errorf("Divide(6, 2) = %f; expected %f", result, expected)
+	}
+	if error != nil {
+		t.Error("error should be nil")
+	}
+}
+
+func TestDivideByZero(t *testing.T) {
+
+	_, error := Divide(6, 0)
+
+	if error == nil {
+		t.Error("Divide(6, 0) should return error")
+	}
+}
+
+```
+
+### How to run
+
+```sh
+go test
+```
+
+with verbose
+
+```sh
+go test -v
+```
+
+```log
+dmitrii@dmitrii-ThinkPad-T15-Gen-2i:~/CODE/go/test$ go test -v
+=== RUN   TestDivideByPositiveNumber
+--- PASS: TestDivideByPositiveNumber (0.00s)
+=== RUN   TestDivideByZero
+--- PASS: TestDivideByZero (0.00s)
+PASS
+ok  	test	0.001s
 ```
