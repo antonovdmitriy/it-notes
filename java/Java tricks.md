@@ -447,6 +447,12 @@
   - [Dependency injection](#dependency-injection)
   - [Avoid creating unnecessary objects](#avoid-creating-unnecessary-objects)
   - [Eliminate obsolete object references](#eliminate-obsolete-object-references)
+- [Performance](#performance)
+  - [Heap tuning](#heap-tuning)
+    - [Console commands](#console-commands)
+      - [show only live objects after full GC.](#show-only-live-objects-after-full-gc)
+      - [show all objects incuding garbage without full GC](#show-all-objects-incuding-garbage-without-full-gc)
+      - [Heap dump](#heap-dump)
 
 
 # OCP preparation
@@ -14494,3 +14500,73 @@ public Object pop() {
 - whenever a class manages its own memory, the programmer should be alert for memory leaks. Whenever an element is freed, any object references contained in the element should be nulled out.
 - Another common source of memory leaks is caches
 - A third common source of memory leaks is listeners and other callbacks
+
+# Performance
+
+## Heap tuning
+
+### Console commands
+
+#### show only live objects after full GC. 
+
+because they take a few seconds to obtain and trigger a full GC, they should not be taken during a performance measurement steady state.
+
+```sh
+ jcmd 8998 GC.class_histogram
+```
+
+or
+
+```sh
+jmap -histo process_id
+```
+
+```log
+8898:
+
+ num     #instances         #bytes  class name
+----------------------------------------------
+   1:        789087       31563480  java.math.BigDecimal
+   2:        172361       14548968  [C
+   3:         13224       13857704  [B
+   4:        184570        5906240  java.util.HashMap$Node
+   5:         14848        4188296  [I
+   6:        172720        4145280  java.lang.String
+   7:         34217        3127184  [Ljava.util.HashMap$Node;
+   8:         38555        2131640  [Ljava.lang.Object;
+   9:         41753        2004144  java.util.HashMap
+  10:         16213        1816472  java.lang.Class
+```
+
+`[C` - char[]
+`[B` - byte[]
+
+#### show all objects incuding garbage without full GC
+
+```sh
+ jcmd 8998 GC.class_histogram -all
+```
+
+or
+
+```sh
+jmap -histo:live process_id
+```
+
+#### Heap dump
+
+```sh
+jcmd process_id GC.heap_dump /path/to/heap_dump.hprof
+```
+
+or
+
+```sh
+jmap -dump:live,file=/path/to/heap_dump.hprof process_id
+```
+
+- Including the `live` option in `jmap` will force a full GC to occur before the heap is dumped. That is the default for `jcmd`, 
+- if for some reason you want those other (dead) objects included, you can specify `-all` at the end of the `jcmd`. 
+- If you use the command in a way that forces a full GC, that will obviously introduce a long pause into the application,
+- even if you don’t force a full GC, the application will be paused for the time it takes to write the heap dump.
+

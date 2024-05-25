@@ -5,7 +5,7 @@
   - [First program](#first-program)
   - [Launch without a binary file](#launch-without-a-binary-file)
   - [Build a binary file](#build-a-binary-file)
-  - [Install additional tols](#install-additional-tols)
+  - [Install additional tools](#install-additional-tools)
   - [Example with linter usage](#example-with-linter-usage)
   - [Troubleshooting](#troubleshooting)
     - [Tabs and spaces](#tabs-and-spaces)
@@ -33,6 +33,11 @@
     - [Naming](#naming)
     - [Example](#example)
     - [How to run](#how-to-run)
+    - [Table tests](#table-tests)
+    - [Coverage](#coverage)
+  - [Network](#network)
+    - [http server](#http-server)
+  - [JSON](#json)
 
 # Basics
 
@@ -94,7 +99,7 @@ go build -o hello_world hello.go
 
 ![](images/image1.png)
 
-## Install additional tols
+## Install additional tools
 
 You can install additional tools via `go install`
 
@@ -410,14 +415,14 @@ func (rectangle Rectangle) perimeter() int {
 Visibility rules:
 
 - Capitalization: If the name of a method, function, variable, or structure begins with a capital letter, then the identifier is exportable, meaning it can be accessed from other packages. This is similar to public in other programming languages.
-- Lowercase Letter: If the name begins with a lowercase letter, then this identifier is non-exportable and can only be accessed within its package. This is similar to private in other programming languages.
+- Lowercase Letter: If the name begins with a lowercase letter, then this identifier is non-exportable and can only be accessed within its package.
 
 ```go
 package mypackage
 
 type Car struct { // Exportable structure
     Make  string // public field
-    model string // private field
+    model string // package private field
 }
 
 func (c Car) Describe() string { // public method
@@ -453,7 +458,7 @@ func main() {
 
 	*ptr = 20
 
-	fmt.Println(variable)
+	fmt.Println(variable) // 20
 
 }
 ```
@@ -470,7 +475,7 @@ func increment(x *int) {
 func main() {
     var a int = 5
     increment(&a)
-    fmt.Println(a) // Выведет 6
+    fmt.Println(a) // 6
 }
 ```
 
@@ -834,3 +839,109 @@ dmitrii@dmitrii-ThinkPad-T15-Gen-2i:~/CODE/go/test$ go test -v
 PASS
 ok  	test	0.001s
 ```
+
+### Table tests
+
+```go
+package main
+
+import "testing"
+
+func TestDivide(t *testing.T) {
+    tests := []struct {
+        a, b     float64
+        expected float64
+        err      bool
+    }{
+        {6, 2, 3, false},
+        {10, 5, 2, false},
+        {8, 0, 0, true},
+        {0, 2, 0, false},
+    }
+
+    for _, tt := range tests {
+        result, err := Divide(tt.a, tt.b)
+        if (err != nil) != tt.err {
+            t.Errorf("Divide(%f, %f) expected error: %v, got: %v", tt.a, tt.b, tt.err, err)
+        }
+        if result != tt.expected {
+            t.Errorf("Divide(%f, %f) = %f; expected %f", tt.a, tt.b, result, tt.expected)
+        }
+    }
+}
+```
+
+### Coverage
+
+```sh
+go test -cover
+```
+
+to create a html report
+
+```go
+go test -coverprofile=coverage.out
+go tool cover -html=coverage.out
+```
+
+## Network
+
+### http server
+
+```go
+package main
+
+import (
+	"fmt"
+	"net/http"
+)
+
+func helloHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "Hello, World!")
+}
+
+func main() {
+	http.HandleFunc("/hello", helloHandler)
+	fmt.Println("Starting server at port 8080")
+	http.ListenAndServe(":8080", nil)
+}
+```
+
+a bit more
+
+```go
+package main
+
+import (
+	"fmt"
+	"net/http"
+)
+
+func helloHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "Hello, World!")
+}
+
+func goodbyeHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "Goodbye, World!")
+}
+
+func greetHandler(w http.ResponseWriter, r *http.Request) {
+	name := r.FormValue("name")
+	if name == "" {
+		name = "Guest"
+	}
+	fmt.Fprintf(w, "Hello, %s", name)
+}
+
+func main() {
+	http.HandleFunc("/hello", helloHandler)
+	http.HandleFunc("/goodbye", goodbyeHandler)
+	http.HandleFunc("/greet", greetHandler)
+
+	fmt.Println("Starting server at port 8080")
+	http.ListenAndServe(":8080", nil)
+}
+```
+
+## JSON
+
