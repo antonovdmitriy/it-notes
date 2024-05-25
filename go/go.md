@@ -945,3 +945,79 @@ func main() {
 
 ## JSON
 
+```go
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"log"
+)
+
+type User struct {
+	ID    int    `json:"id"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
+}
+
+func main() {
+	// Пример данных
+	user := User{ID: 1, Name: "John Doe", Email: "john@example.com"}
+
+	// Шаг 2: Сериализация (Marshalling)
+	jsonData, err := json.Marshal(user)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("Serialized JSON:", string(jsonData))
+
+	// Пример JSON строки
+	jsonString := `{"id":2,"name":"Jane Doe","email":"jane@example.com"}`
+
+	// Шаг 3: Десериализация (Unmarshalling)
+	var newUser User
+	err = json.Unmarshal([]byte(jsonString), &newUser)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("Deserialized User struct:", newUser)
+}
+```
+
+```go
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"log"
+)
+
+type Product struct {
+	Id      int     `json:"id"`
+	Name    string  `json:"name"`
+	Price   float64 `json:"price"`
+	InStock bool    `json:"in_stock"`
+}
+
+func main() {
+
+	var product Product = Product{Id: 12, Name: "Alex", Price: 65.65, InStock: false}
+	jsonData, error := json.Marshal(product)
+	if error != nil {
+		log.Fatal(error)
+		return
+	}
+
+	productInString := string(jsonData)
+	fmt.Println("JSON: ", productInString)
+
+	var productSecond Product
+	error = json.Unmarshal([]byte(productInString), &productSecond)
+	if error != nil {
+		log.Fatal(error)
+		return
+	}
+	fmt.Println("Deserialized Product struct", productSecond)
+}
+```
