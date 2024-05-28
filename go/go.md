@@ -38,6 +38,7 @@
   - [Network](#network)
     - [http server](#http-server)
   - [JSON](#json)
+  - [SQL](#sql)
 
 # Basics
 
@@ -1019,5 +1020,73 @@ func main() {
 		return
 	}
 	fmt.Println("Deserialized Product struct", productSecond)
+}
+```
+
+## SQL
+
+install the driver to db
+
+```sh
+go get github.com/mattn/go-sqlite3
+```
+
+```go
+package main
+
+import (
+    "database/sql"
+    "fmt"
+    _ "github.com/mattn/go-sqlite3"
+    "log"
+)
+
+func main() {
+    
+    db, err := sql.Open("sqlite3", "./test.db")
+    if err != nil {
+        log.Fatal(err)
+    }
+    defer db.Close()
+
+    sqlStmt := `
+    CREATE TABLE IF NOT EXISTS product (
+        id INTEGER NOT NULL PRIMARY KEY,
+        name TEXT,
+        price REAL,
+        in_stock BOOLEAN
+    );
+    `
+    _, err = db.Exec(sqlStmt)
+    if err != nil {
+        log.Fatalf("%q: %s\n", err, sqlStmt)
+    }
+
+    _, err = db.Exec(`INSERT INTO product (name, price, in_stock) VALUES (?, ?, ?)`, "Laptop", 999.99, true)
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    rows, err := db.Query("SELECT id, name, price, in_stock FROM product")
+    if err != nil {
+        log.Fatal(err)
+    }
+    defer rows.Close()
+
+    for rows.Next() {
+        var id int
+        var name string
+        var price float64
+        var in_stock bool
+        err = rows.Scan(&id, &name, &price, &in_stock)
+        if err != nil {
+            log.Fatal(err)
+        }
+        fmt.Printf("ID: %d, Name: %s, Price: %.2f, InStock: %t\n", id, name, price, in_stock)
+    }
+    err = rows.Err()
+    if err != nil {
+        log.Fatal(err)
+    }
 }
 ```
