@@ -10,7 +10,7 @@
   - [Troubleshooting](#troubleshooting)
     - [Tabs and spaces](#tabs-and-spaces)
   - [Variables](#variables)
-- [Data types](#data-types)
+  - [Data types](#data-types)
   - [Literals](#literals)
   - [Conditional](#conditional)
   - [Cycles](#cycles)
@@ -35,10 +35,10 @@
     - [How to run](#how-to-run)
     - [Table tests](#table-tests)
     - [Coverage](#coverage)
-  - [Network](#network)
-    - [http server](#http-server)
-  - [JSON](#json)
-  - [SQL](#sql)
+- [Network](#network)
+  - [http server](#http-server)
+- [JSON](#json)
+- [SQL](#sql)
 
 # Basics
 
@@ -198,7 +198,7 @@ func main() {
 }
 ```
 
-# Data types
+## Data types
 
 `int`, `int8`, `int16`, `int32`, `int64`
 
@@ -885,9 +885,9 @@ go test -coverprofile=coverage.out
 go tool cover -html=coverage.out
 ```
 
-## Network
+# Network
 
-### http server
+## http server
 
 ```go
 package main
@@ -944,7 +944,7 @@ func main() {
 }
 ```
 
-## JSON
+# JSON
 
 ```go
 package main
@@ -1023,7 +1023,7 @@ func main() {
 }
 ```
 
-## SQL
+# SQL
 
 install the driver to db
 
