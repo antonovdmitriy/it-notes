@@ -449,10 +449,16 @@
   - [Eliminate obsolete object references](#eliminate-obsolete-object-references)
 - [Performance](#performance)
   - [Heap tuning](#heap-tuning)
+    - [Terms](#terms)
+      - [Retained memory](#retained-memory)
+      - [shallow size](#shallow-size)
+      - [deep size](#deep-size)
+      - [Dominators](#dominators)
     - [Console commands](#console-commands)
       - [show only live objects after full GC.](#show-only-live-objects-after-full-gc)
       - [show all objects incuding garbage without full GC](#show-all-objects-incuding-garbage-without-full-gc)
       - [Heap dump](#heap-dump)
+    - [What to do](#what-to-do)
 
 
 # OCP preparation
@@ -14505,6 +14511,30 @@ public Object pop() {
 
 ## Heap tuning
 
+### Terms
+
+#### Retained memory 
+
+The `retained memory` of an object is the amount of memory that would be freed if the object itself were eligible to be collected. 
+
+he retained memory of the String Trio object includes the memory occupied by that object as well as the memory occupied by the Sally and David objects. It does not include the memory used by the Michael object, since that object has another reference and won’t be eligible for GC if the String Trio is freed.
+
+![](images/retained_memory_1.png)
+
+#### shallow size
+
+`shallow size` of an object is the size of the object itself. If the object contains a reference to another object, the 4 or 8 bytes of the reference is included, but the size of the target object is not included.
+
+#### deep size
+
+The deep size of an object includes the size of the object it references. The difference between the deep size of an object and the retained memory of an object lies in objects that are otherwise shared.
+
+the deep size of the FluteDuo object includes the space consumed by the Michael object, whereas the retained size of the Flute Duo object does not.
+
+#### Dominators
+
+Objects that retain a large amount of heap space are often called the dominators of the heap.
+
 ### Console commands
 
 #### show only live objects after full GC. 
@@ -14570,3 +14600,14 @@ jmap -dump:live,file=/path/to/heap_dump.hprof process_id
 - If you use the command in a way that forces a full GC, that will obviously introduce a long pause into the application,
 - even if you don’t force a full GC, the application will be paused for the time it takes to write the heap dump.
 
+### What to do 
+
+ If the heap analysis tool shows that a few objects dominate the bulk of the heap: 
+   - create fewer of them
+   - retain them for a shorter period of time
+   - simplify their object graph
+   - make them smaller. 
+  
+That may be easier said than done, but at least the analysis is simple.
+
+Next general rule of thumb, start with collection objects (e.g., HashMap) rather than the entries (e.g., HashMap$Entry), and look for the biggest collections.

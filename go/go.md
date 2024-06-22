@@ -318,6 +318,21 @@ func main() {
 }
 ```
 
+```go
+package main
+
+import "fmt"
+
+func main() {
+
+	names := []string{"Ivan", "Petr", "Johan"}
+	fmt.Println(names) // [Ivan Petr Johan]
+	afterAppend := append(names, "Dima")
+	fmt.Println(names)       // [Ivan Petr Johan]
+	fmt.Println(afterAppend) // [Ivan Petr Johan Dima]
+}
+```
+
 ## Funсtions
 
 ```go
