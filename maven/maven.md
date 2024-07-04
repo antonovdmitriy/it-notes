@@ -1,3 +1,8 @@
+- [Some tricks](#some-tricks)
+  - [Add dependency to a jar in a file system](#add-dependency-to-a-jar-in-a-file-system)
+  - [Connect to svn and add revision number to the manifest](#connect-to-svn-and-add-revision-number-to-the-manifest)
+
+
 # Some tricks
 
 ## Add dependency to a jar in a file system
