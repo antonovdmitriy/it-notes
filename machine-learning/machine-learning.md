@@ -1,21 +1,22 @@
 # Table of contents
 
 - [Table of contents](#table-of-contents)
-- [Примеры приложений](#примеры-приложений)
+- [Examples](#examples)
 - [Классы систем](#классы-систем)
   - [Классификация систем с точки зрения контроля](#классификация-систем-с-точки-зрения-контроля)
   - [Классификация с точки зрения возможности учиться онлайн](#классификация-с-точки-зрения-возможности-учиться-онлайн)
   - [Классификация с точки зрения обобщения](#классификация-с-точки-зрения-обобщения)
 - [Трудности ML](#трудности-ml)
 
-
-Один из самых первых примеров систем на ML это spam filter, который позволил отсечь спам почти полностью.
-
 A computer program is said to learn from experience E with respect to some task T and some performance measure P, if its performance on T, as measured by P, improves with experience E.
 
 Tom Mitchell, 1997
 
-# Примеры приложений
+# Examples
+
+The first ML application that really became mainstream, improving the lives of hundreds of millions of people, took over the world back in the 1990s: the spam filter.
+
+
 
 Анализ изображений продуктов на производственной линии для их автоматической классификации
 

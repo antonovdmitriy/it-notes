@@ -1,6 +1,12 @@
 - [Data intensive applications](#data-intensive-applications)
   - [Reliability](#reliability)
   - [Scalabllity](#scalabllity)
+    - [What to measure?](#what-to-measure)
+    - [Approaches for Coping with Load](#approaches-for-coping-with-load)
+  - [Maintainability](#maintainability)
+    - [Operability](#operability)
+    - [Simplicity](#simplicity)
+    - [Evolvability](#evolvability)
 - [API problems](#api-problems)
   - [Paginating](#paginating)
     - [Links](#links)
@@ -25,7 +31,7 @@
     - [Loose coupling](#loose-coupling)
     - [Resilience](#resilience)
     - [Observability](#observability)
-    - [Maintainability](#maintainability)
+    - [Maintainability](#maintainability-1)
   - [Culture and practices supporting cloud native](#culture-and-practices-supporting-cloud-native)
     - [Automation](#automation)
     - [Continuous delivery](#continuous-delivery)
@@ -61,6 +67,19 @@ many factors that may influence the design of a data system:
 - timescale for delivery
 - organization’s tolerance of different kinds of risk
 - regulatory constraints
+
+An application has to meet various requirements in order to be useful. 
+
+**functional requirements**
+- what it should do, such as allowing data to be stored, retrieved, searched, and processed in various ways
+
+**nonfunctional requirements** 
+- security
+- reliability
+- compliance
+- scalability
+- compatibility
+- maintainability 
 
 Main aspects:
 - **Reliability**
@@ -118,10 +137,13 @@ There are situations in which we may choose to sacrifice reliability in order to
 
  - If the system grows in a particular way, what are our options for coping with the growth?
  - How can we add computing resources to handle the additional load?
+
+
+two views:
 - When you increase a load parameter and keep the system resources (CPU, memory, network bandwidth, etc.) unchanged, how is the performance of your system affected?
 - When you increase a load parameter, how much do you need to increase the resources if you want to keep performance unchanged?
 
-What to measure? 
+#### What to measure? 
 
 **throughput** - the number of records we can process per second, or the total time it takes to run a job on a dataset of a certain size
 
@@ -131,13 +153,130 @@ What to measure?
 
 We need to think of response time not as a single number, but as a distribution of values that you can measure.
 
+ the mean is not a very good metric if you want to know your “typical” response time, because it doesn’t tell you how many users actually experienced that delay.
+
 Usually it is better to use percentiles. If you take your list of response times and sort it from fastest to slowest, then the median is the halfway point: for example, if your median response time is 200 ms, that means half your requests return in less than 200 ms, and half your requests take longer than that. The median is also known as the 50th percentile, and sometimes abbreviated as p50. The median refers to a single request; if the user makes several requests (over the course of a session, or because several resources are included in a single page), the probability that at least one of them is slower than the median is much greater than 50%.
 
-95th, 99th, and 99.9th percentiles are common (abbreviated p95, p99, and p999). They are the response time thresholds at which 95%, 99%, or 99.9% of requests are faster than that particular threshold.
+In order to figure out how bad your outliers are, you can look at higher percentiles: 95th, 99th, and 99.9th percentiles are common (abbreviated p95, p99, and p999). They are the response time thresholds at which 95%, 99%, or 99.9% of requests are faster than that particular threshold.
 
 Amazon has observed that a 100 ms increase in response time reduces sales by 1% [20], and others report that a 1-second slowdown reduces a customer satisfaction metric by 16% 
 
 On the other hand, optimizing the 99.99th percentile (the slowest 1 in 10,000 requests) was deemed too expensive and to not yield enough benefit for Amazon’s purposes. 
+
+High percentiles become especially important in backend services that are called multiple times as part of serving a single end-user request. Even if you make the calls in parallel, the end-user request still needs to wait for the slowest of the parallel calls to complete.  Even if only a small percentage of backend calls are slow, the chance of getting a slow call increases if an end-user request requires multiple backend calls, and so a higher proportion of end-user requests end up being slow (an effect known as tail latency amplification)
+
+#### Approaches for Coping with Load
+
+- If you are working on a fast-growing service, it is therefore likely that you will need to rethink your architecture on every order of magnitude load increase—or perhaps even more often than that.
+
+
+**scaling up, vertical scaling**
+
+- moving to a more powerful machine
+- often simpler 
+- high-end machines can become very expensive, so very intensive workloads often can’t avoid scaling out. 
+
+**scaling out, horizontal scaling**
+
+- distributing the load across multiple smaller machines. 
+- also known as a shared-nothing architecture. 
+ 
+but 
+
+- In reality, good architectures usually involve a pragmatic mixture of approaches: for example, using several fairly powerful machines can still be simpler and cheaper than a large number of small virtual machines.
+
+- Some systems are elastic, meaning that they can automatically add computing resources when they detect a load increase, whereas other systems are scaled manually (a human analyzes the capacity and decides to add more machines to the system). An elastic system can be useful if load is highly unpredictable, but manually scaled systems are simpler and may have fewer operational surprises
+
+-  common wisdom until recently was to keep your database on a single node (scale up) until scaling cost or high-availability requirements forced you to make it distributed.
+
+- The architecture of systems that operate at large scale is usually highly specific to the application
+- The problem may be:
+  -  the volume of reads
+  -  the volume of writes
+  -  the volume of data to store
+  -  the complexity of the data
+  -  the response time requirements
+  -  the access patterns
+  -  (usually) some mixture of all of these plus many more issues.
+
+- For example, a system that is designed to handle 100,000 requests per second, each 1 kB in size, looks very different from a system that is designed for 3 requests per minute, each 2 GB in size—even though the two systems have the same data throughput.
+
+- An architecture that scales well for a particular application is built around assumptions of which operations will be common and which will be rare—the load parameters. If those assumptions turn out to be wrong, the engineering effort for scaling is at best wasted, and at worst counterproductive. In an early-stage startup or an unproven product it’s usually more important to be able to iterate quickly on product features than it is to scale to some hypothetical future load.
+
+### Maintainability
+
+majority of the cost of software is not in its initial development, but in 
+  - its ongoing maintenance—fixing bugs
+  - keeping its systems operational
+  - investigating failures
+  - adapting it to new platforms
+  - modifying it for new use cases
+  - repaying technical debt
+  - adding new features.
+
+particular attention to three design principles for software systems:
+
+#### Operability
+
+Make it easy for operations teams to keep the system running smoothly. Making Life Easy for Operations
+
+> good operations can often work around the limitations of bad (or incomplete) software, but good software cannot run reliably with bad operations
+
+A good operations team typically is responsible for the following, and more:
+- Monitoring the health of the system and quickly restoring service if it goes into a bad state
+- Tracking down the cause of problems, such as system failures or degraded performance
+- Keeping software and platforms up to date, including security patches
+- Keeping tabs on how different systems affect each other, so that a problematic change can be avoided before it causes damage
+- Anticipating future problems and solving them before they occur (e.g., capacity planning)
+- Establishing good practices and tools for deployment, configuration management, and more
+- Performing complex maintenance tasks, such as moving an application from one platform to another
+- Maintaining the security of the system as configuration changes are made
+- Defining processes that make operations predictable and help keep the production environment stable
+- Preserving the organization’s knowledge about the system, even as individual people come and go
+
+Data systems can do various things to make routine tasks easy, including:
+- Providing visibility into the runtime behavior and internals of the system, with good monitoring
+- Providing good support for automation and integration with standard tools
+- Avoiding dependency on individual machines (allowing machines to be taken down for maintenance while the system as a whole continues running uninterrupted)
+- Providing good documentation and an easy-to-understand operational model (“If I do X, Y will happen”)
+- Providing good default behavior, but also giving administrators the freedom to override defaults when needed
+- Self-healing where appropriate, but also giving administrators manual control over the system state when needed
+- Exhibiting predictable behavior, minimizing surprises
+
+
+#### Simplicity
+
+- Make it easy for new engineers to understand the system, by removing as much complexity as possible from the system. (Note this is not the same as simplicity of the user interface.)
+
+- reducing complexity greatly improves the maintainability of software, and thus simplicity should be a key goal for the systems we build.
+
+- A software project mired in complexity is sometimes described as a big ball of mud
+
+- possible symptoms of complexity
+  - explosion of the state space
+  - tight coupling of modules
+  - tangled dependencies
+  - inconsistent naming and terminology
+  - hacks aimed at solving performance problems
+  - special-casing to work around issues elsewhere
+
+- One of the best tools we have for removing accidental complexity is abstraction. A good abstraction can hide a great deal of implementation detail behind a clean, simple-to-understand façade
+
+#### Evolvability
+
+Making Change Easy. 
+
+Make it easy for engineers to make changes to the system in the future, adapting it for unanticipated use cases as requirements change. Also known as extensibility, modifiability, or plasticity.
+
+It’s extremely unlikely that your system’s requirements will remain unchanged forever. 
+- you learn new facts
+- previously unanticipated use cases emerge
+- business priorities change
+- users request new features
+- new platforms replace old platforms
+- legal or regulatory requirements change
+- growth of the system forces architectural changes, etc.
+
 
 ## API problems
 

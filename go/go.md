@@ -11,7 +11,7 @@
     - [Tabs and spaces](#tabs-and-spaces)
   - [Variables](#variables)
   - [Data types](#data-types)
-  - [Literals](#literals)
+    - [integer literals](#integer-literals)
   - [Conditional](#conditional)
   - [Cycles](#cycles)
     - [For](#for)
@@ -19,6 +19,7 @@
   - [Slices](#slices)
   - [Funсtions](#funсtions)
   - [Structures](#structures)
+    - [Anonymous struct](#anonymous-struct)
   - [Method with structure](#method-with-structure)
   - [Visibility](#visibility)
   - [Pointers](#pointers)
@@ -200,16 +201,20 @@ func main() {
 
 ## Data types
 
+### integer literals
+
+- `0b` for binary (base 2), 
+- `0o` for octal (base 8), (without o is also octal but bad practice)
+- `0x` for hexadecimal (base 16). 
+- You can use either upper- or lowercase letters for the prefix
+- In integral literal you can write underscores `_` (they can’t be at the beginning or end of numbers, and you can’t have them next to each other)
+  
 `int`, `int8`, `int16`, `int32`, `int64`
 
 `float32`, `float64` - floating-point 
 
 `bool` - boolean data type
 
-
-## Literals
-
-In integral literal you can write underscores `_`
 
 ## Conditional 
 
@@ -363,39 +368,40 @@ func isEven(number int) bool {
 ## Structures
 
 ```go
-type Person struct {
-    name string
-    age  int
-}
-```
-
-```go
-var p Person
-p.name = "John"
-p.age = 30
-```
-
-```go
-person := Person{name: "Alice", age: 30}
-```
-
-```go
 package main
 
 import "fmt"
 
+type Person struct {
+	name string
+	age  int
+}
+
 func main() {
 
-	var field Rectangle
-	field.height = 10
-	field.width = 20
-	fmt.Println(field.height, field.width)
-}
+	var first Person
+	first.name = "John"
+	first.age = 30
 
-type Rectangle struct {
-	width  int
-	height int
+	var second Person = Person{"Mary", 28}
+	var third Person = Person{name: "Jim", age: 3}
+
+	var family []Person = []Person{first, second, third}
+
+	fmt.Println(family)
 }
+```
+
+### Anonymous struct
+
+```go
+	my := struct {
+		name       string
+		age        int
+		occupation string
+	}{"Dima", 12, "programmer"}
+    
+	fmt.Println("occupation", my.occupation)
 ```
 
 
@@ -477,6 +483,17 @@ func main() {
 	fmt.Println(variable) // 20
 
 }
+```
+
+```go
+	var source []string = []string{"ivan", "dima"}
+	var p *[]string = &source
+
+	*p = append(source, "vasya")
+	p = &append(source, "vasya") // wrong. does not compoile
+	
+
+	fmt.Println(*p)
 ```
 
 ```go
