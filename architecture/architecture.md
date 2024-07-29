@@ -7,11 +7,27 @@
     - [Operability](#operability)
     - [Simplicity](#simplicity)
     - [Evolvability](#evolvability)
-- [API problems](#api-problems)
-  - [Paginating](#paginating)
-    - [Links](#links)
-    - [Overview](#overview)
-    - [Page — based pagination](#page--based-pagination)
+- [Data models](#data-models)
+  - [NoSQL](#nosql)
+    - [sign to use nosql](#sign-to-use-nosql)
+    - [limitations](#limitations)
+    - [Schema flexibility in the document model](#schema-flexibility-in-the-document-model)
+    - [Data locality for queries](#data-locality-for-queries)
+    - [Example of query language](#example-of-query-language)
+  - [SQL](#sql)
+  - [The Object-Relational Mismatch](#the-object-relational-mismatch)
+  - [The Object-Relational Mismatch](#the-object-relational-mismatch-1)
+    - [Representing a LinkedIn profile using a relational schema](#representing-a-linkedin-profile-using-a-relational-schema)
+    - [Representing a LinkedIn profile as a JSON document](#representing-a-linkedin-profile-as-a-json-document)
+    - [Many-to-One problem](#many-to-one-problem)
+    - [Many-to-Many Relationships problem](#many-to-many-relationships-problem)
+  - [Are Document Databases Repeating History (hierarchical model)](#are-document-databases-repeating-history-hierarchical-model)
+  - [Network model](#network-model)
+  - [Relational model](#relational-model)
+  - [How document model resolves many-to-one and many-to-many problem](#how-document-model-resolves-many-to-one-and-many-to-many-problem)
+  - [Graph-Like Data Models](#graph-like-data-models)
+    - [Property graph](#property-graph)
+  - [Query languages](#query-languages)
       - [Pros](#pros)
       - [Cons](#cons)
     - [KeySet-based pagination](#keyset-based-pagination)
@@ -277,6 +293,320 @@ It’s extremely unlikely that your system’s requirements will remain unchange
 - legal or regulatory requirements change
 - growth of the system forces architectural changes, etc.
 
+## Data models
+
+### NoSQL
+
+-  The name “NoSQL” is unfortunate, since it doesn’t actually refer to any particular technology—it was originally intended simply as a catchy Twitter hashtag for a meetup on open source, distributed, nonrelational databases in 2009. Nevertheless, the term struck a nerve and quickly spread through the web startup community and beyond. A number of interesting database systems are now associated with the #NoSQL hashtag, and it has been retroactively reinterpreted as Not Only SQL
+
+driving forces
+- A need for greater scalability than relational databases can easily achieve, including very large datasets or very high write throughput
+- Specialized query operations that are not well supported by the relational model
+- Frustration with the restrictiveness of relational schemas, and a desire for a more dynamic and expressive data model.
+
+
+#### sign to use nosql
+
+ - If the data in your application has a document-like structure (i.e., a tree of one-to-many relationships, where typically the entire tree is loaded at once)
+
+#### limitations
+
+- you cannot refer directly to a nested item within a document, but instead you need to say something like “the second item in the list of positions for user 251” (much like an access path in the hierarchical model). However, as long as documents are not too deeply nested, that is not usually a problem.
+- The poor support for joins in document databases may or may not be a problem, depending on the application. For example, many-to-many relationships may never be needed in an analytics application that uses a document database to record which events occurred at which time
+- For highly interconnected data, the document model is awkward, the relational model is acceptable, and graph models are the most natural.
+
+#### Schema flexibility in the document model
+
+ No schema means that arbitrary keys and values can be added to a document, and when reading, clients have no guarantees as to what fields the documents may contain.
+
+Document databases are sometimes called **schemaless**, but that’s misleading, as the code that reads the data usually assumes some kind of structure—i.e., there is an implicit schema, but it is not enforced by the database. A more accurate term is **schema-on-read** (the structure of the data is implicit, and only interpreted when the data is read), in contrast with **schema-on-write** (the traditional approach of relational databases, where the schema is explicit and the database ensures all written data conforms to it).
+
+Schema-on-read is similar to dynamic (runtime) type checking in programming languages
+
+For example, say you are currently storing each user’s full name in one field, and you instead want to store the first name and last name separately. In a document database, you would just start writing new documents with the new fields and have code in the application that handles the case when old documents are read. For example:
+
+```js
+if (user && user.name && !user.first_name) {
+    // Documents written before Dec 8, 2013 don't have first_name
+    user.first_name = user.name.split(" ")[0];
+}
+```
+
+with sql we need perform a migration 
+
+```sql
+ALTER TABLE users ADD COLUMN first_name text;
+UPDATE users SET first_name = split_part(name, ' ', 1);      -- PostgreSQL
+UPDATE users SET first_name = substring_index(name, ' ', 1); 
+```
+
+sign to use schema or read
+- There are many different types of objects, and it is not practicable to put each type of object in its own table.
+- The structure of the data is determined by external systems over which you have no control and which may change at any time.
+
+#### Data locality for queries
+
+If your application often needs to access the entire document (for example, to render it on a web page), there is a performance advantage to this storage locality. 
+
+The locality advantage only applies if you need large parts of the document at the same time.
+
+The database typically needs to load the entire document, even if you access only a small portion of it, which can be wasteful on large documents
+
+On updates to a document, the entire document usually needs to be rewritten—only modifications that don’t change the encoded size of a document can easily be performed in place
+
+For these reasons, it is generally recommended that you keep documents fairly small and avoid writes that increase the size of a document
+
+The column-family concept in the Bigtable data model (used in Cassandra and HBase) has a similar purpose of managing locality 
+
+ Oracle allows the same, using a feature called multi-table index cluster tables
+
+#### Example of query language
+
+aggregation pipeline in MongoDB. Realy similar to sql, but with json
+
+```js
+db.observations.aggregate([
+    { $match: { family: "Sharks" } },
+    { $group: {
+        _id: {
+            year:  { $year:  "$observationTimestamp" },
+            month: { $month: "$observationTimestamp" }
+        },
+        totalAnimals: { $sum: "$numAnimals" }
+    } }
+]);
+```
+
+### SQL
+
+- relational model proposed by Edgar Codd in 1970. Data is organized into relations (called tables in SQL), where each relation is an unordered collection of tuples (rows in SQL). It was  theoretical proposal.
+- Other databases at that time forced application developers to think a lot about the internal representation of the data in the database. The goal of the relational model was to hide that implementation detail behind a cleaner interface.
+- In the 1970s and early 1980s, the network model and the hierarchical model were the main alternatives, but the relational model came to dominate them. Object databases came and went again in the late 1980s and early 1990s. XML databases appeared in the early 2000s, but have only seen niche adoption. 
+
+pros:
+- better support for joins
+- support many-to-one and many-to-many relationships
+
+### The Object-Relational Mismatch
+
+### The Object-Relational Mismatch
+
+- Most application development today is done in object-oriented programming languages, which leads to a common criticism of the SQL data model: if data is stored in relational tables, an awkward translation layer is required between the objects in the application code and the database model of tables, rows, and columns. The disconnect between the models is sometimes called an impedance mismatch.
+
+#### Representing a LinkedIn profile using a relational schema
+
+![](images/sql_gates.png)
+
+There is a one-to-many relationship from the user to these items, which can be represented in various ways:
+
+- In the traditional SQL model (prior to SQL:1999), the most common normalized representation is to put positions, education, and contact information in separate tables, with a foreign key reference to the users table, as in Figure.
+- Later versions of the SQL standard added support for structured datatypes and XML data; this allowed multi-valued data to be stored within a single row, with support for querying and indexing inside those documents. These features are supported to varying degrees by Oracle, IBM DB2, MS SQL Server, and PostgreSQL. A JSON datatype is also supported by several databases, including IBM DB2, MySQL, and PostgreSQL.
+- A third option is to encode jobs, education, and contact info as a JSON or XML document, store it on a text column in the database, and let the application interpret its structure and content. In this setup, you typically cannot use the database to query for values inside that encoded column.
+
+####  Representing a LinkedIn profile as a JSON document
+
+```json
+{
+  "user_id":     251,
+  "first_name":  "Bill",
+  "last_name":   "Gates",
+  "summary":     "Co-chair of the Bill & Melinda Gates... Active blogger.",
+  "region_id":   "us:91",
+  "industry_id": 131,
+  "photo_url":   "/p/7/000/253/05b/308dd6e.jpg",
+  "positions": [
+    {"job_title": "Co-chair", "organization": "Bill & Melinda Gates Foundation"},
+    {"job_title": "Co-founder, Chairman", "organization": "Microsoft"}
+  ],
+  "education": [
+    {"school_name": "Harvard University",       "start": 1973, "end": 1975},
+    {"school_name": "Lakeside School, Seattle", "start": null, "end": null}
+  ],
+  "contact_info": {
+    "blog":    "https://www.gatesnotes.com/",
+    "twitter": "https://twitter.com/BillGates"
+  }
+}
+```
+
+The JSON representation has better locality than the multi-table schema. If you want to fetch a profile in the relational example, you need to either perform multiple queries (query each table by user_id) or perform a messy multi-way join between the users table and its subordinate tables. In the JSON representation, all the relevant information is in one place, and one query is sufficient.
+
+#### Many-to-One problem
+
+ the preceding section, region_id and industry_id are given as IDs, 
+
+![](images/json_many_to_one.png)
+
+ there are advantages to having standardized lists of geographic regions and industries, and letting users choose from a drop-down list or autocompleter:
+- Consistent style and spelling across profiles
+- Avoiding ambiguity (e.g., if there are several cities with the same name)
+- Ease of updating—the name is stored in only one place, so it is easy to update across the board if it ever needs to be changed (e.g., change of a city name due to political events)
+- Localization support—when the site is translated into other languages, the standardized lists can be localized, so the region and industry can be displayed in the viewer’s language
+- Better search—e.g., a search for philanthropists in the state of Washington can match this profile, because the list of regions can encode the fact that Seattle is in Washington (which is not apparent from the string "Greater Seattle Area")
+
+Whether you store an ID or a text string is a question of duplication. When you use an ID, the information that is meaningful to humans (such as the word Philanthropy) is stored in only one place, and everything that refers to it uses an ID (which only has meaning within the database). When you store the text directly, you are duplicating the human-meaningful information in every record that uses it.
+
+The advantage of using an ID is that because it has no meaning to humans, it never needs to change: the ID can remain the same, even if the information it identifies changes. Anything that is meaningful to humans may need to change sometime in the future—and if that information is duplicated, all the redundant copies need to be updated. That incurs write overheads, and risks inconsistencies (where some copies of the information are updated but others aren’t). Removing such duplication is the key idea behind normalization in databases
+
+Unfortunately, normalizing this data requires many-to-one relationships (many people live in one particular region, many people work in one particular industry), which don’t fit nicely into the document model. In relational databases, it’s normal to refer to rows in other tables by ID, because joins are easy. In document databases, joins are not needed for one-to-many tree structures, and support for joins is often weak
+
+If the database itself does not support joins, you have to emulate a join in application code by making multiple queries to the database. (In this case, the lists of regions and industries are probably small and slow-changing enough that the application can simply keep them in memory.  But nevertheless, the work of making the join is shifted from the database to the application code.
+
+####  Many-to-Many Relationships problem
+
+consider some changes we could make to the résumé example:
+
+- Organizations and schools as entities
+
+    In the previous description, organization (the company where the user worked) and school_name (where they studied) are just strings. Perhaps they should be references to entities instead? Then each organization, school, or university could have its own web page (with logo, news feed, etc.); each résumé could link to the organizations and schools that it mentions, and include their logos and other information
+
+- Recommendations
+
+    Say you want to add a new feature: one user can write a recommendation for another user. The recommendation is shown on the résumé of the user who was recommended, together with the name and photo of the user making the recommendation. If the recommender updates their photo, any recommendations they have written need to reflect the new photo. Therefore, the recommendation should have a reference to the author’s profile.
+
+![](images/json_many_to_many.png)
+
+### Are Document Databases Repeating History (hierarchical model)
+
+The most popular database for business data processing in the 1970s was IBM’s Information Management System (IMS), originally developed for stock-keeping in the Apollo space program 
+
+The design of IMS used a fairly simple data model called the hierarchical model, which has some remarkable similarities to the JSON model used by document databases. It represented all data as a tree of records nested within records, much like the JSON structure
+
+Like document databases, IMS worked well for one-to-many relationships, but it made many-to-many relationships difficult, and it didn’t support joins. Developers had to decide whether to duplicate (denormalize) data or to manually resolve references from one record to another.
+
+The “great debate” between  relational model and network mode  lasted for much of the 1970s
+
+### Network model
+
+The CODASYL model was a generalization of the hierarchical model. In the tree structure of the hierarchical model, every record has exactly one parent; in the network model, a record could have multiple parents. For example, there could be one record for the "Greater Seattle Area" region, and every user who lived in that region could be linked to it. This allowed many-to-one and many-to-many relationships to be modeled.
+
+The links between records in the network model were not foreign keys, but more like pointers in a programming language (while still being stored on disk). The only way of accessing a record was to follow a path from a root record along these chains of links. This was called an access path.
+
+In the simplest case, an access path could be like the traversal of a linked list: start at the head of the list, and look at one record at a time until you find the one you want. But in a world of many-to-many relationships, several different paths can lead to the same record, and a programmer working with the network model had to keep track of these different access paths in their head.
+
+A query in CODASYL was performed by moving a cursor through the database by iterating over lists of records and following access paths. If a record had multiple parents (i.e., multiple incoming pointers from other records), the application code had to keep track of all the various relationships. Even CODASYL committee members admitted that this was like navigating around an n-dimensional data space 
+
+With both the hierarchical and the network model, if you didn’t have a path to the data you wanted, you were in a difficult situation. You could change the access paths, but then you had to go through a lot of handwritten database query code and rewrite it to handle the new access paths. It was difficult to make changes to an application’s data model.
+
+### Relational model
+
+What the relational model did, by contrast, was to lay out all the data in the open: a relation (table) is simply a collection of tuples (rows), and that’s it. There are no labyrinthine nested structures, no complicated access paths to follow if you want to look at the data. You can read any or all of the rows in a table, selecting those that match an arbitrary condition. You can read a particular row by designating some columns as a key and matching on those. You can insert a new row into any table without worrying about foreign key relationships to and from other tables.iv
+
+In a relational database, the query optimizer automatically decides which parts of the query to execute in which order, and which indexes to use. Those choices are effectively the “access path,” but the big difference is that they are made automatically by the query optimizer, not by the application developer, so we rarely need to think about them.
+
+You don’t need to change your queries to take advantage of a new index. The relational model thus made it much easier to add new features to applications.
+
+### How document model resolves many-to-one and many-to-many problem 
+
+ when it comes to representing many-to-one and many-to-many relationships, relational and document databases are not fundamentally different: in both cases, the related item is referenced by a unique identifier, which is called a foreign key in the relational model and a document reference in the document model. That identifier is resolved at read time by using a join or follow-up queries. To date, document databases have not followed the path of CODASYL.
+
+### Graph-Like Data Models
+
+what if many-to-many relationships are very common in your data? The relational model can handle simple cases of many-to-many relationships, but as the connections within your data become more complex, it becomes more natural to start modeling your data as a graph.
+
+A graph consists of two kinds of objects: 
+- vertices (also known as nodes or entities) 
+- edges (also known as relationships or arcs). 
+  
+Typical examples include:
+- Social graphs
+    Vertices are people, and edges indicate which people know each other.
+- The web graph
+    Vertices are web pages, and edges indicate HTML links to other pages.
+- Road or rail networks
+    Vertices are junctions, and edges represent the roads or railway lines between them.
+
+graphs are not limited to such homogeneous data: an equally powerful use of graphs is to provide a consistent way of storing completely different types of objects in a single datastore. For example, Facebook maintains a single graph with many different types of vertices and edges: vertices represent people, locations, events, checkins, and comments made by users; edges indicate which people are friends with each other, which checkin happened in which location, who commented on which post, who attended which event, and so o
+
+![](images/graph_1.png)
+
+There are several different, but related, ways of structuring and querying data in graphs.
+- property graph model (implemented by Neo4j, Titan, and InfiniteGraph) 
+- triple-store model (implemented by Datomic, AllegroGraph, and others). 
+
+
+#### Property graph
+
+In the property graph model, each vertex consists of:
+- A unique identifier
+- A set of outgoing edges
+- A set of incoming edges
+- A collection of properties (key-value pairs)
+
+Each edge consists of:
+
+- A unique identifier
+- The vertex at which the edge starts (the tail vertex)
+- The vertex at which the edge ends (the head vertex)
+- A label to describe the kind of relationship between the two vertices
+- A collection of properties (key-value pairs)
+
+
+
+### Query languages
+
+- imperative 
+  - all for IMS (hierachical) and CODASYL (network)
+- declerative
+  - SQL (for RDMVS)
+  
+    ```sql
+    SELECT * FROM animals WHERE family = 'Sharks';
+    ```
+  - aggregation pipeline for Mongo  
+    ```js
+    db.observations.aggregate([
+        { $match: { family: "Sharks" } },
+        { $group: {
+            _id: {
+                year:  { $year:  "$observationTimestamp" },
+                month: { $month: "$observationTimestamp" }
+            },
+            totalAnimals: { $sum: "$numAnimals" }
+        } }
+    ]);
+    ```
+  - for graphs
+    - Cypher
+    - SPARQL
+    - Datalog. 
+    - Gremlin 
+    - Pregel 
+  - for web CSS
+    ```css
+      li.selected > p {
+        background-color: blue;
+    }
+    ```
+
+- combined approach
+  - map reduce
+    ```sql
+    SELECT date_trunc('month', observation_timestamp) AS observation_month, 1
+          sum(num_animals) AS total_animals
+    FROM observations
+    WHERE family = 'Sharks'
+    GROUP BY observation_month;
+    ```
+
+    for MongoDB map reduce
+
+    ```js
+    db.observations.mapReduce(
+        function map() { 2
+            var year  = this.observationTimestamp.getFullYear();
+            var month = this.observationTimestamp.getMonth() + 1;
+            emit(year + "-" + month, this.numAnimals); 3
+        },
+        function reduce(key, values) { 4
+            return Array.sum(values); 5
+        },
+        {
+            query: { family: "Sharks" }, 1
+            out: "monthlySharkReport" 6
+        }
+    );
+```
 
 ## API problems
 
