@@ -2101,7 +2101,8 @@ sudo firewall-cmd --add-service=cockpit --permanent
 
 `alt + *`   инвертировать выделение
 
-`alt + i` отобразить текущую директорию на другой панели
+`alt + i` отобразить текущую директорию на другой панели. 
+`option + i` for MAC. You need specify option as meta key for standart terminal. For iterm2 you need specify left option as esc+ in settings. 
 
 `alt + u`   `alt + y`  ходим по каталогам в истории
 
