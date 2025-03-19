@@ -283,3 +283,10 @@ with mouse
 - intention actions `Opt Enter`
 - Basic Completion `Control Enter` Double press for searshing in not only current context. 
 - Completion with filtering types. Type-Matching Completion. `Control Shift Enter`. Double press for searshing in not only current context. 
+
+### Find/replace
+
+- Find in current file `Command F`
+- Go to next findings in file `Command G`
+- Go to previous findings in file `Command Shift G`
+- Replace in fine `Command R`
