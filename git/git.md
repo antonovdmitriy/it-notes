@@ -481,6 +481,28 @@ git revert 9c6a1fad
 
 Если не хотим, чтобы оставались в истории отмены комитов (revert commit), Можно просто вернуть `git reset --soft` после `revert` на комит более ранний, при этом сформируется индекс, в котором не будет лишних файлов, которые мы ревертнули и сформировать уже нормальный комит.
 
+### revert commit for range of commits
+
+If we need to prepare PR with revert for range of commit. Actually it is not revert commit, just commit to apply to rollback.
+
+first commit is not included
+```
+git revert --no-commit hash10..hash20
+git commi -m "Revert ...."--
+```
+
+if we want to include first commit as well
+
+```
+git revert --no-commit hash10^..hash20
+git commi -m "Revert ...."--
+```
+
+if all commit we want to return is in the end so. 
+
+git revert --no-commit last_commit_hash_we_want_to_keep..HEAD
+git commi -m "Revert ...."--
+```
 
 ## Ветвление
 
