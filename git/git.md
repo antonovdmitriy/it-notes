@@ -1018,23 +1018,31 @@ git blame file 
 ## Соединение с удаленным репозиторием
 
 добавить remote репозиторий
-```
-git remote add origin  
-```
+
 ```
 git remote add origin user@github.com:/opt/REPO.git
+git remote add <shortcut-name-of-repository> <url>
 ```
 
+check remote repositories
+```
+git remote -v
+```
 
-Посмотреть что репозиторий записался в конфиг
+after adding new remote we can push local branch to remote
+
 ```
-git remote -v.  
+git push <shortcut-name-of-repository> branch_name
 ```
 
-Также можно изменить репозиторий
+if we need to change origin
+
 ```
-git remote set-url
-git push -u origin master
+git remote add dima-fork <my_new_git_repo>
+git remote remove origin.
+git remote rename dima-fm-fork origin
+git branch --set-upstream-to=origin/my_branch my_branch
+git pull
 ```
 
 ## Автодополнение
