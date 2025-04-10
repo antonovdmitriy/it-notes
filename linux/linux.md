@@ -2089,6 +2089,8 @@ sudo firewall-cmd --add-service=cockpit --permanent
 
 # Midnight Comander
 
+## Windows
+
 `Ctrs + s`  Быстрый поиск в текущей директории
 
 `Alt + e`  Кодировка
@@ -2145,11 +2147,21 @@ sudo firewall-cmd --add-service=cockpit --permanent
 `Ctrl-x q`   Режим просмотра файлов. Справа панель, слева текст.
 КАк нажимать:   Сначала `ctrl + x`   потом отпускаем обе и нажимаем `q`
 
-## Избранные директории в mc
+### Избранные директории в mc
 
 Добавить директорию  `Ctrl + x, h`
 
 Открыть список `ctrl + \`
+
+## Hotkeys for mac
+
+- swap pannesl `Control U`
+- equals panel `opt i`
+- change detail view pannel `Esc T` or `Opt T`
+- select file `Control T`
+- select multiple files `Shift UP DOWN`
+- select by mask `+`
+- deselect by mask `-`  
 
 ## Цветовая схема
 
