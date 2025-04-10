@@ -167,7 +167,7 @@
 - Go to implementation `Command Opt B`
 - Go to quick definition `Opt Space` or `Command Y`  use to show where is field or variable are declared or if it is class show source cod
 - Go to type declaration `Command Shift B`. When you are on a variable and diffucult to know the type, 
-- Go to super class or method `Command 
+- Go to super class or method `Command U`
 - show pop up with file structure `command F12`
 - show type hierarchy `Control H`
 - go to next / previous highlited error `F2 / Shift F2`
@@ -228,6 +228,7 @@ with mouse
 - run prevous run config `Command R`    
 - debug previous debug config `Command D`
 - Stop `Command F2` 
+  
 ### Debug
 
 - Step over `F8` 
@@ -242,7 +243,7 @@ with mouse
 
 ### Editing
 
-- Comment `Command /` <---------------->
+- Comment `Command /` 
 - Block comment `Command Opt /`
 - Extend Selection `Opt UP/DOWN`
 - Select till the end or start row `Command Shift Left/Right`
@@ -250,18 +251,18 @@ with mouse
 - Fix imports `Control Opt O`
 - Fix indent for line `Control Opt I`
 - Parameter info `Command P`
-- quick documentation about class or method `F1`
-- Pop up short info using mouse `command + hover`
+- quick documentation about class or method `F1` 
+- Pop up short info using mouse `command + hover` 
 - Generate (construct, getter, setter ...) `Command N`
 - override method `Control O`
-- implements method `Control I`
+- implements method `Control I` 
 - surround with template `Command Opt T`
 - select deselect code `Opt UP/DOWN`
-- paste from buffers `Command Shift V`
+- paste from buffers `Command Shift V` 
 - duplicate line or block `Command D`
 - Delete line `Command Backspace`
 - Delecte word `Opt Backspace`
-- change case of current word `Command Shift U`
+- change case of current word `Command Shift U` 
 - expand collaps block `Command +/-`
 - expand collaps all `Command Shift +/-`
 - collapse expand selection `Command .`
@@ -273,9 +274,9 @@ with mouse
 
 ### Git
 
-- Show pop up vcs actions `Control V`
+- Show pop up vcs actions `Control V` 
 - view recent changes `Opt Shift C`
-- Update project `Command T`
+- Update project `Command T` <---------------->
 - Reset changes in file `Command Opt Z`
 
 ### Coding assistance
@@ -284,9 +285,19 @@ with mouse
 - Basic Completion `Control Enter` Double press for searshing in not only current context. 
 - Completion with filtering types. Type-Matching Completion. `Control Shift Enter`. Double press for searshing in not only current context. 
 
+### Usage
+
+- Show declaration and usages `Command B`,  `Opt F7`
+- Go to implementaions `Command Opt B`
+- Go to test `Command Shift T`
+- Highlite in current file `Command Shift F7` then you can you `Command G` and `Shift Command G` to navigate
+
 ### Find/replace
 
 - Find in current file `Command F`
 - Go to next findings in file `Command G`
 - Go to previous findings in file `Command Shift G`
 - Replace in fine `Command R`
+- Find in Files `Command Shift F`
+- Replase in Files `Command Shift R`
+- Find Actions `Command Shift A`
