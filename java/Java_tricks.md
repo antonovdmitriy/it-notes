@@ -14507,6 +14507,7 @@ public Object pop() {
 - Another common source of memory leaks is caches
 - A third common source of memory leaks is listeners and other callbacks
 
+
 # Performance
 
 ## Heap tuning
@@ -14613,3 +14614,78 @@ That may be easier said than done, but at least the analysis is simple.
 Next general rule of thumb, start with collection objects (e.g., HashMap) rather than the entries (e.g., HashMap$Entry), and look for the biggest collections.
 
 test some new row.
+
+## JFR
+
+### prepare your jvm
+
+need to use JVM option. 
+
+```
+-XX:+UnlockDiagnosticVMOptions -XX:+DebugNonSafepoints
+```
+
+On Oracle JDK8, if the `UnlockCommercialFeatures` flag was not specified at startup it must be enabled from the comman line to allow recording:
+
+```
+jcmd <pid> VM.unlock_commercial_features
+```
+
+### make sure a running jvm supports jrf
+
+```
+$ jcmd <pid> help
+VM.unlock_commercial_features
+JFR.configure
+JFR.stop
+JFR.start
+JFR.dump
+JFR.check
+```
+
+### pick profile settings
+
+- `profile` - “Low overhead configuration for profiling, typically around 2 % overhead.”:
+- `default` - Will cover method profiling, GC events, slow compilations
+
+
+### schedule a recording as part of startup
+
+```
+-XX:StartFlightRecording=delay=60m,duration=10m,name=Default,filename=<recording-filename>.jfr,settings=profile
+```
+
+example
+
+```
+$ java \
+ -XX:StartFlightRecording=delay=60m,duration=10m,name=Default,filename=<recording-filename>.jfr,settings=profile \
+    -jar <your_app.jar>
+```
+
+### trigger a recrding from the command line
+
+```
+jcmd <pid> JFR.start settings=profile duration=10m name=Profiling filename=recording.jfr
+```
+
+### adjust stack depth for the recording
+
+JFR collects up to 64 frames in stack traces by default.
+
+```
+$ java ... -XX:FlightRecorderOptions=stackdepth=128 ...
+```
+
+```
+$ jcmd <pid> JFR.configure stackdepth=128
+```
+
+# Misc
+
+## how check jdk architecture for mac (arm or x86)
+   
+   It is possible to check
+   ```sh
+   /usr/libexec/java_home -V
+   ```
