@@ -14689,3 +14689,148 @@ $ jcmd <pid> JFR.configure stackdepth=128
    ```sh
    /usr/libexec/java_home -V
    ```
+
+
+## JVM shutdown behaviour
+
+The standard solution for correct stopping processes in operating systems is to listen for interrupt signals (SIGTERM, SIGINT) from the operating system; a Java Vitrual Machine is no exception to this and has mechanisms for processing system signals. 
+
+Default interrupt listeners are set in the class `java.lang.Terminator`. 
+
+<details>
+
+  <summary>more details about java.lang.Terminator</summary>
+
+```java
+/**
+ * Package-private utility class for setting up and tearing down
+ * platform-specific support for termination-triggered shutdowns.
+ *
+ * @author   Mark Reinhold
+ * @since    1.3
+ */
+
+class Terminator {
+
+    private static Signal.Handler handler = null;
+
+    /* Invocations of setup and teardown are already synchronized
+     * on the shutdown lock, so no further synchronization is needed here
+     */
+
+    static void setup() {
+        if (handler != null) return;
+        Signal.Handler sh = new Signal.Handler() {
+            public void handle(Signal sig) {
+                Shutdown.exit(sig.getNumber() + 0200);
+            }
+        };
+        handler = sh;
+        // When -Xrs is specified the user is responsible for
+        // ensuring that shutdown hooks are run by calling
+        // System.exit()
+        try {
+            Signal.handle(new Signal("HUP"), sh);
+        } catch (IllegalArgumentException e) {
+        }
+        try {
+            Signal.handle(new Signal("INT"), sh);
+        } catch (IllegalArgumentException e) {
+        }
+        try {
+            Signal.handle(new Signal("TERM"), sh);
+        } catch (IllegalArgumentException e) {
+        }
+    }
+
+    static void teardown() {
+        /* The current sun.misc.Signal class does not support
+         * the cancellation of handlers
+         */
+    }
+
+}
+```
+
+it seems to be executed at the internal level of the JVM but it is possible to check and see the default signal handlers, for example, by setting your own interrupt signal. 
+
+```java
+        final Signal signal = new Signal("TERM");
+        Signal.handle(signal, new SignalHandler() {
+            @Override
+            public void handle(Signal sig) {
+                System.out.println("MY HANDLEr");
+            }
+        });
+```
+
+When you get inside the handle method of the class `sun.misc.Signal` that registers handlers, you can see that the collection of handlers is not empty and is filled with those default handlers from the `java.lang.Terminator` class
+
+![](images/default_signal_handlers.png)
+
+
+</details>
+
+So we have the default implementation of the Java machine’s response to a stop signal. Here is it
+
+```java
+public void handle(Signal sig) {
+    Shutdown.exit(sig.getNumber() + 0200);
+}
+```
+
+In default case, a series of native Java machine methods are called, as well as calls to custom hooks that can be set to close resources. 
+
+<details>
+
+  <summary>more details about default Shutdown</summary>
+
+From class `java.lnag.Shutdown`
+
+```java
+    static void exit(int status) {
+        synchronized (lock) {
+            if (status != 0 && VM.isShutdown()) {
+                /* Halt immediately on nonzero status */
+                halt(status);
+            }
+        }
+        synchronized (Shutdown.class) {
+            /* Synchronize on the class object, causing any other thread
+             * that attempts to initiate shutdown to stall indefinitely
+             */
+            beforeHalt();
+            runHooks();
+            halt(status);
+        }
+    }
+```
+
+For example, these hooks are actively used in spring to close the context. 
+
+From `org.springframework.context.support.AbstractApplicationContext`
+
+```java
+	@Override
+	public void registerShutdownHook() {
+		if (this.shutdownHook == null) {
+			// No shutdown hook registered yet.
+			this.shutdownHook = new Thread(SHUTDOWN_HOOK_THREAD_NAME) {
+				@Override
+				public void run() {
+					synchronized (startupShutdownMonitor) {
+						doClose();
+					}
+				}
+			};
+			Runtime.getRuntime().addShutdownHook(this.shutdownHook);
+		}
+	}
+```
+
+</details>
+
+
+**After executing hooks, the Java machine interrupts threads, including non-daemon threads.** It is really important. 
+
+What happens if the user adds his own implementation of system signal processing? Then the default implementation will override the custom one. Then the behavior of the Java machine will change significantly, that is, it will be left to the user handler. In it, for example, you can call the Java machine to stop, following the example of the default implementation, or you can don't call it. In the latter case, the Java machine will continue to work until all non-daemon threads have completed their work. If these non-daemon threads continue their work, the Java machine will not stop even if it catches system interrupt signals, with the exception of the SYGKILL (kill -9) signal
