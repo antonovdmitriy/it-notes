@@ -14834,3 +14834,51 @@ From `org.springframework.context.support.AbstractApplicationContext`
 **After executing hooks, the Java machine interrupts threads, including non-daemon threads.** It is really important. 
 
 What happens if the user adds his own implementation of system signal processing? Then the default implementation will override the custom one. Then the behavior of the Java machine will change significantly, that is, it will be left to the user handler. In it, for example, you can call the Java machine to stop, following the example of the default implementation, or you can don't call it. In the latter case, the Java machine will continue to work until all non-daemon threads have completed their work. If these non-daemon threads continue their work, the Java machine will not stop even if it catches system interrupt signals, with the exception of the SYGKILL (kill -9) signal
+
+## Unmarhalling in parent class using generics
+
+```java
+public abstract class AbstractAction<T extends MyAppRequest> implements Action {
+
+    private final MyAppMapper mapper;
+    private final String requestMappingTemplateName;
+    protected static final SummaryLogger summaryLogger = SummaryLogger.getLogger();
+
+    protected AbstractAction(ICoreMapper mapper, String requestMappingTemplateName) {
+        this.mapper = mapper;
+        this.requestMappingTemplateName = requestMappingTemplateName;
+    }
+
+    @Override
+    public final void doAction(CompositeActionContext context) {
+        T unmarshalRequestContent =
+                mapper.unmarshalRequestContent(context.requestContent(), requestMappingTemplateName);
+        doAction(context, unmarshalRequestContent);
+    }
+
+    protected abstract void doAction(CompositeActionContext context, T request);
+}
+
+
+@Component
+public class ExampleAction extends AbstractAction<SpecificRequest> {
+
+    private static final String REQUEST_MAPPING_INFO = "mappingName";
+    private final ExampleService authAfterLostModeService;
+
+    public ExampleAction(ExampleService authAfterLostModeService,
+                                   ICoreMapper requestResponseMapper) {
+        super(requestResponseMapper, REQUEST_MAPPING_INFO);
+        this.authAfterLostModeService = authAfterLostModeService;
+    }
+
+    @Override
+    public void doAction(CompositeActionContext context, SpecificRequest request) {
+
+        ...
+    }
+}
+
+public class SpecificRequest extends MyAppRequest {
+}
+```
