@@ -14681,6 +14681,18 @@ $ java ... -XX:FlightRecorderOptions=stackdepth=128 ...
 $ jcmd <pid> JFR.configure stackdepth=128
 ```
 
+## Profling
+
+### async-profiler
+
+run for amount of time in nanosec
+
+  ./profiler/async-profiler-3.0-macos/bin/asprof -d {{.PROFILING_DURATION_SECONDS}} --interval {{.PROFILING_INTERVAL_NANOSECONDS}} -f {{.PROFILING_RESULT_JFR_PATH}} $(jps | grep MyService | awk '{print $1}') &
+
+you can use start and stop in runtime if you do not know time you want to profile. 
+
+
+
 # Misc
 
 ## how check jdk architecture for mac (arm or x86)
