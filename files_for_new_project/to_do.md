@@ -13,6 +13,7 @@
 
 ## Secondary tasks
 
+- commit current state
 - review latest PRs of team or connected teams
 - podcast?
 - open to do list
