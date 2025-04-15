@@ -459,6 +459,27 @@
       - [show all objects incuding garbage without full GC](#show-all-objects-incuding-garbage-without-full-gc)
       - [Heap dump](#heap-dump)
     - [What to do](#what-to-do)
+  - [JFR](#jfr)
+    - [prepare your jvm](#prepare-your-jvm)
+    - [make sure a running jvm supports jrf](#make-sure-a-running-jvm-supports-jrf)
+    - [pick profile settings](#pick-profile-settings)
+    - [schedule a recording as part of startup](#schedule-a-recording-as-part-of-startup)
+    - [trigger a recrding from the command line](#trigger-a-recrding-from-the-command-line)
+    - [adjust stack depth for the recording](#adjust-stack-depth-for-the-recording)
+  - [Profling](#profling)
+    - [async-profiler](#async-profiler)
+- [Misc](#misc)
+  - [how check jdk architecture for mac (arm or x86)](#how-check-jdk-architecture-for-mac-arm-or-x86)
+  - [JVM shutdown behaviour](#jvm-shutdown-behaviour)
+  - [Unmarhalling in parent class using generics](#unmarhalling-in-parent-class-using-generics)
+  - [How to know where java was intalled on Linux machine](#how-to-know-where-java-was-intalled-on-linux-machine)
+  - [JEnv](#jenv)
+    - [Installation](#installation)
+      - [Mac](#mac)
+      - [Linux or WSL](#linux-or-wsl)
+    - [Show versions](#show-versions)
+    - [add java](#add-java)
+    - [switch java](#switch-java)
 
 
 # OCP preparation
@@ -14893,4 +14914,106 @@ public class ExampleAction extends AbstractAction<SpecificRequest> {
 
 public class SpecificRequest extends MyAppRequest {
 }
+```
+
+## How to know where java was intalled on Linux machine
+
+```sh
+readlink -f $(which java)
+```
+
+## JEnv
+
+### Installation 
+
+#### Mac
+
+```sh
+brew install jenv
+```
+
+#### Linux or WSL
+
+```sh
+git clone https://github.com/jenv/jenv.git ~/.jenv
+```
+
+```sh
+# Shell: bash
+echo 'export PATH="$HOME/.jenv/bin:$PATH"' >> ~/.bash_profile
+echo 'eval "$(jenv init -)"' >> ~/.bash_profile
+# Shell: zsh
+echo 'export PATH="$HOME/.jenv/bin:$PATH"' >> ~/.zshrc
+echo 'eval "$(jenv init -)"' >> ~/.zshrc
+```
+
+```sh
+eval "$(jenv init -)"
+jenv enable-plugin export
+```
+
+### Show versions
+
+```sh
+$ jenv versions
+* system (set by /Users/user/.jenv/version)
+  21.0
+  21.0.2
+  openjdk64-21.0.2
+```
+
+### add java
+
+first one needs to know where is java was installed. For example 
+
+```sh
+readlink -f $(which java)
+/usr/lib/jvm/java-21-openjdk-amd64/bin/java
+```
+
+add java
+
+```sh
+ jenv add /usr/lib/jvm/java-21-openjdk-amd64/
+ openjdk64-21.0.6 added
+21.0.6 added
+21.0 added
+21 added
+ ```
+
+```sh
+root@LAPTOP-MIH0IT98:~# jenv versions
+* system (set by /root/.jenv/version)
+  21
+  21.0
+  21.0.6
+  openjdk64-21.0.
+```
+
+### switch java
+
+```sh
+jenv add /usr/lib/jvm/java-11-openjdk-amd64/
+openjdk64-11.0.26 added
+11.0.26 added
+11.0 added
+11 added
+```
+
+```
+root@LAPTOP-MIH0IT98:~# java -version
+openjdk version "21.0.6" 2025-01-21
+OpenJDK Runtime Environment (build 21.0.6+7-Ubuntu-124.04.1)
+OpenJDK 64-Bit Server VM (build 21.0.6+7-Ubuntu-124.04.1, mixed mode, sharing)
+```
+
+```sh
+jenv global 11
+```
+
+```
+root@LAPTOP-MIH0IT98:~# java -version
+openjdk version "11.0.26" 2025-01-21
+OpenJDK Runtime Environment (build 11.0.26+4-post-Ubuntu-1ubuntu124.04)
+OpenJDK 64-Bit Server VM (build 11.0.26+4-post-Ubuntu-1ubuntu124.04, mixed mode, sharing)
 ```
