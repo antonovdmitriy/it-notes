@@ -480,6 +480,10 @@
     - [Show versions](#show-versions)
     - [add java](#add-java)
     - [switch java](#switch-java)
+    - [level of setting Java versions](#level-of-setting-java-versions)
+    - [disconnect java](#disconnect-java)
+  - [Jps](#jps)
+    - [how to stop or kill java process](#how-to-stop-or-kill-java-process)
 
 
 # OCP preparation
@@ -14924,6 +14928,8 @@ readlink -f $(which java)
 
 ## JEnv
 
+- [github jenv](https://github.com/jenv/jenv)
+
 ### Installation 
 
 #### Mac
@@ -14939,13 +14945,16 @@ git clone https://github.com/jenv/jenv.git ~/.jenv
 ```
 
 ```sh
-# Shell: bash
-echo 'export PATH="$HOME/.jenv/bin:$PATH"' >> ~/.bash_profile
-echo 'eval "$(jenv init -)"' >> ~/.bash_profile
+# Shell: bash в инструкции было указано добавлять в .bash_profile, но в WSL не работает, для применения новой джавы нужно было октрывать новый терминал
+echo 'export PATH="$HOME/.jenv/bin:$PATH"' >> ~/.bashrc
+echo 'eval "$(jenv init -)"' >> ~/.bashrc
+
 # Shell: zsh
 echo 'export PATH="$HOME/.jenv/bin:$PATH"' >> ~/.zshrc
 echo 'eval "$(jenv init -)"' >> ~/.zshrc
 ```
+
+for dynamic change JAVA_HOME env variable
 
 ```sh
 eval "$(jenv init -)"
@@ -15016,4 +15025,113 @@ root@LAPTOP-MIH0IT98:~# java -version
 openjdk version "11.0.26" 2025-01-21
 OpenJDK Runtime Environment (build 11.0.26+4-post-Ubuntu-1ubuntu124.04)
 OpenJDK 64-Bit Server VM (build 11.0.26+4-post-Ubuntu-1ubuntu124.04, mixed mode, sharing)
+```
+
+### level of setting Java versions
+
+jenv can set Java versions at 3 levels:
+
+- global (lowest priority)
+- local
+- shell (highest priority)
+  
+Where multiple versions are set, the highest priority setting as above takes effect.
+
+set local (directory)
+
+```
+jenv local 21.0.2
+```
+
+unset 
+
+```
+jenv local --unset
+```
+
+### disconnect java
+
+to know the path to java
+
+```sh
+jenv versions --verbose
+```
+
+```
+root@LAPTOP-MIH0IT98:~# jenv versions --verbose
+  system
+
+         --> /root
+
+  11
+         /root/.jenv/versions/11
+         --> /usr/lib/jvm/java-11-openjdk-amd64
+
+  11.0
+         /root/.jenv/versions/11.0
+         --> /usr/lib/jvm/java-11-openjdk-amd64
+
+  11.0.26
+         /root/.jenv/versions/11.0.26
+         --> /usr/lib/jvm/java-11-openjdk-amd64
+
+* 21 (set by JENV_VERSION environment variable)
+         /root/.jenv/versions/21
+         --> /usr/lib/jvm/java-21-openjdk-amd64
+
+  21.0
+         /root/.jenv/versions/21.0
+         --> /usr/lib/jvm/java-21-openjdk-amd64
+
+  21.0.6
+         /root/.jenv/versions/21.0.6
+         --> /usr/lib/jvm/java-21-openjdk-amd64
+
+  openjdk64-11.0.26
+         /root/.jenv/versions/openjdk64-11.0.26
+         --> /usr/lib/jvm/java-11-openjdk-amd64
+
+  openjdk64-21.0.6
+         /root/.jenv/versions/openjdk64-21.0.6
+         --> /usr/lib/jvm/java-21-openjdk-amd64
+```
+
+then disconnect java we want
+
+```sh
+jenv remove 11 11.0 11.0.26
+```
+
+```
+root@LAPTOP-MIH0IT98:~# jenv remove 11.0.26 11.0 11
+JDK 11.0.26 removed
+JDK 11.0 removed
+JDK 11 removed
+```
+
+## Jps
+
+a handy little utility that comes with the JDK. Tt shows running Java processes under current user. 
+
+```sh
+jps
+```
+
+```
+12345 MyMainClass
+67890 Jps
+```
+
+### how to stop or kill java process
+
+gently kill
+
+```sh
+kill $(jps | grep MyAppMainClass | awk '{print $1}')
+```
+
+force kill
+
+```sh
+kill -9 $(jps | grep MyAppMainClass | awk '{print $1}')
 ```

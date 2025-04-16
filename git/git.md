@@ -27,6 +27,7 @@
   - [Отмена изменений, отмена комитов](#отмена-изменений-отмена-комитов)
     - [Отмена последовательных комитов и индекса reset](#отмена-последовательных-комитов-и-индекса-reset)
     - [Отмена комита в середине дерева](#отмена-комита-в-середине-дерева)
+    - [revert commit for range of commits](#revert-commit-for-range-of-commits)
   - [Ветвление](#ветвление)
     - [Создание и переключение веток](#создание-и-переключение-веток)
     - [Удаление ветки](#удаление-ветки)
@@ -486,20 +487,21 @@ git revert 9c6a1fad
 If we need to prepare PR with revert for range of commit. Actually it is not revert commit, just commit to apply to rollback.
 
 first commit is not included
-```
+```sh
 git revert --no-commit hash10..hash20
 git commi -m "Revert ...."--
 ```
 
 if we want to include first commit as well
 
-```
+```sh
 git revert --no-commit hash10^..hash20
 git commi -m "Revert ...."--
 ```
 
 if all commit we want to return is in the end so. 
 
+```sh
 git revert --no-commit last_commit_hash_we_want_to_keep..HEAD
 git commi -m "Revert ...."--
 ```
