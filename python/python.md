@@ -1,12 +1,9 @@
-# Table of contents
+## Table of contents
 
-- [Table of contents](#table-of-contents)
-- [Strings](#strings)
-- [F-strings](#f-strings)
 - [Methods](#methods)
 
 
-# Strings
+## Strings
 
 - It possible to write string literals with single or double quates
 - You don't need to write a type
@@ -19,7 +16,7 @@ full_name = f"{first_name} {second_name}"
 print(full_name)
 ```
 
-# F-strings
+## F-strings
 
 F-string starts from the 3.6 version.
 
@@ -48,7 +45,7 @@ greetings = "Hello {}!".format(full_name)
 print(greetings)
 ```
 
-# Methods
+## Methods
 
 Example how to invoke a method
 
