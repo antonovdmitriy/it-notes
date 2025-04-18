@@ -22,7 +22,7 @@
   - project task
 - take a look on clock  
 - should I clean the screen or keyboard
-  - get one napkins    
+  - get one napkins      
 - harvest
 - check emails
 - Clean dirty notes in VSCode.
