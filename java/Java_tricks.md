@@ -14944,6 +14944,8 @@ brew install jenv
 git clone https://github.com/jenv/jenv.git ~/.jenv
 ```
 
+#### Initial setup (for both MAC and linux)
+
 ```sh
 # Shell: bash в инструкции было указано добавлять в .bash_profile, но в WSL не работает, для применения новой джавы нужно было октрывать новый терминал
 echo 'export PATH="$HOME/.jenv/bin:$PATH"' >> ~/.bashrc

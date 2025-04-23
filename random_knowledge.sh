@@ -11,20 +11,18 @@ extract_toc_items() {
     local md_file="$1"
     local lines=()
 
-    # Read file into an array, converting CRLF to LF if needed
-    mapfile -t lines < <(tr -d '\r' < "$md_file")
+    # Read lines into array manually, stripping carriage returns
+    while IFS= read -r line || [ -n "$line" ]; do
+        lines+=("${line//$'\r'/}")
+    done <"$md_file"
 
     # Loop through lines to find the table of contents items
-    for (( i=0; i<${#lines[@]}; i++ )); do
+    for ((i = 0; i < ${#lines[@]}; i++)); do
         local line="${lines[$i]}"
-        local next_line="${lines[$i+1]}"
+        local next_line="${lines[$i + 1]}"
 
-        # Check if line is a table of contents item
         if [[ "$line" =~ ^[[:blank:]]*[-\*] ]]; then
-            # Add the line with its file path to the global array
             toc_items+=("$md_file|$line")
-
-            # Break the loop if the next line is empty, assuming the end of the table of contents
             if [[ -z "$next_line" ]]; then
                 break
             fi
