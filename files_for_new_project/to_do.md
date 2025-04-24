@@ -21,6 +21,8 @@
         - clone project.
         - install uninity on mac
         - open unity
+        - install unity editor
+        - open unity editor
 - podcast?
 - open to do list
   - regular task
@@ -33,7 +35,7 @@
 - check emails
 - Clean dirty notes in VSCode.
 - keep IDE up to date and OS.  
-
+  
 - close not useful apps
 - Only non dirty tabs in browser.  
 - keep downloads folder and home folder and desktop in order and desktop clean
@@ -51,14 +53,10 @@
 
 I want to keep notes in good state. 
 - locust
-  - explain why a bit weird command. Where I can find usued environment variables and command. 
-  - explain contants of locust.py
-  - up image and try again
-  - how I can connect to web ui.
-  - add to notes how to use loucts and compose
-  - expose port 
-  - install locust without container
-  - add to notes
+  - set up python sandbox as simple as possible with mininum files. 
+  - skim documentaion. Possible that there is some cool features. 
+
+
 
 what I want to try
 - go
@@ -68,6 +66,14 @@ what I want to try
 I want to polish existing repo. It should be in consistent state up to date. 
 - open separately develop and sql branches. 
 - open commit log. Actually it is too big PR. Start a new branches and try to cherry pick first commits. 
+
+I want to create my first app for iphone. 
+- ask chat gpt how to do that
+- start notes. 
+
+I want revise my knowledge in IT
+- just a run scripts.
+- do I have some sandbox?
 
 ## List of tasks
 
