@@ -286,18 +286,19 @@ with mouse
 - Indent Selection `Tab`
 - Undent line or selection `Shift Tab`
 - move statement up/down `Command Shift UP/DOWN`
+- move line up/down `Opt Shift UP/DOWN`
 
 ### Git
 
 - Show pop up vcs actions `Control V` 
 - view recent changes `Opt Shift C`
-- Update project `Command T` <---------------->
+- Update project `Command T` 
 - Reset changes in file `Command Opt Z`
 
 ### Coding assistance
 
-- intention actions `Opt Enter`
-- Basic Completion `Control Enter` Double press for searshing in not only current context. 
+- intention actions `Opt Enter` <---------------->
+- Basic Completion `Control Enter` Double press for searching in not only current context. 
 - Completion with filtering types. Type-Matching Completion. `Control Shift Enter`. Double press for searshing in not only current context. 
 
 ### Usage

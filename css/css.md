@@ -23,7 +23,6 @@
   - [Space between cells](#space-between-cells)
   - [Alternation](#alternation)
 - [Colors](#colors)
-- [Encoding](#encoding)
 
 # Color and alignment
 
@@ -243,28 +242,3 @@ rgb(200,200,200)  
 rgb(255,255,255)
 ```
 
-# Encoding
-
-**ASCII** was the first character encoding standard (also called character set). 
-
-**ASCII** defined 127 different alphanumeric characters that could be used on the internet: numbers (0-9), English letters (A-Z), and some special characters like ! $ + - ( ) @ < > .
-
-**ANSI (Windows-1252)** was the original Windows character set, with support for 256 different character codes.
-
-**ISO-8859-1** was the default character set for HTML 4. This character set also supported 256 different character codes.
-
-Because **ANSI** and **ISO-8859-1** were so limited, the default character encoding was changed to **UTF-8** in HTML5.
-
-**UTF-8 (Unicode)** covers almost all of the characters and symbols in the world.
-
-All HTML 4 processors also support UTF-8 encoding.
-
-For HTML4:
-```html
-<meta http-equiv="Content-Type" content="text/html;charset=ISO-8859-1">
-```
-
-For HTML5:
-```html
-<meta charset="UTF-8">
-```

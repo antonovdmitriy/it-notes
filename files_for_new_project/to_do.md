@@ -35,7 +35,6 @@
 - check emails
 - Clean dirty notes in VSCode.
 - keep IDE up to date and OS.  
-  
 - close not useful apps
 - Only non dirty tabs in browser.  
 - keep downloads folder and home folder and desktop in order and desktop clean
@@ -53,10 +52,7 @@
 
 I want to keep notes in good state. 
 - locust
-  - set up python sandbox as simple as possible with mininum files. 
   - skim documentaion. Possible that there is some cool features. 
-
-
 
 what I want to try
 - go
