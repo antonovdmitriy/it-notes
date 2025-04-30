@@ -15,14 +15,7 @@
 
 - commit current state
 - review latest PRs of team or connected teams
-  - open ox repos. 
-    - to understand what is it in some repo. 
-      - shaman dance
-        - clone project.
-        - install uninity on mac
-        - open unity
-        - install unity editor
-        - open unity editor
+  - take a look at the PR to apache-camel repo. I can start just from commit history and after that understand a logic. Then to take a look at caravan.
 - podcast?
 - open to do list
   - regular task

@@ -2438,7 +2438,7 @@ Resources:
 
 ### Parameters
 
-optionl Parameters section to customuze templates
+optional Parameters section to customuze templates
 
 Parameters enable you to input custom values to your template each time you create or update a stack
 
