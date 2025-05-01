@@ -15,7 +15,8 @@
 
 - commit current state
 - review latest PRs of team or connected teams
-  - take a look at the PR to apache-camel repo. I can start just from commit history and after that understand a logic. Then to take a look at caravan.
+  - build camel repo.
+  - open PRs.
 - podcast?
 - open to do list
   - regular task

@@ -3549,13 +3549,11 @@ Once the function has finished executing, the FaaS platform is free to tear it d
 
 AWS Lambda was launched in 2014
 
-Lambda implements the FaaS pattern by instantiating ephemeral, managed, Linux environments to host each of our function instances. Lambda guarantees that only one event is processed per environment at a time. 
-
-Lambda also requires that the function completes processing of the event within 15 minutes; otherwise, the execution is aborted.
-
-Since we are fully abstracted from the underlying host with Lambda, we can’t specify a number or type of underlying EC2 instances to use. Instead, we specify how much RAM our function requires (up to a maximum of 3GB), and other aspects of performance are tied to this too. 
-
-If a particular data center/Availability Zone fails, then Lambda will automatically start environments in a different AZ in the same region.
+- Lambda implements the FaaS pattern by instantiating ephemeral, managed, Linux environments to host each of our function instances. 
+- Lambda guarantees that only one event is processed per environment at a time. 
+- Lambda also requires that the function completes processing of the event within 15 minutes; otherwise, the execution is aborted.
+- Since we are fully abstracted from the underlying host with Lambda, we can’t specify a number or type of underlying EC2 instances to use. Instead, we specify how much RAM our function requires (up to a maximum of 3GB), and other aspects of performance are tied to this too. 
+- If a particular data center/Availability Zone fails, then Lambda will automatically start environments in a different AZ in the same region.
 
 ## How lambda can be invoked
 
