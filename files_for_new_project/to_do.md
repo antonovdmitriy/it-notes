@@ -15,8 +15,12 @@
 
 - commit current state
 - review latest PRs of team or connected teams
-  - build camel repo.
-  - open PRs.
+  - camel (медленно потихоньку вперед)
+    - git pull
+    - create notes
+    - open tests and start to read it
+    - check current PR
+    - check latest merged PR and to find it in git history.
 - podcast?
 - open to do list
   - regular task

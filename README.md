@@ -8,6 +8,7 @@ Just notes, compilation from different courrses and own thoughts.
 - [AWS](/aws/AWS.md)
 - [Bash](/bash/Bash.md)
 - [C#](/c#/notes.md)
+- [Apache Camel](/camel/camel.md)
 - [Css](css/css.md)
 - [Docker](/docker/Docker.md)
 - [Git](/git/git.md)
