@@ -16,7 +16,7 @@ Just notes, compilation from different courrses and own thoughts.
 - [Go](/go/go.md)
 - [Html](html/html.md)
 - [InteliJ IDEA](intelij-idea/intelij-idea.md)
-- [Java](/java/Java%20tricks.md)
+- [Java](/java/Java_tricks.md)
 - [Javascript](javascript/javascript.md)
 - [Kubernetes](kubernates/kubernates.md)
 - [Linux](/linux/linux.md)

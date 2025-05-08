@@ -1,0 +1,1 @@
+rootProject.name = "netty_gradle_java21"

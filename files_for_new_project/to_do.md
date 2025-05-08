@@ -48,6 +48,13 @@
 
 ## Thoughts
 
+- notes. 
+- revice anything tech
+- book
+- swift
+- go
+- camel project
+
 I want to keep notes in good state. 
 - locust
   - skim documentaion. Possible that there is some cool features. 
