@@ -1091,10 +1091,12 @@ source ~/.git-completion.bash
 git remote prune origin --dry-run
 ```
 
-и потом удалить
 ```
-git remote prune origin 
+git fetch
+git remote prune origin
+git branch -vv | awk '/: gone]/{print $1}' | xargs -r git branch -D
 ```
+
 
 ### Чиста дерева файлов
 
