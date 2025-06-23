@@ -1,17 +1,22 @@
 # Содержание
 - [Содержание](#содержание)
-- [Установка Kubernetes](#установка-kubernetes)
-  - [Утилита kind](#утилита-kind)
-- [Получение справки](#получение-справки)
-  - [Справка о командах](#справка-о-командах)
+- [Install Kubernetes locally](#install-kubernetes-locally)
+    - [Linux](#linux)
+    - [kind](#kind)
+  - [Mac](#mac)
+    - [colima](#colima)
+- [Getting help](#getting-help)
+  - [About kubectl commands](#about-kubectl-commands)
   - [Получение информации о созданных объектах](#получение-информации-о-созданных-объектах)
 - [Создание и удаление объектов](#создание-и-удаление-объектов)
 - [Получение логов](#получение-логов)
 
 
-# Установка Kubernetes
+# Install Kubernetes locally
 
-## Утилита kind
+### Linux
+
+### kind
 
 ```bash
 curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.10.0/kind-linux-amd64
@@ -26,14 +31,33 @@ kind create cluster
 
 Подключиться получается только из под `root`. 
 
-# Получение справки
+## Mac
 
-## Справка о командах
+### colima
+
+```
+brew install docker
+brew install colima
+brew install kubectl
+colima start --with-kubernetes
+```
+
+to check after installation
+
+```
+kubectl get nodes
+docker ps
+```
+
+
+# Getting help
+
+## About kubectl commands
 ```
 Kubectl -h
 ```
 
-Получение справки по команде
+Help about a certain command
 ```
 kubectl command -h
 ```
