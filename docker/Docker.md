@@ -34,6 +34,11 @@
   - [настроить докер на доступ по порту](#настроить-докер-на-доступ-по-порту)
 - [Docker compose](#docker-compose)
   - [Основные команды:](#основные-команды)
+- [Work on mac os](#work-on-mac-os)
+  - [Colima](#colima)
+    - [Installing colima](#installing-colima)
+    - [Start colima if docker needed only](#start-colima-if-docker-needed-only)
+    - [Start colima if kubernetes needed](#start-colima-if-kubernetes-needed)
 
 
 # Полезные ссылки
@@ -391,4 +396,39 @@ docker-compose stop
 Удалить контейенры и volumes
 ```
 docker-compose down --volumes
+```
+
+# Work on mac os
+
+## Colima
+
+### Installing colima
+
+```sh
+brew intsall colima
+colima version
+```
+
+### Start colima if docker needed only
+
+```sh
+colima start
+```
+
+check that is was started
+
+```sh
+docker ps
+```
+
+### Start colima if kubernetes needed
+
+```sh
+colima start --with-kubernetes
+```
+
+check that it was started
+
+```sh
+kubectl get nodes
 ```
