@@ -20,14 +20,12 @@ for i in "${dirs[@]}"; do
     cd "$i" || { echo "cannot cd into $i, skipping"; continue; }
     echo "processing $i"
 
-    git pull || echo "pull failed for $i"
-
     status=$(git status)
     if [[ $status != *"nothing to commit, working tree clean"* ]]; then
         git add -A
         git commit -m "Auto commit from script"
-        git push
-    elif [[ $status == *"Your branch is ahead"* ]]; then
-        git push
     fi
+
+    git pull || echo "pull failed for $i"
+    git push
 done
